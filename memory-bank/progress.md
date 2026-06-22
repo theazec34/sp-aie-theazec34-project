@@ -49,3 +49,11 @@ Se detecta una brecha tecnica importante:
 	- `web-accessibility`
 	- `playwright-testing`
 	- `brasaland-domain-migration` (custom)
+- Se aplicaron las skills al proyecto:
+	- migracion de `src/` al dominio Brasaland (tipos, validaciones y demo),
+	- mejora de accesibilidad en menu movil,
+	- setup de Playwright con tests e2e para home y application.
+- Validacion final completada:
+	- `npm run typecheck` OK,
+	- `npm run demo` OK,
+	- `npx playwright test` OK (4 tests passing).

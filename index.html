@@ -810,7 +810,7 @@
     <a href="#main" class="skip-link">Saltar al contenido principal</a>
 
     <!-- Mobile Menu -->
-    <div class="mobile-menu" id="mobile-menu" role="dialog" aria-label="Menú móvil">
+    <div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Menú móvil">
         <button class="mobile-menu-close" id="menu-close" aria-label="Cerrar menú">✕</button>
         <a href="#hero" onclick="closeMobileMenu()">Inicio</a>
         <a href="#carta" onclick="closeMobileMenu()">Carta</a>
@@ -832,7 +832,7 @@
                 <a href="#testimonios">Clientes</a>
                 <a href="application.html" class="btn-reserva">Reservar Mesa</a>
             </div>
-            <button class="nav-mobile-btn" id="menu-open" aria-label="Abrir menú" aria-expanded="false">
+            <button class="nav-mobile-btn" id="menu-open" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-menu">
                 <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                 </svg>
@@ -1364,12 +1364,22 @@
     document.getElementById("menu-open").addEventListener("click", () => {
         document.getElementById("mobile-menu").classList.add("open");
         document.getElementById("menu-open").setAttribute("aria-expanded", "true");
+        document.body.style.overflow = "hidden";
+        document.getElementById("menu-close").focus();
     });
     document.getElementById("menu-close").addEventListener("click", closeMobileMenu);
     function closeMobileMenu() {
         document.getElementById("mobile-menu").classList.remove("open");
         document.getElementById("menu-open").setAttribute("aria-expanded", "false");
+        document.body.style.overflow = "";
+        document.getElementById("menu-open").focus();
     }
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && document.getElementById("mobile-menu").classList.contains("open")) {
+            closeMobileMenu();
+        }
+    });
 
     // ── EMBERS ANIMATION ──
     function createEmbers() {
