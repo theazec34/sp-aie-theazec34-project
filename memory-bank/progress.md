@@ -44,3 +44,8 @@ Se detecta una brecha tecnica importante:
 
 ## Actualizacion reciente
 - Se creo `memory-bank/context.md` como resumen ejecutivo unificado para retomar el proyecto rapidamente.
+- Se implementaron 4 skills en `skills/`:
+	- `typescript-validation`
+	- `web-accessibility`
+	- `playwright-testing`
+	- `brasaland-domain-migration` (custom)
