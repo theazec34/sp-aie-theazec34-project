@@ -1,82 +1,135 @@
-import { Candidate, Vote, Election } from "../packages/shared/types/index";
-import { validateRequiredFields, validateConsistency, validateCandidate, validateElection } from "./utils/validations";
-import { sumBy, avgBy, maxBy, reportCountsByCategory, reportSummaryByCategory } from "./utils/transformations";
-import { searchLinear, binarySearchByKey } from "./utils/search";
-import { filterBy, sortBy, groupBy } from "./utils/collections";
+import {
+  EncargoProveedor,
+  PedidoDomicilio,
+  PlatoCarta,
+  ReservaMesa,
+} from "./types/models";
+import {
+  validateEncargoProveedor,
+  validatePedidoDomicilio,
+  validatePlatoCarta,
+  validateReservaMesa,
+} from "./utils/validations";
+import { reportCountsByCategory, reportSummaryByCategory } from "./utils/transformations";
 
-// Demo data
-const candidates: Candidate[] = [
-  { id: "1", name: "Alice García", party: "Partido Verde", votes: 1500 },
-  { id: "2", name: "Bob López", party: "Partido Azul", votes: 2100 },
-  { id: "3", name: "Carol Martínez", party: "Partido Rojo", votes: 1200 },
+const encargos: EncargoProveedor[] = [
+  {
+    id: "enc-1",
+    idProveedor: "prov-carnes",
+    fechaPrevistaEntrega: "2026-06-24",
+    estado: "enviado",
+    importeTotal: 820.5,
+    numeroLineas: 7,
+  },
+  {
+    id: "enc-2",
+    idProveedor: "prov-bebidas",
+    fechaPrevistaEntrega: "2026-06-25",
+    estado: "facturado",
+    importeTotal: 390,
+    numeroLineas: 4,
+  },
+  {
+    id: "enc-3",
+    idProveedor: "prov-verduras",
+    fechaPrevistaEntrega: "2026-06-23",
+    estado: "recibido",
+    importeTotal: 210,
+    numeroLineas: 3,
+  },
 ];
 
-const votes: Vote[] = [
-  { id: "v1", candidateId: "1", voterRegion: "Madrid", timestamp: "2026-04-29T10:00:00Z" },
-  { id: "v2", candidateId: "2", voterRegion: "Barcelona", timestamp: "2026-04-29T10:05:00Z" },
-  { id: "v3", candidateId: "1", voterRegion: "Valencia", timestamp: "2026-04-29T10:10:00Z" },
+const platos: PlatoCarta[] = [
+  { id: "pla-1", nombre: "Entranha Fina", categoria: "principal", precio: 32.5, alergenos: ["Su"], activoEnCarta: true },
+  { id: "pla-2", nombre: "Tabla Ibericos", categoria: "entrada", precio: 24.9, alergenos: ["Su", "G"], activoEnCarta: true },
+  { id: "pla-3", nombre: "Tiramisu", categoria: "postre", precio: 7.2, alergenos: ["G", "L", "H"], activoEnCarta: true },
+  { id: "pla-4", nombre: "Limonada", categoria: "bebida", precio: 4.5, alergenos: [], activoEnCarta: false },
 ];
 
-const election: Election = {
-  id: "e1",
-  name: "Elecciones Generales 2026",
-  startDate: "2026-04-29",
-  endDate: "2026-04-30",
-  isActive: true,
-};
+const reservas: ReservaMesa[] = [
+  { id: "res-1", nombreCliente: "Ana", numeroComensales: 2, fechaHora: "2026-06-22T20:30:00Z", idMesa: "M-07", estado: "confirmada" },
+  { id: "res-2", nombreCliente: "Luis", numeroComensales: 4, fechaHora: "2026-06-22T21:00:00Z", idMesa: "M-10", estado: "pendiente" },
+  { id: "res-3", nombreCliente: "Marta", numeroComensales: 3, fechaHora: "2026-06-22T22:00:00Z", idMesa: "M-05", estado: "confirmada" },
+  { id: "res-4", nombreCliente: "Jorge", numeroComensales: 2, fechaHora: "2026-06-22T19:30:00Z", idMesa: "M-02", estado: "cancelada" },
+];
 
-console.log("=== DEMO SISTEMA DE ELECCIONES ===
-");
+const pedidos: PedidoDomicilio[] = [
+  {
+    id: "ped-1",
+    direccionEntrega: "Calle Feria 18, Sevilla",
+    importeTotal: 38,
+    plataforma: "uber",
+    estado: "entregado",
+    fechaPedido: "2026-06-22T13:10:00Z",
+  },
+  {
+    id: "ped-2",
+    direccionEntrega: "Av. Triana 45, Sevilla",
+    importeTotal: 22.5,
+    plataforma: "just_eat",
+    estado: "cancelado",
+    fechaPedido: "2026-06-22T13:30:00Z",
+  },
+  {
+    id: "ped-3",
+    direccionEntrega: "Calle Betis 10, Sevilla",
+    importeTotal: 41.2,
+    plataforma: "web_propia",
+    estado: "en_reparto",
+    fechaPedido: "2026-06-22T13:55:00Z",
+  },
+  {
+    id: "ped-4",
+    direccionEntrega: "Plaza Nueva 3, Sevilla",
+    importeTotal: 17,
+    plataforma: "uber",
+    estado: "entregado",
+    fechaPedido: "2026-06-22T14:05:00Z",
+  },
+];
 
-// Validaciones
-console.log("1. Validación de campos requeridos:");
-const validationErrors = validateRequiredFields(election, ["id", "name", "startDate", "endDate"]);
-console.log(validationErrors.length === 0 ? "✓ Elección válida" : "✗ Errores detectados", "
-");
+console.log("=== DEMO BRASALAND (HITO 2) ===\n");
 
-// Consistencia
-console.log("2. Validación de consistencia:");
-const consistency = validateConsistency(election);
-console.log(consistency.valid ? "✓ Fechas consistentes" : "✗ Fechas inconsistentes", consistency.errors, "
-");
+console.log("1) Validaciones de entidades:");
+console.log("Encargos validos:", encargos.every((e) => validateEncargoProveedor(e).valid));
+console.log("Platos validos:", platos.every((p) => validatePlatoCarta(p).valid));
+console.log("Reservas validas:", reservas.every((r) => validateReservaMesa(r).valid));
+console.log("Pedidos validos:", pedidos.every((p) => validatePedidoDomicilio(p).valid));
+console.log();
 
-// Análisis de votos
-console.log("3. Análisis de candidatos:");
-console.log(`Total de votos: ${sumBy(candidates, c => c.votes)}`);
-console.log(`Promedio de votos: ${avgBy(candidates, c => c.votes).toFixed(2)}`);
-const topCandidate = maxBy(candidates, c => c.votes);
-console.log(`Candidato con más votos: ${topCandidate?.name} (${topCandidate?.votes} votos)
-`);
+console.log("2) Reporte EncargoProveedor");
+const encargosByEstado = reportCountsByCategory(encargos, (e) => e.estado);
+const encargosResumen = reportSummaryByCategory(encargos, (e) => e.estado, (e) => e.importeTotal);
+console.log("Conteo por estado:", encargosByEstado);
+console.log("Suma/promedio por estado:", encargosResumen);
+console.log();
 
-// Reporte por partido
-console.log("4. Reporte por partido:");
-const byParty = reportCountsByCategory(candidates, c => c.party);
-console.log(byParty, "
-");
+console.log("3) Reporte PlatoCarta (solo activos)");
+const platosActivos = platos.filter((p) => p.activoEnCarta);
+const platosByCategoria = reportCountsByCategory(platosActivos, (p) => p.categoria);
+const platosResumen = reportSummaryByCategory(platosActivos, (p) => p.categoria, (p) => p.precio);
+console.log("Conteo activos por categoria:", platosByCategoria);
+console.log("Suma/promedio/min/max por categoria:", platosResumen);
+console.log();
 
-// Reporte resumen por partido (suma, avg, min, max)
-console.log("5. Resumen por partido (votos):");
-const summary = reportSummaryByCategory(candidates, c => c.party, c => c.votes);
-console.log(summary, "
-");
+console.log("4) Reporte ReservaMesa");
+const reservasByEstado = reportCountsByCategory(reservas, (r) => r.estado);
+const totalComensalesConfirmadas = reservas
+  .filter((r) => r.estado === "confirmada")
+  .reduce((acc, r) => acc + r.numeroComensales, 0);
+console.log("Conteo por estado:", reservasByEstado);
+console.log("Suma comensales confirmadas:", totalComensalesConfirmadas);
+console.log();
 
-// Búsqueda lineal
-console.log("6. Búsqueda lineal:");
-const idx = searchLinear(candidates, c => c.name === "Bob López");
-console.log(`Índice de 'Bob López': ${idx >= 0 ? idx : "no encontrado"}
-`);
+console.log("5) Reporte PedidoDomicilio");
+const pedidosByPlataforma = reportCountsByCategory(pedidos, (p) => p.plataforma);
+const pedidosNoCancelados = pedidos.filter((p) => p.estado !== "cancelado");
+const pedidosResumen = reportSummaryByCategory(
+  pedidosNoCancelados,
+  (p) => p.plataforma,
+  (p) => p.importeTotal
+);
+console.log("Conteo por plataforma:", pedidosByPlataforma);
+console.log("Suma por plataforma (sin cancelados):", Object.fromEntries(Object.entries(pedidosResumen).map(([k, v]) => [k, v.sum])));
 
-// Ordenamiento por múltiples claves (por ejemplo: party asc, votes desc)
-console.log("7. Ordenamiento por party asc y votes desc:");
-const sorted = sortBy(candidates, [{ key: c => c.party, dir: 'asc' }, { key: c => c.votes, dir: 'desc' }]);
-console.log(sorted, "
-");
-
-// Búsqueda binaria por key (ejemplo: buscaremos en array ordenado por id)
-console.log("8. Búsqueda binaria por id en array ordenado por id:");
-const sortedById = sortBy(candidates, [{ key: c => c.id, dir: 'asc' }]);
-const bIdx = binarySearchByKey(sortedById, '2', c => c.id);
-console.log(`Índice (binario) de id='2': ${bIdx >= 0 ? bIdx : 'no encontrado'}
-`);
-
-console.log("=== FIN DEMO ===");
+console.log("\n=== FIN DEMO ===");

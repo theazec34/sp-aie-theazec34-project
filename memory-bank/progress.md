@@ -1,46 +1,73 @@
-# Progress Log (hasta hoy)
+# Progress Log (alineado a Brasaland.md + README)
 
-## 1) Arranque y visibilidad
-- Se verificó cómo servir el proyecto en local.
-- Se levantó servidor en `http://localhost:3000`.
+## Completado
 
-## 2) Corrección de incongruencias iniciales
-- Se detectaron enlaces en `application.html` apuntando a anclas inexistentes.
-- Se actualizaron enlaces a secciones reales de `index.html`:
-	- `#carta`
-	- `#como-funciona`
-	- `#testimonios`
-- Se ajustaron textos de footer/contacto para consistencia con Brasaland.
+### A) Web Brasaland (parte visible)
+- Servidor local operativo con `npm run serve` en puerto 3000.
+- Navegacion corregida para secciones reales de la home (`#carta`, `#como-funciona`, `#testimonios`).
+- Carta convertida a vista unica continua (sin separar por botones visibles de categoria).
+- Integracion de imagenes reales desde carpeta `Imagenes` y mejoras de coherencia visual.
+- Branding actualizado:
+	- icono principal en logo de header/footer,
+	- `rel=icon` apuntando a `Imagenes/Icono principal.png`.
 
-## 3) Integración de imágenes y favicon
-- Se añadió favicon en páginas principales.
-- Se incorporaron imágenes de platos en la carta.
-- Se preparó mapeo de imágenes por `id` de plato y render con `img` real.
+### B) Documentacion interna
+- Creada rama de trabajo `hito-4`.
+- Creada carpeta `memory-bank/` con archivos `projectbrief.md`, `techContext.md` y `progress.md`.
 
-## 4) Menú y experiencia de carta
-- Se pasó de vista por pestañas a menú único grande en scroll continuo.
-- Se mantuvo soporte de navegación interna desde enlaces de footer.
-- Se implementó filtrado/render en base a imágenes disponibles.
+## Verificacion contra fuentes oficiales
 
-## 5) Identidad visual del logo
-- Se reemplazó uso de `favicon.jpg` por `Icono principal.png`.
-- El icono principal se usa ahora:
-	- como favicon (`rel=icon`),
-	- junto al nombre Brasaland en header y footer.
-- Se incrementó tamaño del icono para mejorar presencia visual.
+### Brasaland_Eleccion.md
+La parte web implementada si va en la direccion descrita por el alumno:
+- foco en restaurante,
+- interes en marketing/carta,
+- interes en reservas/pedidos y automatizacion.
 
-## 6) Organización de trabajo
-- Se creó rama de trabajo `hito-4` para continuar desarrollo.
-- Se creó carpeta `memory-bank/` con documentación viva del proyecto.
+### Brasaland.md + README
+Se detecta una brecha tecnica importante:
+- El dominio TypeScript exigido para hito 2 debe ser Brasaland (4 entidades de negocio).
+- El codigo actual de `src/` sigue en dominio de elecciones (`Candidate`, `Vote`, `Election`).
 
-## Estado actual
-- Funcional: sí.
-- Navegación: coherente y operativa.
-- Branding: más consistente que el estado inicial.
-- Carta: renderizada en vista única con assets visuales.
+## Estado real del proyecto hoy
+- Frontend Brasaland: avanzado y funcional.
+- Capa TS de hito 2 segun contexto oficial: pendiente de migracion completa al dominio Brasaland.
 
-## Próximos pasos recomendados
-- Unificar fuente de datos del menú (preferentemente solo `menu.json`).
-- Ajustar/validar definitivamente relación plato-imagen con criterio de negocio.
-- Limpiar CSS residual no utilizado tras los cambios de estructura.
-- QA responsive final (móvil/tablet/escritorio) y revisión de accesibilidad.
+## Siguiente bloque de trabajo recomendado (prioridad)
+1. Migrar `src/types/models.ts` a las entidades de `Brasaland.md`.
+2. Reescribir `src/utils/validations.ts` con todas las reglas literales y rangos definidos.
+3. Adaptar `src/demo.ts` para demostrar reportes de:
+	 - encargos por estado,
+	 - platos activos por categoria con resumen de precios,
+	 - reservas por estado y suma de comensales confirmados,
+	 - pedidos por plataforma excluyendo cancelados en sumas.
+4. Alinear README si hay diferencias entre lo documentado y lo implementado.
+
+## Actualizacion reciente
+- Se creo `memory-bank/context.md` como resumen ejecutivo unificado para retomar el proyecto rapidamente.
+- Se implementaron 4 skills en `skills/`:
+	- `typescript-validation`
+	- `web-accessibility`
+	- `playwright-testing`
+	- `brasaland-domain-migration` (custom)
+- Se aplicaron las skills al proyecto:
+	- migracion de `src/` al dominio Brasaland (tipos, validaciones y demo),
+	- mejora de accesibilidad en menu movil,
+	- setup de Playwright con tests e2e para home y application.
+- Validacion final completada:
+	- `npm run typecheck` OK,
+	- `npm run demo` OK,
+	- `npx playwright test` OK (4 tests passing).
+
+## Recuperacion y push seguro
+- Se recuperaron `uis/website` y `uis/backoffice` desde commit de reflog con codigo fuente valido.
+- Se endurecio `.gitignore` raiz para bloquear artefactos sensibles o pesados:
+	- `**/.next/`,
+	- `**/node_modules/`,
+	- `**/.env*`,
+	- `**/*.tsbuildinfo`.
+- Se revalidaron ambas apps recuperadas:
+	- `npm run lint --prefix uis/website` OK,
+	- `npm run build --prefix uis/website` OK,
+	- `npm run lint --prefix uis/backoffice` OK,
+	- `npm run build --prefix uis/backoffice` OK.
+- Objetivo de esta recuperacion: evitar nuevo rechazo GH013 por push protection (secretos en `.next` cache).

@@ -3,3 +3,20 @@ dist/
 dist-web/
 *.log
 .DS_Store
+test-results/
+playwright-report/
+
+# Next.js artifacts (any nested app)
+**/.next/
+**/out/
+
+# Dependency folders in nested apps
+**/node_modules/
+
+# Local env/secrets files
+**/.env
+**/.env.*
+!.env.example
+
+# TypeScript cache
+**/*.tsbuildinfo

@@ -1,47 +1,51 @@
-# Technical Context
+# Technical Context (concreto y actualizado)
 
-## Stack y ejecución
-- Sitio estático HTML/CSS/JS (sin framework frontend).
-- Node.js >= 18.
-- Servido local con `http-server` via script:
-	- `npm run serve` -> `npx --yes http-server . -p 3000 -a 0.0.0.0`
+## Runtime y scripts reales
+- Node.js >= 18 (segun `package.json`).
+- Scripts disponibles:
+	- `npm run typecheck` -> `tsc --noEmit`
+	- `npm run build` -> `tsc`
+	- `npm run demo` -> build + `node dist/demo.js`
+	- `npm run build:web` -> bundle browser con `esbuild`
+	- `npm run serve` -> `http-server` en puerto 3000
 
-## Archivos clave
-- `index.html`: landing principal + carta + JS de render dinámico.
-- `application.html`: formulario de aplicación/reserva y navegación secundaria.
-- `validation.js`: validación del formulario en cliente.
-- `menu.json`: fuente de datos estructurada para categorías/platos/alérgenos.
-- `Imagenes/`: assets visuales de platos + iconos.
+## Estructura relevante actual
+- Web restaurante:
+	- `index.html`
+	- `application.html`
+	- `validation.js`
+	- `menu.json`
+	- `Imagenes/*`
+- Capa TypeScript existente:
+	- `src/types/models.ts`
+	- `src/utils/collections.ts`
+	- `src/utils/search.ts`
+	- `src/utils/transformations.ts`
+	- `src/utils/validations.ts`
+	- `src/demo.ts`
 
-## Decisiones técnicas implementadas
-- Favicon migrado a `Imagenes/Icono principal.png`.
-- Logo visible del header/footer usa también `Imagenes/Icono principal.png` con tamaño ampliado.
-- Render de carta preparado para:
-	- cargar desde `menu.json` si está disponible,
-	- fallback a datos inline si falla carga.
-- Menú visual simplificado a una sola vista continua (sin tabs activos en UI).
-- Soporte de navegación móvil mediante menú overlay.
+## Requisito de negocio/academico (fuente: Brasaland.md)
+El modelo de dominio esperado en TypeScript debe basarse en 4 entidades:
+- `EncargoProveedor`
+- `PlatoCarta`
+- `ReservaMesa`
+- `PedidoDomicilio`
 
-## Gestión de imágenes
-- Carpeta actual `Imagenes/` contiene:
-	- Arroz bogavante.png
-	- Arroz caldoso.jpg
-	- Corte carne.png
-	- Entraña argentina.png
-	- Icono principal.png
-	- Pata de cordero.png
-	- Pescado braseado.png
-	- Tabla ibericos.png
-	- Tarta de galleta.png
-	- tiramisu.jpg
-	- favicon.jpg
-- En el estado actual se utiliza un mapeo de IDs de plato -> imagen(es) dentro de `index.html`.
+Con reglas estrictas de validacion (ISO, rangos, literales permitidos) y reportes de agregacion por estado/categoria/plataforma.
 
-## Rama y estado git
-- Rama de trabajo activa: `hito-4`.
-- Carpeta `memory-bank/` creada para documentar contexto y avance.
+## Hallazgo importante de coherencia
+Actualmente `src/` no implementa aun ese dominio Brasaland:
+- `src/types/models.ts` reexporta tipos de elecciones desde `packages/shared/types`.
+- `src/utils/validations.ts` valida `Candidate`, `Vote`, `Election`.
+- `src/demo.ts` ejecuta demo de "sistema de elecciones".
 
-## Riesgos/temas pendientes
-- Hay doble fuente de verdad de menú (inline + JSON). Recomendable consolidar a una sola.
-- Puede quedar CSS heredado no usado; conviene limpiar en una pasada final.
-- Revisar que precios/nombres de platos añadidos manualmente estén aprobados por negocio.
+Conclusión tecnica: la parte web refleja Brasaland, pero la parte TypeScript de hito 2 sigue en dominio distinto y necesita migracion para quedar acorde con `Brasaland.md` y README.
+
+## Frontend realizado sobre Brasaland
+- Favicon y logo usan `Imagenes/Icono principal.png`.
+- Carta en vista unica (sin tabs visibles).
+- Carga de menu desde `menu.json` con fallback inline.
+- Integracion de imagenes de platos mediante mapeo en JS.
+
+## Estado de rama
+- Rama activa de trabajo: `hito-4`.

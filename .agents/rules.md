@@ -1,0 +1,3 @@
+- No modificar archivos fuera de src/.
+- Mantener componentes funcionales.
+- Usar fetch para llamadas a APIs.
