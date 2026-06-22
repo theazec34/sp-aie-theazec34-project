@@ -57,3 +57,17 @@ Se detecta una brecha tecnica importante:
 	- `npm run typecheck` OK,
 	- `npm run demo` OK,
 	- `npx playwright test` OK (4 tests passing).
+
+## Recuperacion y push seguro
+- Se recuperaron `uis/website` y `uis/backoffice` desde commit de reflog con codigo fuente valido.
+- Se endurecio `.gitignore` raiz para bloquear artefactos sensibles o pesados:
+	- `**/.next/`,
+	- `**/node_modules/`,
+	- `**/.env*`,
+	- `**/*.tsbuildinfo`.
+- Se revalidaron ambas apps recuperadas:
+	- `npm run lint --prefix uis/website` OK,
+	- `npm run build --prefix uis/website` OK,
+	- `npm run lint --prefix uis/backoffice` OK,
+	- `npm run build --prefix uis/backoffice` OK.
+- Objetivo de esta recuperacion: evitar nuevo rechazo GH013 por push protection (secretos en `.next` cache).
