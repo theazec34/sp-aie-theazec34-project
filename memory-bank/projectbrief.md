@@ -1,27 +1,33 @@
-# Project Brief - Brasaland (estado actual)
+# Project Brief - Brasaland (alineado a documentos base)
 
-## Objetivo
-Construir y pulir la web de Brasaland (restaurante) para que la experiencia sea coherente con la marca, la carta y los assets visuales del proyecto.
+## Fuentes de verdad
+- Contexto de negocio: `Brasaland.md`.
+- Motivacion y enfoque del alumno: `Brasaland_Eleccion.md`.
+- Alcance tecnico de hito: `README.md` y `README.es.md`.
 
-## Alcance trabajado hasta ahora
-- Revisión y corrección de incongruencias entre contenido de restaurante y textos genéricos.
-- Corrección de enlaces de navegación rotos o apuntando a secciones inexistentes.
-- Integración de imágenes reales de platos en la carta.
-- Integración de icono de marca en favicon y en logotipo visible del sitio.
-- Simplificación de UX: menú de carta en vista única (sin tabs/botones de categoría).
-- Organización del trabajo en la rama de desarrollo `hito-4`.
+## Empresa y foco de negocio
+Brasaland es un restaurante de cocina brasilena con operacion en sala, reservas y pedidos a domicilio integrados con agregadores. Los dos departamentos prioritarios definidos son:
+- Logistica: compras a proveedores, facturacion y encargos.
+- Marketing/carta: menu digital, alergenos y visibilidad en plataformas.
 
-## Resultado funcional esperado
-- Página principal y página de aplicación consistentes en identidad visual y datos de contacto.
-- Carta renderizada con imágenes disponibles, evitando placeholders vacíos.
-- Navegación interna usable desde desktop y móvil.
-- Sitio servible en local con `npm run serve` en puerto 3000.
+## Entidades que el proyecto debe cubrir (segun Brasaland.md)
+- `EncargoProveedor`.
+- `PlatoCarta`.
+- `ReservaMesa`.
+- `PedidoDomicilio`.
 
-## Restricciones y criterios acordados
-- Priorizar coherencia entre nombre de plato e imagen usada.
-- Usar todas las imágenes de comida aportadas por el usuario (excepto favicon cuando aplique).
-- Evitar asignaciones engañosas de imagen-plato.
-- Mantener el proyecto simple, estático y fácil de continuar.
+Cada entidad tiene reglas concretas de validacion y reportes obligatorios (conteos por estado/plataforma/categoria, sumas y promedios, y en el caso de carta tambien min/max de precio).
 
-## Estado de continuidad
-El proyecto está listo para seguir en mejoras visuales, afinado de contenido y normalización final de datos (JSON vs datos inline) sin romper la experiencia actual.
+## Reto funcional definido
+Automatizar pedidos a domicilio y reservas de mesa de forma segura, evitando solapes de mesa y reduciendo dependencia de llamadas telefonicas.
+
+## Estado real del repo respecto al brief
+- Se ha avanzado bastante en la web de Brasaland (`index.html`, `application.html`, `menu.json`, carpeta `Imagenes`).
+- La UX de carta ya esta integrada en una vista unica y se incorporaron assets visuales del negocio.
+- Existe una brecha con el hito tecnico de TypeScript: el codigo actual de `src/` sigue orientado a ejemplo de elecciones y no implementa aun las 4 entidades de Brasaland.
+
+## Objetivo inmediato de esta rama
+Continuar sobre `hito-4` cerrando la brecha entre:
+1. Contexto de negocio Brasaland.
+2. Reglas de validacion/reportes exigidas.
+3. Implementacion TypeScript real en `src/`.
