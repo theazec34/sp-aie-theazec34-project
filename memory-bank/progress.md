@@ -41,3 +41,6 @@ Se detecta una brecha tecnica importante:
 	 - reservas por estado y suma de comensales confirmados,
 	 - pedidos por plataforma excluyendo cancelados en sumas.
 4. Alinear README si hay diferencias entre lo documentado y lo implementado.
+
+## Actualizacion reciente
+- Se creo `memory-bank/context.md` como resumen ejecutivo unificado para retomar el proyecto rapidamente.
