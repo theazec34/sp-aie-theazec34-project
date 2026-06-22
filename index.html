@@ -9,6 +9,7 @@
     <meta property="og:title" content="Brasaland — Carnes, Arroces y Sabor Ibérico">
     <meta property="og:description" content="El sabor de Sudamérica con alma ibérica. Reserva en Sevilla.">
     <meta property="og:type" content="website">
+    <link rel="icon" type="image/png" href="Imagenes/Icono principal.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -97,8 +98,20 @@
             color: var(--dorado-light);
             text-decoration: none;
             letter-spacing: -0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
         }
         .nav-logo span { color: var(--brasa-light); }
+
+        .nav-logo-mark {
+            width: 46px;
+            height: 46px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 1px solid rgba(212,148,58,.45);
+            box-shadow: 0 4px 14px rgba(0,0,0,.35);
+        }
 
         .nav-links { display: flex; gap: 32px; align-items: center; }
         .nav-links a {
@@ -343,33 +356,6 @@
         /* ── CARTA / MENÚ ── */
         #carta { background: var(--crema); }
 
-        .category-tabs {
-            display: flex; gap: 12px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 48px;
-        }
-
-        .tab-btn {
-            background: #fff;
-            border: 2px solid var(--crema-dark);
-            color: var(--texto-suave);
-            padding: 10px 22px;
-            border-radius: 999px;
-            font-family: var(--font-body);
-            font-size: .9rem; font-weight: 500;
-            cursor: pointer;
-            display: flex; align-items: center; gap: 8px;
-            transition: all .25s;
-        }
-        .tab-btn:hover, .tab-btn.active {
-            background: var(--brasa);
-            border-color: var(--brasa);
-            color: #fff;
-            box-shadow: 0 4px 20px rgba(200,56,10,.35);
-        }
-        .tab-icon { font-size: 1.1rem; }
-
         .category-section { display: none; }
         .category-section.active { display: block; }
 
@@ -414,6 +400,14 @@
             position: relative;
             overflow: hidden;
             background: linear-gradient(135deg, var(--carbon) 0%, var(--humo) 100%);
+        }
+
+        .plato-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            filter: saturate(1.05) contrast(1.02);
         }
 
         /* placeholder food illustrations using CSS */
@@ -663,7 +657,11 @@
             gap: 48px; margin-bottom: 48px;
         }
         .footer-brand .nav-logo {
-            display: block; margin-bottom: 16px; font-size: 1.5rem;
+            display: inline-flex; margin-bottom: 16px; font-size: 1.5rem;
+        }
+        .footer-brand .nav-logo .nav-logo-mark {
+            width: 38px;
+            height: 38px;
         }
         .footer-brand p {
             color: rgba(255,255,255,.4);
@@ -823,7 +821,10 @@
 
     <header>
         <nav aria-label="Navegación principal">
-            <a href="index.html" class="nav-logo">Brasa<span>land</span></a>
+            <a href="index.html" class="nav-logo">
+                <img class="nav-logo-mark" src="Imagenes/Icono principal.png" alt="Logo Brasaland">
+                <span>Brasa<span>land</span></span>
+            </a>
             <div class="nav-links">
                 <a href="#hero">Inicio</a>
                 <a href="#carta">La Carta</a>
@@ -923,21 +924,7 @@
                     <p class="section-sub">Cada plato cuenta una historia. Sabores que viajan desde el Río de la Plata hasta la Sierra Morena, fusionados en nuestra cocina.</p>
                 </div>
 
-                <!-- Category Tabs -->
-                <div class="category-tabs" role="tablist" aria-label="Categorías del menú">
-                    <button class="tab-btn active" role="tab" aria-selected="true" data-cat="carnes">
-                        <span class="tab-icon">🔥</span> Carnes a la Brasa
-                    </button>
-                    <button class="tab-btn" role="tab" aria-selected="false" data-cat="arroces">
-                        <span class="tab-icon">🍚</span> Arroces
-                    </button>
-                    <button class="tab-btn" role="tab" aria-selected="false" data-cat="entrantes">
-                        <span class="tab-icon">🍖</span> Entrantes Ibéricos
-                    </button>
-                    <button class="tab-btn" role="tab" aria-selected="false" data-cat="postres">
-                        <span class="tab-icon">🍮</span> Postres
-                    </button>
-                </div>
+                <p class="section-sub" style="margin-bottom: 38px;">Todo el menú en una sola vista para ver todas las fotos y platos de forma continua.</p>
 
                 <!-- Allergen Legend -->
                 <div class="alergenos-legend" aria-label="Leyenda de alérgenos">
@@ -1063,7 +1050,10 @@
     <footer>
         <div class="footer-inner">
             <div class="footer-brand">
-                <a href="index.html" class="nav-logo">Brasa<span>land</span></a>
+                <a href="index.html" class="nav-logo">
+                    <img class="nav-logo-mark" src="Imagenes/Icono principal.png" alt="Logo Brasaland">
+                    <span>Brasa<span>land</span></span>
+                </a>
                 <p>Carnes sudamericanas, arroces artesanales y despensa ibérica. Sevilla, desde 2006.</p>
             </div>
             <div class="footer-col">
@@ -1172,18 +1162,122 @@
         ]
     };
 
+    // Solo imágenes con correspondencia clara con el nombre del plato.
+    const MENU_IMAGES = {
+        "entraña": ["Imagenes/Entraña argentina.png"],
+        "bogavante": ["Imagenes/Arroz bogavante.png", "Imagenes/Arroz caldoso.jpg"],
+        "arroz-bogavante": ["Imagenes/Arroz bogavante.png", "Imagenes/Arroz caldoso.jpg"],
+        "tabla": ["Imagenes/Tabla ibericos.png"],
+        "tabla-ibericos": ["Imagenes/Tabla ibericos.png"],
+        "corte-carne": ["Imagenes/Corte carne.png"],
+        "pata-cordero": ["Imagenes/Pata de cordero.png"],
+        "pescado-braseado": ["Imagenes/Pescado braseado.png"],
+        "tarta-galleta": ["Imagenes/Tarta de galleta.png"],
+        "tiramisu": ["Imagenes/tiramisu.jpg"]
+    };
+
+    // Platos añadidos para representar todas las imágenes disponibles (excepto favicon).
+    const EXTRA_DISHES_BY_CATEGORY = {
+        carnes: [
+            {
+                id: "corte-carne",
+                emoji: "🥩",
+                nombre: "Corte de Carne a la Brasa",
+                descripcion: "Corte seleccionado de vacuno hecho a la brasa en su punto.",
+                precio: 29.90,
+                peso: "350g",
+                badge: "Parrilla",
+                alergenos: [],
+                extras: "Consultar corte disponible del día"
+            },
+            {
+                id: "pata-cordero",
+                emoji: "🍖",
+                nombre: "Pata de Cordero Asada",
+                descripcion: "Pata de cordero cocinada lentamente para lograr textura melosa y sabor intenso.",
+                precio: 27.50,
+                peso: "400g",
+                badge: "Especial",
+                alergenos: ["Su"],
+                extras: "Con guarnición de temporada"
+            }
+        ],
+        entrantes: [
+            {
+                id: "pescado-braseado",
+                emoji: "🐟",
+                nombre: "Pescado Braseado del Día",
+                descripcion: "Pescado fresco marcado a la brasa con aliño ligero de la casa.",
+                precio: 21.90,
+                peso: "300g",
+                badge: "Del día",
+                alergenos: ["Su"],
+                extras: "Disponible según mercado"
+            }
+        ],
+        postres: [
+            {
+                id: "tarta-galleta",
+                emoji: "🍰",
+                nombre: "Tarta de Galleta Casera",
+                descripcion: "Capas de galleta y crema, terminada con cacao suave.",
+                precio: 6.90,
+                peso: "Ración",
+                badge: "Casero",
+                alergenos: ["G", "L", "H"],
+                extras: "Receta tradicional"
+            },
+            {
+                id: "tiramisu",
+                emoji: "🍮",
+                nombre: "Tiramisu Artesanal",
+                descripcion: "Postre cremoso con café y cacao, servido frío.",
+                precio: 7.20,
+                peso: "Ración",
+                badge: "Postre",
+                alergenos: ["G", "L", "H"],
+                extras: "Preparación diaria"
+            }
+        ]
+    };
+
+    let appMenuData = MENU_DATA;
+
     // ── RENDER MENU ──
-    function renderMenu(activeId = "carnes") {
+    function getDishImages(plato) {
+        return MENU_IMAGES[plato.id] || [];
+    }
+
+    function withExtraDishes(data) {
+        return {
+            ...data,
+            categorias: data.categorias.map(cat => ({
+                ...cat,
+                platos: [...cat.platos, ...(EXTRA_DISHES_BY_CATEGORY[cat.id] || [])]
+            }))
+        };
+    }
+
+    function renderMenu() {
         const container = document.getElementById("menu-container");
         container.innerHTML = "";
+        const menuData = withExtraDishes(appMenuData);
 
-        MENU_DATA.categorias.forEach(cat => {
+        menuData.categorias.forEach(cat => {
+            const platosConImagen = cat.platos.flatMap(plato => {
+                const imageList = getDishImages(plato);
+                return imageList.map(imagePath => ({ ...plato, imagePath }));
+            });
+
+            if (platosConImagen.length === 0) return;
+
             const section = document.createElement("div");
-            section.className = "category-section" + (cat.id === activeId ? " active" : "");
+            section.className = "category-section active";
             section.id = "cat-" + cat.id;
-            section.setAttribute("role", "tabpanel");
+            section.setAttribute("role", "region");
+            section.setAttribute("aria-label", cat.nombre);
 
-            const grid = cat.platos.map(plato => buildPlatoCard(plato)).join("");
+            const grid = platosConImagen.map(plato => buildPlatoCard(plato)).join("");
 
             section.innerHTML = `
                 <div class="category-header">
@@ -1201,11 +1295,15 @@
             ? `<span class="plato-badge">${plato.badge}</span>`
             : "";
 
+        const imageHtml = plato.imagePath
+            ? `<img src="${encodeURI(plato.imagePath)}" alt="${plato.nombre}" loading="lazy" decoding="async">`
+            : "";
+
         const alergenosHtml = plato.alergenos.length === 0
             ? `<div class="sin-alergenos">✅ Sin alérgenos comunes</div>`
             : `<div class="alergenos" aria-label="Alérgenos: ${plato.alergenos.join(', ')}">
                 ${plato.alergenos.map(a => {
-                    const info = MENU_DATA.alergenos_clave[a];
+                    const info = appMenuData.alergenos_clave[a];
                     return info
                         ? `<span class="alergeno-chip" tabindex="0" role="img" aria-label="${info.nombre}">
                             ${info.emoji} ${a}
@@ -1219,7 +1317,7 @@
 
         return `
         <article class="plato-card" data-id="${plato.id}">
-            <div class="plato-img" style="--food-emoji: '${plato.emoji}'">${badge}</div>
+            <div class="plato-img" style="--food-emoji: '${plato.emoji}'">${imageHtml}${badge}</div>
             <div class="plato-body">
                 <div class="plato-top">
                     <h3 class="plato-nombre">${plato.nombre}</h3>
@@ -1240,18 +1338,11 @@
 
     // ── TABS ──
     function setTab(catId) {
-        document.querySelectorAll(".tab-btn").forEach(btn => {
-            btn.classList.toggle("active", btn.dataset.cat === catId);
-            btn.setAttribute("aria-selected", btn.dataset.cat === catId);
-        });
-        document.querySelectorAll(".category-section").forEach(sec => {
-            sec.classList.toggle("active", sec.id === "cat-" + catId);
-        });
+        const target = document.getElementById("cat-" + catId);
+        if (target) {
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
     }
-
-    document.querySelectorAll(".tab-btn").forEach(btn => {
-        btn.addEventListener("click", () => setTab(btn.dataset.cat));
-    });
 
     // ── MODAL ──
     function handlePedir(id, nombre) {
@@ -1312,8 +1403,20 @@
     document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
 
     // ── INIT ──
-    renderMenu("carnes");
+    renderMenu();
     createEmbers();
+
+    fetch("menu.json")
+        .then(response => response.ok ? response.json() : null)
+        .then(data => {
+            if (data && Array.isArray(data.categorias) && data.alergenos_clave) {
+                appMenuData = data;
+                renderMenu();
+            }
+        })
+        .catch(() => {
+            // Fallback silencioso: se mantiene la carta inline.
+        });
 
     // Re-observe after render (cards added dynamically)
     setTimeout(() => {
