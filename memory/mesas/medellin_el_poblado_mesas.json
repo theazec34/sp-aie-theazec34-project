@@ -1,0 +1,213 @@
+{
+  "local_id": "MED_ELP",
+  "nombre": "Medellín, El Poblado",
+  "total_mesas": 25,
+  "mesas_libres": 18,
+  "mesas_ocupadas": 5,
+  "mesas_reservadas": 2,
+  "ultima_actualizacion": "2026-06-29T18:48:00Z",
+  "detalle_mesas": [
+    {
+      "id": "M01",
+      "capacidad": 2,
+      "estado": "libre",
+      "hora_ocupacion": null,
+      "tiempo_promedio_min": 90,
+      "estimacion_liberacion": null
+    },
+    {
+      "id": "M02",
+      "capacidad": 2,
+      "estado": "libre",
+      "hora_ocupacion": null,
+      "tiempo_promedio_min": 90,
+      "estimacion_liberacion": null
+    },
+    {
+      "id": "M03",
+      "capacidad": 2,
+      "estado": "ocupada",
+      "hora_ocupacion": "2026-06-29T19:00:00Z",
+      "tiempo_promedio_min": 90,
+      "estimacion_liberacion": "2026-06-29T20:30:00Z"
+    },
+    {
+      "id": "M04",
+      "capacidad": 2,
+      "estado": "libre",
+      "hora_ocupacion": null,
+      "tiempo_promedio_min": 90,
+      "estimacion_liberacion": null
+    },
+    {
+      "id": "M05",
+      "capacidad": 2,
+      "estado": "ocupada",
+      "hora_ocupacion": "2026-06-29T19:15:00Z",
+      "tiempo_promedio_min": 90,
+      "estimacion_liberacion": "2026-06-29T20:45:00Z"
+    },
+    {
+      "id": "M06",
+      "capacidad": 2,
+      "estado": "libre",
+      "hora_ocupacion": null,
+      "tiempo_promedio_min": 90,
+      "estimacion_liberacion": null
+    },
+    {
+      "id": "M07",
+      "capacidad": 2,
+      "estado": "reservada",
+      "hora_ocupacion": null,
+      "tiempo_promedio_min": 90,
+      "estimacion_liberacion": null,
+      "reserva_hora": "2026-06-29T20:30:00Z"
+    },
+    {
+      "id": "M08",
+      "capacidad": 2,
+      "estado": "libre",
+      "hora_ocupacion": null,
+      "tiempo_promedio_min": 90,
+      "estimacion_liberacion": null
+    },
+    {
+      "id": "M09",
+      "capacidad": 2,
+      "estado": "libre",
+      "hora_ocupacion": null,
+      "tiempo_promedio_min": 90,
+      "estimacion_liberacion": null
+    },
+    {
+      "id": "M10",
+      "capacidad": 2,
+      "estado": "ocupada",
+      "hora_ocupacion": "2026-06-29T18:45:00Z",
+      "tiempo_promedio_min": 90,
+      "estimacion_liberacion": "2026-06-29T20:15:00Z"
+    },
+    {
+      "id": "M11",
+      "capacidad": 4,
+      "estado": "libre",
+      "hora_ocupacion": null,
+      "tiempo_promedio_min": 100,
+      "estimacion_liberacion": null
+    },
+    {
+      "id": "M12",
+      "capacidad": 4,
+      "estado": "ocupada",
+      "hora_ocupacion": "2026-06-29T19:30:00Z",
+      "tiempo_promedio_min": 100,
+      "estimacion_liberacion": "2026-06-29T21:10:00Z"
+    },
+    {
+      "id": "M13",
+      "capacidad": 4,
+      "estado": "libre",
+      "hora_ocupacion": null,
+      "tiempo_promedio_min": 100,
+      "estimacion_liberacion": null
+    },
+    {
+      "id": "M14",
+      "capacidad": 4,
+      "estado": "libre",
+      "hora_ocupacion": null,
+      "tiempo_promedio_min": 100,
+      "estimacion_liberacion": null
+    },
+    {
+      "id": "M15",
+      "capacidad": 4,
+      "estado": "ocupada",
+      "hora_ocupacion": "2026-06-29T19:45:00Z",
+      "tiempo_promedio_min": 100,
+      "estimacion_liberacion": "2026-06-29T21:25:00Z"
+    },
+    {
+      "id": "M16",
+      "capacidad": 4,
+      "estado": "libre",
+      "hora_ocupacion": null,
+      "tiempo_promedio_min": 100,
+      "estimacion_liberacion": null
+    },
+    {
+      "id": "M17",
+      "capacidad": 4,
+      "estado": "libre",
+      "hora_ocupacion": null,
+      "tiempo_promedio_min": 100,
+      "estimacion_liberacion": null
+    },
+    {
+      "id": "M18",
+      "capacidad": 4,
+      "estado": "libre",
+      "hora_ocupacion": null,
+      "tiempo_promedio_min": 100,
+      "estimacion_liberacion": null
+    },
+    {
+      "id": "M19",
+      "capacidad": 4,
+      "estado": "reservada",
+      "hora_ocupacion": null,
+      "tiempo_promedio_min": 100,
+      "estimacion_liberacion": null,
+      "reserva_hora": "2026-06-29T21:00:00Z"
+    },
+    {
+      "id": "M20",
+      "capacidad": 4,
+      "estado": "libre",
+      "hora_ocupacion": null,
+      "tiempo_promedio_min": 100,
+      "estimacion_liberacion": null
+    },
+    {
+      "id": "M21",
+      "capacidad": 6,
+      "estado": "libre",
+      "hora_ocupacion": null,
+      "tiempo_promedio_min": 120,
+      "estimacion_liberacion": null
+    },
+    {
+      "id": "M22",
+      "capacidad": 6,
+      "estado": "libre",
+      "hora_ocupacion": null,
+      "tiempo_promedio_min": 120,
+      "estimacion_liberacion": null
+    },
+    {
+      "id": "M23",
+      "capacidad": 6,
+      "estado": "ocupada",
+      "hora_ocupacion": "2026-06-29T19:20:00Z",
+      "tiempo_promedio_min": 120,
+      "estimacion_liberacion": "2026-06-29T21:20:00Z"
+    },
+    {
+      "id": "M24",
+      "capacidad": 8,
+      "estado": "libre",
+      "hora_ocupacion": null,
+      "tiempo_promedio_min": 130,
+      "estimacion_liberacion": null
+    },
+    {
+      "id": "M25",
+      "capacidad": 8,
+      "estado": "libre",
+      "hora_ocupacion": null,
+      "tiempo_promedio_min": 130,
+      "estimacion_liberacion": null
+    }
+  ]
+}
