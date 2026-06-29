@@ -1,23 +1,31 @@
 {
   "name": "sp-aie-theazec34-project",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "Proyecto compañía AI Engineering — Brasaland (Hito 2)",
+  "description": "Brasaland Agent - Onboarding con Memoria Persistente + Gestión de Mesas",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "tsc",
     "demo": "npm run build && node dist/demo.js",
+    "demo:agent": "npm run build && node dist/demo-agent.js",
     "build:web": "esbuild src/demo-browser.ts --bundle --outfile=dist-web/app.js --format=esm --platform=browser",
     "serve": "npx --yes http-server . -p 3000 -a 0.0.0.0",
     "test:e2e": "playwright test",
-    "test:e2e:headed": "playwright test --headed"
+    "test:e2e:headed": "playwright test --headed",
+    "agent:start": "npm run build && node dist/agent/brasaland-agent.js",
+    "agent:test": "ts-node src/demo-agent.ts",
+    "agent:memory-check": "ts-node src/utils/memory-persistence.ts"
   },
   "engines": {
     "node": ">=18"
   },
+  "dependencies": {
+    "@types/node": "^20.0.0"
+  },
   "devDependencies": {
     "@playwright/test": "^1.54.1",
     "esbuild": "^0.25.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "ts-node": "^10.9.0"
   }
 }
