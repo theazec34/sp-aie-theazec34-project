@@ -58,6 +58,14 @@ Se detecta una brecha tecnica importante:
 	- `npm run demo` OK,
 	- `npx playwright test` OK (4 tests passing).
 
+## Propuesta de arquitectura backend
+- Redactado `docs/architecture_proposal.md` con:
+  - Patron propuesto: monolito modular + Clean Architecture + DDD por dominios.
+  - Estructura de carpetas en `apps/brasaland-api/` con modulos `logistica`, `carta`, `reservas`, `domicilio`.
+  - Mapa de endpoints FastAPI por dominio bajo `/api/v1/`.
+  - Decisiones tecnicas iniciales (FastAPI, PostgreSQL, Pydantic, CORS para website/backoffice).
+  - Riesgos: fat controllers, estructura por capas tecnicas globales, divergencia de reglas con `Brasaland.md`, acoplamiento entre dominios.
+
 ## Recuperacion y push seguro
 - Se recuperaron `uis/website` y `uis/backoffice` desde commit de reflog con codigo fuente valido.
 - Se endurecio `.gitignore` raiz para bloquear artefactos sensibles o pesados:
