@@ -112,15 +112,16 @@ uis/
 - El dominio previo del repo (`Brasaland.md`, `src/`, `uis/website`, `uis/backoffice`) cubre restaurante/operaciones, **no** incidencias postventa — este hito es un modulo nuevo.
 
 ### Bloqueo actual
-- Los ficheros de referencia del alumno **no estan en el entorno cloud**:
-  - `incidents-brasaland.csv`
-  - `CONTEXT-brasaland.es.md`
-- Rutas indicadas por el usuario (`c:\Users\alfre\OneDrive\Escritorio\...`) son locales de Windows y no se subieron al agente.
-- Sin `CONTEXT-brasaland.es.md` no se pueden conocer: campos obligatorios, literales permitidos, metricas esperadas ni valores de referencia para validar el script.
+- ~~Los ficheros de referencia del alumno **no estan en el entorno cloud**~~ **Resuelto** (commit `2a662c7`).
 
-### Proximos pasos (cuando lleguen los ficheros)
-1. Copiar CSV a `scripts/incidents-brasaland.csv`.
-2. Implementar `scripts/analyze.py` y verificar metricas contra CONTEXT.
-3. Crear `services/api/` con endpoints de analisis y exportacion.
-4. Crear `uis/web/` con carga de fichero, visualizacion de resumen y descarga CSV.
-5. Abrir PR de `CSV` → `main`.
+### Fase 1 completada — `scripts/analyze.py`
+- Ficheros de referencia en repo: `CONTEXT-brasaland.es.md`, `incidents-brasaland.csv` (raiz) y copia en `scripts/`.
+- Script implementado: `scripts/analyze.py` (stdlib `csv`, sin dependencias externas).
+- Ejecucion: `python analyze.py incidents-brasaland.csv` desde `scripts/`.
+- Validacion contra CONTEXT: **todos los valores numericos coinciden** (100 filas, 96 validas, 4 invalidas, desglose por categoria/estado/satisfaccion, promedio 3.46).
+- Exportacion opcional a CSV (`metric`, `value`, `percentage`) al responder `y` al prompt final.
+
+### Proximos pasos (Fase 2)
+1. Crear `services/api/` con endpoints de analisis y exportacion.
+2. Crear `uis/web/` con carga de fichero, visualizacion de resumen y descarga CSV.
+3. Abrir PR de `CSV` → `main`.
