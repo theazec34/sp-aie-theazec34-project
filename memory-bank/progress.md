@@ -121,7 +121,26 @@ uis/
 - Validacion contra CONTEXT: **todos los valores numericos coinciden** (100 filas, 96 validas, 4 invalidas, desglose por categoria/estado/satisfaccion, promedio 3.46).
 - Exportacion opcional a CSV (`metric`, `value`, `percentage`) al responder `y` al prompt final.
 
-### Proximos pasos (Fase 2)
-1. Crear `services/api/` con endpoints de analisis y exportacion.
-2. Crear `uis/web/` con carga de fichero, visualizacion de resumen y descarga CSV.
-3. Abrir PR de `CSV` → `main`.
+### Fase 2a completada — `services/api/`
+- API FastAPI con logica compartida en `app/analyzer.py`.
+- Endpoints: `GET /health`, `POST /api/v1/incidents/analyze`, `POST /api/v1/incidents/export`.
+- `scripts/analyze.py` refactorizado para reutilizar el modulo compartido.
+- Commit: `feat(api): añadir API FastAPI de análisis de incidencias`.
+
+### Fase 2b completada — `uis/web/`
+- Interfaz estatica HTML/CSS/JS para carga de CSV, visualizacion del resumen y descarga CSV.
+- Conecta con la API configurable (`http://localhost:8000` por defecto).
+- Commit: `feat(web): interfaz web de análisis de incidencias`.
+
+### Ejecucion local completa
+```bash
+# Terminal 1
+cd services/api && uvicorn app.main:app --reload --port 8000
+
+# Terminal 2
+cd uis/web && python3 -m http.server 8080
+```
+
+### Estado del hito
+- Fases 1, 2a y 2b completadas.
+- Pendiente: merge PR `CSV` → `main`.

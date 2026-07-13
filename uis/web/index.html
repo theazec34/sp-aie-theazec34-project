@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Brasaland — Análisis de Incidencias</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="header__inner">
+        <p class="header__eyebrow">Brasaland Digital · Operaciones</p>
+        <h1>Análisis de incidencias</h1>
+        <p class="header__lead">
+          Carga el CSV exportado del departamento de atención postventa, revisa el
+          resumen y descarga los resultados sin usar la terminal.
+        </p>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="panel panel--upload" aria-labelledby="upload-title">
+        <h2 id="upload-title">1. Cargar fichero</h2>
+
+        <label class="field" for="api-url">
+          <span class="field__label">URL de la API</span>
+          <input
+            id="api-url"
+            name="api-url"
+            type="url"
+            value="http://localhost:8000"
+            autocomplete="off"
+          />
+        </label>
+
+        <div
+          id="dropzone"
+          class="dropzone"
+          tabindex="0"
+          role="button"
+          aria-label="Zona para soltar o seleccionar un fichero CSV"
+        >
+          <input
+            id="file-input"
+            type="file"
+            accept=".csv,text/csv"
+            hidden
+          />
+          <p class="dropzone__title">Arrastra tu CSV aquí</p>
+          <p class="dropzone__hint">o haz clic para seleccionar</p>
+          <p id="file-name" class="dropzone__file" aria-live="polite">
+            Ningún fichero seleccionado
+          </p>
+        </div>
+
+        <div class="actions">
+          <button id="analyze-btn" class="btn btn--primary" type="button" disabled>
+            Analizar incidencias
+          </button>
+          <button
+            id="export-btn"
+            class="btn btn--secondary"
+            type="button"
+            disabled
+          >
+            Descargar resumen CSV
+          </button>
+        </div>
+
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+      </section>
+
+      <section
+        id="results"
+        class="panel panel--results hidden"
+        aria-labelledby="results-title"
+      >
+        <h2 id="results-title">2. Resumen del análisis</h2>
+        <p id="results-source" class="results-source"></p>
+
+        <div class="metrics-grid">
+          <article class="metric-card">
+            <h3>Total en fichero</h3>
+            <p id="metric-total" class="metric-card__value">—</p>
+          </article>
+          <article class="metric-card metric-card--ok">
+            <h3>Válidos</h3>
+            <p id="metric-valid" class="metric-card__value">—</p>
+          </article>
+          <article class="metric-card metric-card--warn">
+            <h3>Inválidos / incompletos</h3>
+            <p id="metric-invalid" class="metric-card__value">—</p>
+          </article>
+          <article class="metric-card metric-card--accent">
+            <h3>Índice de satisfacción</h3>
+            <p id="metric-satisfaction" class="metric-card__value">—</p>
+          </article>
+        </div>
+
+        <div class="results-columns">
+          <section aria-labelledby="invalid-title">
+            <h3 id="invalid-title">Registros inválidos</h3>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">Regla</th>
+                  <th scope="col">Cantidad</th>
+                </tr>
+              </thead>
+              <tbody id="invalid-body"></tbody>
+            </table>
+          </section>
+
+          <section aria-labelledby="category-title">
+            <h3 id="category-title">Por categoría (válidos)</h3>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">Categoría</th>
+                  <th scope="col">Cantidad</th>
+                  <th scope="col">%</th>
+                </tr>
+              </thead>
+              <tbody id="category-body"></tbody>
+            </table>
+          </section>
+
+          <section aria-labelledby="status-title">
+            <h3 id="status-title">Por estado (válidos)</h3>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">Estado</th>
+                  <th scope="col">Cantidad</th>
+                  <th scope="col">%</th>
+                </tr>
+              </thead>
+              <tbody id="status-body"></tbody>
+            </table>
+          </section>
+
+          <section aria-labelledby="scores-title">
+            <h3 id="scores-title">Distribución de satisfacción</h3>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">Puntaje</th>
+                  <th scope="col">Cantidad</th>
+                </tr>
+              </thead>
+              <tbody id="scores-body"></tbody>
+            </table>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Brasaland · Departamento de Operaciones · Uso interno</p>
+    </footer>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
