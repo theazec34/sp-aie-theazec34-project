@@ -79,3 +79,48 @@ Se detecta una brecha tecnica importante:
 	- `npm run lint --prefix uis/backoffice` OK,
 	- `npm run build --prefix uis/backoffice` OK.
 - Objetivo de esta recuperacion: evitar nuevo rechazo GH013 por push protection (secretos en `.next` cache).
+
+## Hito CSV — Analisis de incidencias postventa (en curso)
+
+### Contexto del nuevo hito
+- Departamento: atencion postventa de Brasaland (quejas, solicitudes, fallos operativos).
+- Fuente de datos: CSV con 100 registros de prueba (`incidents-brasaland.csv`), escalable a ~1M lineas.
+- Restriccion: datos sensibles (PII) — el analisis debe ejecutarse internamente, sin enviar el fichero a IA externa.
+- Enfoque en dos fases:
+  1. **Fase 1 (script Python):** `scripts/analyze.py` — validacion + metricas sobre el CSV de prueba.
+  2. **Fase 2 (plataforma):** API en `services/api/` + interfaz en `uis/web/` (carga, resumen en pantalla, export CSV).
+
+### Reglas de validacion (segun enunciado)
+- Registro **invalido** si falta al menos un campo obligatorio (definidos en `CONTEXT-brasaland.es.md`) o si un valor no pertenece al conjunto permitido (estados/categorias).
+- Los invalidos deben detectarse, contarse y **excluirse del analisis principal**, pero **nunca ignorarse en silencio**.
+
+### Estructura objetivo del monorepo
+```text
+scripts/
+  analyze.py
+  incidents-COMPANY.csv   # incidents-brasaland.csv en este proyecto
+services/
+  api/
+uis/
+  web/
+```
+
+### Estado del repo respecto a este hito
+- Rama creada: `CSV` (base: `main`).
+- Carpetas `services/api/` y `uis/web/` **no existen aun** en el monorepo.
+- `scripts/` solo contiene README; no hay `analyze.py` ni CSV de incidencias.
+- El dominio previo del repo (`Brasaland.md`, `src/`, `uis/website`, `uis/backoffice`) cubre restaurante/operaciones, **no** incidencias postventa — este hito es un modulo nuevo.
+
+### Bloqueo actual
+- Los ficheros de referencia del alumno **no estan en el entorno cloud**:
+  - `incidents-brasaland.csv`
+  - `CONTEXT-brasaland.es.md`
+- Rutas indicadas por el usuario (`c:\Users\alfre\OneDrive\Escritorio\...`) son locales de Windows y no se subieron al agente.
+- Sin `CONTEXT-brasaland.es.md` no se pueden conocer: campos obligatorios, literales permitidos, metricas esperadas ni valores de referencia para validar el script.
+
+### Proximos pasos (cuando lleguen los ficheros)
+1. Copiar CSV a `scripts/incidents-brasaland.csv`.
+2. Implementar `scripts/analyze.py` y verificar metricas contra CONTEXT.
+3. Crear `services/api/` con endpoints de analisis y exportacion.
+4. Crear `uis/web/` con carga de fichero, visualizacion de resumen y descarga CSV.
+5. Abrir PR de `CSV` → `main`.

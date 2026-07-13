@@ -48,4 +48,12 @@ Conclusión tecnica: la parte web refleja Brasaland, pero la parte TypeScript de
 - Integracion de imagenes de platos mediante mapeo en JS.
 
 ## Estado de rama
-- Rama activa de trabajo: `hito-4`.
+- Rama activa de trabajo: `CSV` (hito analisis de incidencias postventa).
+- Rama anterior: `hito-4` (web Brasaland + dominio TS restaurante).
+
+## Nuevo hito CSV (Python + API + web)
+- Script objetivo: `scripts/analyze.py` (Fase 1).
+- Datos de prueba: `scripts/incidents-brasaland.csv` (100 registros).
+- Backend objetivo: `services/api/` (FastAPI o similar, pendiente de definir al integrar).
+- UI objetivo: `uis/web/` (carga CSV, resumen, exportacion).
+- Contexto de negocio especifico: `CONTEXT-brasaland.es.md` (incidencias postventa; distinto de `Brasaland.md`).
