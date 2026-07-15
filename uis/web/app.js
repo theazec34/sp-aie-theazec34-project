@@ -10,6 +10,18 @@ const resultsSection = document.getElementById("results");
 let selectedFile = null;
 let lastReport = null;
 
+function defaultApiUrl() {
+  const { protocol, hostname } = window.location;
+  // Codespaces / GitHub.dev: xxx-8080.app.github.dev -> xxx-8000.app.github.dev
+  if (hostname.includes("github.dev") || hostname.includes("githubpreview.dev")) {
+    const apiHost = hostname.replace(/-\d+(?=\.)/, "-8000");
+    return `${protocol}//${apiHost}`;
+  }
+  return "http://localhost:8000";
+}
+
+apiUrlInput.value = defaultApiUrl();
+
 const INVALID_LABELS = {
   missing_location_id: "Falta location_id",
   invalid_category: "Categoría faltante o inválida",

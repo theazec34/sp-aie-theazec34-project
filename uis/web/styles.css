@@ -91,6 +91,11 @@ body {
   font-weight: 600;
 }
 
+.field__hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 .field input {
   width: 100%;
   border: 1px solid var(--border);
