@@ -32,7 +32,8 @@
             autocomplete="off"
           />
           <span class="field__hint">
-            En Codespaces usa la URL pública del puerto 8000 (panel Ports), no localhost.
+            En Codespaces abre la UI desde el puerto <strong>8000</strong>
+            (misma URL que la API). El puerto debe estar en Public.
           </span>
         </label>
 
@@ -57,6 +58,9 @@
         </div>
 
         <div class="actions">
+          <button id="ping-btn" class="btn btn--secondary" type="button">
+            Probar API
+          </button>
           <button id="analyze-btn" class="btn btn--primary" type="button" disabled>
             Analizar incidencias
           </button>

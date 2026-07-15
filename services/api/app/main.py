@@ -1,9 +1,15 @@
+from pathlib import Path
+
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.analyzer import analyze_text, build_report, export_to_csv_text
 from app.schemas import AnalysisReport
+
+# services/api/app/main.py → monorepo root → uis/web
+WEB_DIR = Path(__file__).resolve().parents[3] / "uis" / "web"
 
 app = FastAPI(
     title="Brasaland Incidents API",
@@ -20,20 +26,21 @@ app.add_middleware(
 )
 
 
-@app.get("/")
-def root() -> dict[str, str]:
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok", "service": "brasaland-incidents-api"}
+
+
+@app.get("/api")
+def api_info() -> dict[str, str]:
     return {
         "service": "brasaland-incidents-api",
         "health": "/health",
         "docs": "/docs",
+        "ui": "/",
         "analyze": "/api/v1/incidents/analyze",
         "export": "/api/v1/incidents/export",
     }
-
-
-@app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok", "service": "brasaland-incidents-api"}
 
 
 @app.post("/api/v1/incidents/analyze", response_model=AnalysisReport)
@@ -69,3 +76,26 @@ async def export_incidents(file: UploadFile = File(...)) -> PlainTextResponse:
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+@app.get("/", include_in_schema=False)
+def serve_ui() -> FileResponse:
+    index = WEB_DIR / "index.html"
+    if not index.is_file():
+        raise HTTPException(status_code=500, detail=f"UI no encontrada en {WEB_DIR}")
+    return FileResponse(index)
+
+
+# CSS/JS y demás estáticos de uis/web (después de las rutas API)
+if WEB_DIR.is_dir():
+    app.mount("/static-ui", StaticFiles(directory=str(WEB_DIR)), name="web-static")
+
+
+@app.get("/styles.css", include_in_schema=False)
+def styles() -> FileResponse:
+    return FileResponse(WEB_DIR / "styles.css")
+
+
+@app.get("/app.js", include_in_schema=False)
+def app_js() -> FileResponse:
+    return FileResponse(WEB_DIR / "app.js")

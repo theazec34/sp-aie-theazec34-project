@@ -22,6 +22,17 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
+- UI (mismo puerto): `http://localhost:8000/`
+- Health: `http://localhost:8000/health`
+- Docs: `http://localhost:8000/docs`
+
+### Codespaces
+
+1. Arranca solo el puerto **8000**.
+2. En panel **Ports**, marca **8000** como **Public**.
+3. Abre la URL pública del 8000 (no uses el 8080).
+4. Pulsa **Probar API**; debe salir "API conectada".
+
 Documentación interactiva: `http://localhost:8000/docs`
 
 ## Endpoints

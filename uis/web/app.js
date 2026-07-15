@@ -11,16 +11,42 @@ let selectedFile = null;
 let lastReport = null;
 
 function defaultApiUrl() {
-  const { protocol, hostname } = window.location;
+  const { protocol, hostname, port } = window.location;
+
+  // Misma origen (UI servida por la API en :8000 o URL -8000 de Codespaces)
+  if (port === "8000" || hostname.includes("-8000.")) {
+    return window.location.origin;
+  }
+
   // Codespaces / GitHub.dev: xxx-8080.app.github.dev -> xxx-8000.app.github.dev
   if (hostname.includes("github.dev") || hostname.includes("githubpreview.dev")) {
     const apiHost = hostname.replace(/-\d+(?=\.)/, "-8000");
     return `${protocol}//${apiHost}`;
   }
+
   return "http://localhost:8000";
 }
 
 apiUrlInput.value = defaultApiUrl();
+
+async function pingApi() {
+  const base = getApiBase();
+  try {
+    const response = await fetch(`${base}/health`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    setStatus(`API conectada: ${data.service || "ok"} (${base})`, "success");
+    return true;
+  } catch (error) {
+    setStatus(
+      `No hay conexión con la API en ${base}. En Ports marca el 8000 como Public y reinicia uvicorn. ${error.message}`,
+      "error"
+    );
+    return false;
+  }
+}
 
 const INVALID_LABELS = {
   missing_location_id: "Falta location_id",
@@ -224,3 +250,7 @@ dropzone.addEventListener("drop", (event) => {
 
 analyzeBtn.addEventListener("click", analyzeFile);
 exportBtn.addEventListener("click", exportFile);
+document.getElementById("ping-btn").addEventListener("click", pingApi);
+
+// Comprueba la API al cargar la página
+pingApi();
