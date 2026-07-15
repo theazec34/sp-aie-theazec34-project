@@ -106,10 +106,16 @@ uis/
 ```
 
 ### Estado del repo respecto a este hito
-- Rama creada: `CSV` (base: `main`).
-- Carpetas `services/api/` y `uis/web/` **no existen aun** en el monorepo.
-- `scripts/` solo contiene README; no hay `analyze.py` ni CSV de incidencias.
-- El dominio previo del repo (`Brasaland.md`, `src/`, `uis/website`, `uis/backoffice`) cubre restaurante/operaciones, **no** incidencias postventa — este hito es un modulo nuevo.
+- Rama `CSV` creada y **mergeada a `main`** vía PR #5.
+- En `main` existen: `scripts/analyze.py`, `scripts/incidents-brasaland.csv`, `services/api/`, `uis/web/`, `CONTEXT-brasaland.es.md`.
+
+### Auditoría main (2026-07-15)
+- **Hito CSV:** completo en `main` (script + API + web). No falta nada de ese trabajo.
+- **Hitos ya mergeados previamente:** Hito 4, recuperación website/backoffice, propuesta arquitectura, skills/migración dominio Brasaland.
+- **Ramas remotas con commits no mergeados a main** (trabajo distinto, no del CSV):
+  - `hito-3-talent-pipeline-tracker` / `3.5` → Talent Pipeline Tracker (`apps/talent-pipeline-tracker/`)
+  - `brasaland_agent` → agente con memoria persistente
+- No hay PRs abiertas.
 
 ### Bloqueo actual
 - ~~Los ficheros de referencia del alumno **no estan en el entorno cloud**~~ **Resuelto** (commit `2a662c7`).
@@ -143,4 +149,4 @@ cd uis/web && python3 -m http.server 8080
 
 ### Estado del hito
 - Fases 1, 2a y 2b completadas.
-- Pendiente: merge PR `CSV` → `main`.
+- **PR #5 mergeado a `main`** (2026-07-13). `main` contiene el hito CSV completo.
