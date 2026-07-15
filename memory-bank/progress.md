@@ -143,4 +143,8 @@ cd uis/web && python3 -m http.server 8080
 
 ### Estado del hito
 - Fases 1, 2a y 2b completadas.
-- Pendiente: merge PR `CSV` → `main`.
+- **PR #5 mergeado a `main`** (2026-07-13).
+
+### Fix Codespaces (failed to fetch)
+- En Codespaces `localhost:8000` no funciona desde el navegador.
+- Rama `cursor/codespaces-cors-api-c620`: CORS abierto + auto-detección de URL del puerto 8000 en la UI.
