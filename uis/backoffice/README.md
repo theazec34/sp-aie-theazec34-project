@@ -1,25 +1,37 @@
 # Backoffice UI
 
-Espacio reservado para el panel interno de operacion Brasaland.
+Panel interno de operación Brasaland (`uis/backoffice`).
 
-## Estado actual
-- App Next.js independiente de `uis/website`.
-- Layout propio de backoffice (sidebar + topbar + paneles vacios).
-- Estructura inicial lista para conectar logica del hito 2.
+## Directorio de proveedores
 
-## Estructura base
-- `src/app/layout.tsx`: layout visual del backoffice.
-- `src/app/page.tsx`: dashboard vacio con modulos placeholder.
-- `src/app/globals.css`: estilo interno (no corporativo de website).
+Página: `/proveedores`
+
+1. API + seeder:
+
+```bash
+cd services/api
+pip install -r requirements.txt
+python seed.py
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+2. Backoffice:
+
+```bash
+cd uis/backoffice
+cp .env.example .env.local
+npm install
+npm run dev
+```
+
+3. Abre `http://localhost:3000/proveedores`.
+
+En Codespaces marca el puerto **8000** como Public y usa esa URL en el campo **URL API** si hace falta.
 
 ## Comandos
+
 - `npm run dev`
 - `npm run lint`
 - `npm run build`
 
-Objetivos previstos:
-- Gestion de reservas y ocupacion de mesas.
-- Control de encargos a proveedores.
-- Seguimiento de pedidos a domicilio.
-
-La web publica principal vive en ../website.
+La web pública principal vive en `../website`. La UI de incidencias CSV vive en `../web` (también servida por la API en `/`).

@@ -154,3 +154,25 @@ cd uis/web && python3 -m http.server 8080
 ### Fix Codespaces (failed to fetch)
 - En Codespaces `localhost:8000` no funciona desde el navegador.
 - Rama `cursor/codespaces-cors-api-c620`: CORS abierto + auto-detección de URL del puerto 8000 en la UI.
+
+## Hito Directorio de Proveedores (rama `proveedores`)
+
+### Alcance
+- CONTEXT: `09-lightweight-storage/CONTEXT-brasaland.md`
+- Misma API FastAPI (`services/api`) + TinyDB + backoffice (`uis/backoffice/proveedores`)
+
+### Commits
+1. `feat(proveedores): modelo Pydantic Supplier según CONTEXT`
+2. `feat(proveedores): seeder TinyDB con 15 proveedores del CONTEXT`
+3. `feat(proveedores): endpoints FastAPI /suppliers`
+4. `feat(proveedores): página backoffice del directorio`
+
+### Cómo arrancar
+```bash
+cd services/api && python seed.py && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+cd uis/backoffice && npm run dev
+# Abrir http://localhost:3000/proveedores
+```
+
+### Nota
+- El PR a `main` lo abre el alumno desde la rama `proveedores`.

@@ -7,14 +7,18 @@ from fastapi.staticfiles import StaticFiles
 
 from app.analyzer import analyze_text, build_report, export_to_csv_text
 from app.schemas import AnalysisReport
+from app.suppliers.router import router as suppliers_router
 
 # services/api/app/main.py → monorepo root → uis/web
 WEB_DIR = Path(__file__).resolve().parents[3] / "uis" / "web"
 
 app = FastAPI(
-    title="Brasaland Incidents API",
-    version="1.0.0",
-    description="Análisis y exportación de reportes de incidencias operativas.",
+    title="Brasaland API",
+    version="1.1.0",
+    description=(
+        "API Brasaland Digital: análisis de incidencias y directorio de proveedores "
+        "(TinyDB)."
+    ),
 )
 
 app.add_middleware(
@@ -25,21 +29,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(suppliers_router)
+
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": "brasaland-incidents-api"}
+    return {"status": "ok", "service": "brasaland-api"}
 
 
 @app.get("/api")
-def api_info() -> dict[str, str]:
+def api_info() -> dict[str, object]:
     return {
-        "service": "brasaland-incidents-api",
+        "service": "brasaland-api",
         "health": "/health",
         "docs": "/docs",
-        "ui": "/",
-        "analyze": "/api/v1/incidents/analyze",
-        "export": "/api/v1/incidents/export",
+        "ui_incidents": "/",
+        "incidents": {
+            "analyze": "/api/v1/incidents/analyze",
+            "export": "/api/v1/incidents/export",
+        },
+        "suppliers": {
+            "list_create": "/suppliers",
+            "detail": "/suppliers/{id}",
+            "rate": "/suppliers/{id}/rate",
+            "status": "/suppliers/{id}/status",
+        },
     }
 
 
