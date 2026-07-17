@@ -35,7 +35,25 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 Documentación interactiva: `http://localhost:8000/docs`
 
-## Endpoints
+## Directorio de proveedores (TinyDB)
+
+```bash
+cd services/api
+pip install -r requirements.txt
+python seed.py
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `POST` | `/suppliers` | Alta de proveedor |
+| `GET` | `/suppliers` | Listado (`?country=` / `?category=`) |
+| `GET` | `/suppliers/{id}` | Detalle |
+| `PATCH` | `/suppliers/{id}/rate` | Actualiza tarifa (+ `updated_at`) |
+| `PATCH` | `/suppliers/{id}/status` | `active` / `suspended` |
+| `DELETE` | `/suppliers/{id}` | Borrado (correcciones) |
+
+## Endpoints de incidencias
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
@@ -43,7 +61,7 @@ Documentación interactiva: `http://localhost:8000/docs`
 | `POST` | `/api/v1/incidents/analyze` | Sube un CSV y devuelve el resumen JSON |
 | `POST` | `/api/v1/incidents/export` | Sube un CSV y descarga el resumen en CSV |
 
-## Ejemplo
+## Ejemplo incidencias
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/incidents/analyze" \
