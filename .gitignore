@@ -25,3 +25,5 @@ playwright-report/
 **/__pycache__/
 **/*.pyc
 **/.venv/
+services/api/data/
+
