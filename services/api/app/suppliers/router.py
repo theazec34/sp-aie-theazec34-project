@@ -1,9 +1,10 @@
-"""FastAPI routes for Brasaland supplier directory."""
+"""FastAPI routes for Brasaland supplier directory (JWT protected)."""
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from app.auth.deps import get_current_user
 from app.suppliers.models import (
     ProductCategory,
     Country,
@@ -13,8 +14,13 @@ from app.suppliers.models import (
     SupplierStatusUpdate,
 )
 from app.suppliers.repository import SupplierRepository
+from app.users.models import UserInDB
 
-router = APIRouter(prefix="/suppliers", tags=["suppliers"])
+router = APIRouter(
+    prefix="/suppliers",
+    tags=["suppliers"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 def get_repo() -> SupplierRepository:
@@ -22,7 +28,9 @@ def get_repo() -> SupplierRepository:
 
 
 @router.post("", response_model=Supplier, status_code=201)
-def create_supplier(payload: SupplierCreate) -> Supplier:
+def create_supplier(
+    payload: SupplierCreate, _current: UserInDB = Depends(get_current_user)
+) -> Supplier:
     repo = get_repo()
     try:
         if repo.name_exists(payload.name):
@@ -39,6 +47,7 @@ def create_supplier(payload: SupplierCreate) -> Supplier:
 def list_suppliers(
     country: Country | None = Query(default=None),
     category: ProductCategory | None = Query(default=None),
+    _current: UserInDB = Depends(get_current_user),
 ) -> list[Supplier]:
     repo = get_repo()
     try:
@@ -51,7 +60,9 @@ def list_suppliers(
 
 
 @router.get("/{supplier_id}", response_model=Supplier)
-def get_supplier(supplier_id: int) -> Supplier:
+def get_supplier(
+    supplier_id: int, _current: UserInDB = Depends(get_current_user)
+) -> Supplier:
     repo = get_repo()
     try:
         supplier = repo.get(supplier_id)
@@ -63,7 +74,11 @@ def get_supplier(supplier_id: int) -> Supplier:
 
 
 @router.patch("/{supplier_id}/rate", response_model=Supplier)
-def update_supplier_rate(supplier_id: int, payload: SupplierRateUpdate) -> Supplier:
+def update_supplier_rate(
+    supplier_id: int,
+    payload: SupplierRateUpdate,
+    _current: UserInDB = Depends(get_current_user),
+) -> Supplier:
     repo = get_repo()
     try:
         supplier = repo.update_rate(supplier_id, payload.rate_per_unit)
@@ -76,7 +91,9 @@ def update_supplier_rate(supplier_id: int, payload: SupplierRateUpdate) -> Suppl
 
 @router.patch("/{supplier_id}/status", response_model=Supplier)
 def update_supplier_status(
-    supplier_id: int, payload: SupplierStatusUpdate
+    supplier_id: int,
+    payload: SupplierStatusUpdate,
+    _current: UserInDB = Depends(get_current_user),
 ) -> Supplier:
     repo = get_repo()
     try:
@@ -89,7 +106,9 @@ def update_supplier_status(
 
 
 @router.delete("/{supplier_id}", status_code=204)
-def delete_supplier(supplier_id: int) -> None:
+def delete_supplier(
+    supplier_id: int, _current: UserInDB = Depends(get_current_user)
+) -> None:
     repo = get_repo()
     try:
         deleted = repo.delete(supplier_id)

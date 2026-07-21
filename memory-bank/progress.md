@@ -176,3 +176,14 @@ cd uis/backoffice && npm run dev
 
 ### Nota
 - El PR a `main` lo abre el alumno desde la rama `proveedores`.
+
+## Hito Users & Profile (en curso)
+- Rama de trabajo: `users&profile` (creada desde `main` actualizado).
+- AUTH-01 implementado en `services/api`:
+  1. Modelos User/Profile + TinyDB (`auth.json`)
+  2. JWT + bcrypt + `get_current_user`
+  3. Rutas `/auth`, `/users`, `/profiles` + `seed_auth.py`
+  4. Rutas protegidas: todo `/suppliers` + incidencias analyze/export
+- `.env` gitignored; usar `.env.example`
+- Tooling: `uv` + `.venv` en raíz del monorepo
+- PR a `main`: lo abre el alumno desde GitHub

@@ -1,22 +1,27 @@
 from pathlib import Path
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.analyzer import analyze_text, build_report, export_to_csv_text
+from app.auth.deps import get_current_user
+from app.auth.router import router as auth_router
+from app.profiles.router import router as profiles_router
 from app.schemas import AnalysisReport
 from app.suppliers.router import router as suppliers_router
+from app.users.models import UserInDB
+from app.users.router import router as users_router
 
 # services/api/app/main.py → monorepo root → uis/web
 WEB_DIR = Path(__file__).resolve().parents[3] / "uis" / "web"
 
 app = FastAPI(
     title="Brasaland API",
-    version="1.1.0",
+    version="1.2.0",
     description=(
-        "API Brasaland Digital: análisis de incidencias y directorio de proveedores "
+        "API Brasaland Digital: auth JWT, usuarios/perfiles, proveedores e incidencias "
         "(TinyDB)."
     ),
 )
@@ -29,6 +34,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_router)
+app.include_router(users_router)
+app.include_router(profiles_router)
 app.include_router(suppliers_router)
 
 
@@ -43,6 +51,9 @@ def api_info() -> dict[str, object]:
         "service": "brasaland-api",
         "health": "/health",
         "docs": "/docs",
+        "auth": {"login": "/auth/login", "me": "/auth/me"},
+        "users": "/users",
+        "profiles": "/profiles/me",
         "ui_incidents": "/",
         "incidents": {
             "analyze": "/api/v1/incidents/analyze",
@@ -53,12 +64,16 @@ def api_info() -> dict[str, object]:
             "detail": "/suppliers/{id}",
             "rate": "/suppliers/{id}/rate",
             "status": "/suppliers/{id}/status",
+            "auth_required": True,
         },
     }
 
 
 @app.post("/api/v1/incidents/analyze", response_model=AnalysisReport)
-async def analyze_incidents(file: UploadFile = File(...)) -> AnalysisReport:
+async def analyze_incidents(
+    file: UploadFile = File(...),
+    _current: UserInDB = Depends(get_current_user),
+) -> AnalysisReport:
     if not file.filename or not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="Se requiere un fichero CSV.")
 
@@ -72,7 +87,10 @@ async def analyze_incidents(file: UploadFile = File(...)) -> AnalysisReport:
 
 
 @app.post("/api/v1/incidents/export")
-async def export_incidents(file: UploadFile = File(...)) -> PlainTextResponse:
+async def export_incidents(
+    file: UploadFile = File(...),
+    _current: UserInDB = Depends(get_current_user),
+) -> PlainTextResponse:
     if not file.filename or not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="Se requiere un fichero CSV.")
 
