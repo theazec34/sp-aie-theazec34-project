@@ -17,6 +17,7 @@ playwright-report/
 **/.env
 **/.env.*
 !.env.example
+!**/.env.example
 
 # TypeScript cache
 **/*.tsbuildinfo
@@ -25,5 +26,8 @@ playwright-report/
 **/__pycache__/
 **/*.pyc
 **/.venv/
+.venv/
 services/api/data/
+*.db
+
 
