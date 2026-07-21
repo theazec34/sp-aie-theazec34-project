@@ -176,3 +176,7 @@ cd uis/backoffice && npm run dev
 
 ### Nota
 - El PR a `main` lo abre el alumno desde la rama `proveedores`.
+
+## Hito Users & Profile (en curso)
+- Rama de trabajo: `users&profile` (creada desde `main` actualizado).
+- Alcance anunciado: backend primero; enunciado/CONTEXT pendientes de recibir.
