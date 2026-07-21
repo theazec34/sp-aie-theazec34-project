@@ -1,69 +1,79 @@
-# Brasaland Incidents API
+# Brasaland API
 
-Backend FastAPI para analizar y exportar reportes de incidencias operativas.
+Backend FastAPI: autenticación JWT, usuarios/perfiles, proveedores e incidencias (TinyDB).
 
 ## Requisitos
 
 - Python 3.12+
-- Dependencias en `requirements.txt`
+- [`uv`](https://github.com/astral-sh/uv)
 
-## Instalación
+## Instalación (uv)
+
+Desde la **raíz del monorepo**:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source ~/.bashrc   # o: source $HOME/.local/bin/env
+uv venv
+source .venv/bin/activate
+uv pip install -r services/api/requirements.txt
+```
+
+Configura secretos (no se suben a git):
+
+```bash
+cp services/api/.env.example services/api/.env
+# edita SECRET_KEY en production
+```
+
+Seeders:
 
 ```bash
 cd services/api
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+PYTHONPATH=. python seed_auth.py   # admin alfredobormujo@gmail.com
+PYTHONPATH=. python seed.py        # 15 proveedores
 ```
 
 ## Ejecución
 
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-- UI (mismo puerto): `http://localhost:8000/`
-- Health: `http://localhost:8000/health`
-- Docs: `http://localhost:8000/docs`
-
-### Codespaces
-
-1. Arranca solo el puerto **8000**.
-2. En panel **Ports**, marca **8000** como **Public**.
-3. Abre la URL pública del 8000 (no uses el 8080).
-4. Pulsa **Probar API**; debe salir "API conectada".
-
-Documentación interactiva: `http://localhost:8000/docs`
-
-## Directorio de proveedores (TinyDB)
-
-```bash
 cd services/api
-pip install -r requirements.txt
-python seed.py
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+source ../../.venv/bin/activate
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| `POST` | `/suppliers` | Alta de proveedor |
-| `GET` | `/suppliers` | Listado (`?country=` / `?category=`) |
-| `GET` | `/suppliers/{id}` | Detalle |
-| `PATCH` | `/suppliers/{id}/rate` | Actualiza tarifa (+ `updated_at`) |
-| `PATCH` | `/suppliers/{id}/status` | `active` / `suspended` |
-| `DELETE` | `/suppliers/{id}` | Borrado (correcciones) |
+- Docs: `http://localhost:8000/docs`
+- Health (público): `http://localhost:8000/health`
 
-## Endpoints de incidencias
+## Auth JWT
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| `GET` | `/health` | Estado del servicio |
-| `POST` | `/api/v1/incidents/analyze` | Sube un CSV y devuelve el resumen JSON |
-| `POST` | `/api/v1/incidents/export` | Sube un CSV y descarga el resumen en CSV |
+| Método | Ruta | Acceso | Descripción |
+|--------|------|--------|-------------|
+| `POST` | `/auth/login` | Público | Form OAuth2: `username`=email, `password` → JWT |
+| `GET` | `/auth/me` | Token | email, role + profile |
+| `POST` | `/users` | Público | Registro (role default `user` + Profile opcional) |
+| `GET` | `/users` | Token | Listado |
+| `GET` | `/users/{id}` | Token | Detalle |
+| `PUT` | `/users/{id}` | Token | email/role (self o admin; role solo admin) |
+| `DELETE` | `/users/{id}` | Token | Borra user + profile (self o admin) |
+| `GET/PUT` | `/profiles/me` | Token | Perfil del usuario autenticado |
 
-## Ejemplo incidencias
+### Rutas existentes ahora protegidas (≥5)
 
-```bash
-curl -X POST "http://localhost:8000/api/v1/incidents/analyze" \
-  -F "file=@../../scripts/incidents-brasaland.csv"
-```
+- `POST/GET /suppliers`
+- `GET/PATCH/DELETE /suppliers/{id}` (+ rate/status)
+- `POST /api/v1/incidents/analyze`
+- `POST /api/v1/incidents/export`
+
+Siguen públicas: `/health`, `/docs`, `/`, `POST /auth/login`, `POST /users`.
+
+### Verificación rápida en `/docs`
+
+1. `POST /users` o usar el admin del seeder  
+2. `POST /auth/login` (Authorize con el token)  
+3. Llamar `GET /suppliers` / `GET /auth/me`  
+4. Sin token → **401**
+
+## Proveedores e incidencias
+
+Ver tablas anteriores; requieren `Authorization: Bearer <token>`.
