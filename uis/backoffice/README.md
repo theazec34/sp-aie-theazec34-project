@@ -1,37 +1,48 @@
 # Backoffice UI
 
-Panel interno de operación Brasaland (`uis/backoffice`).
+Panel interno de operación Brasaland (`uis/backoffice`) con autenticación JWT.
 
-## Directorio de proveedores
+## Auth (AUTH-02)
 
-Página: `/proveedores`
+Rutas públicas:
+- `/login`
+- `/register`
 
-1. API + seeder:
+Rutas protegidas (exigen token en `localStorage`):
+- `/` (dashboard)
+- `/proveedores`
+- `/account/profile`
+
+El token se guarda tras login/registro y se envía como `Authorization: Bearer <token>`.
+Un **401** limpia la sesión y redirige a `/login`. **Cerrar sesión** hace lo mismo.
+
+La web pública `uis/website` **no** tiene auth (permanece abierta).
+
+## Arranque
+
+1. API + seeders:
 
 ```bash
 cd services/api
-pip install -r requirements.txt
-python seed.py
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+source ../../.venv/bin/activate
+PYTHONPATH=. python seed_auth.py
+PYTHONPATH=. python seed.py
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 2. Backoffice:
 
 ```bash
 cd uis/backoffice
-cp .env.example .env.local
 npm install
 npm run dev
 ```
 
-3. Abre `http://localhost:3000/proveedores`.
-
-En Codespaces marca el puerto **8000** como Public y usa esa URL en el campo **URL API** si hace falta.
+3. Abre `http://localhost:3000/login`  
+   Admin seeder: `alfredobormujo@gmail.com` / (password del seeder)
 
 ## Comandos
 
 - `npm run dev`
 - `npm run lint`
 - `npm run build`
-
-La web pública principal vive en `../website`. La UI de incidencias CSV vive en `../web` (también servida por la API en `/`).

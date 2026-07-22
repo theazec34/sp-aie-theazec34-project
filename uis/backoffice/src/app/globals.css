@@ -375,3 +375,14 @@ a {
   font-size: 0.8rem;
   font-weight: 500;
 }
+
+.bo-logout {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  margin-top: 12px;
+  color: #fda4af !important;
+}

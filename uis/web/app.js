@@ -29,6 +29,78 @@ function defaultApiUrl() {
 
 apiUrlInput.value = defaultApiUrl();
 
+
+const TOKEN_KEY = "brasaland_access_token";
+const authEmail = document.getElementById("auth-email");
+const authPassword = document.getElementById("auth-password");
+const authToken = document.getElementById("auth-token");
+const loginBtn = document.getElementById("login-btn");
+const logoutBtn = document.getElementById("logout-btn");
+
+function getToken() {
+  return localStorage.getItem(TOKEN_KEY) || "";
+}
+
+function setToken(token) {
+  localStorage.setItem(TOKEN_KEY, token);
+  authToken.value = token;
+}
+
+function clearToken() {
+  localStorage.removeItem(TOKEN_KEY);
+  authToken.value = "";
+}
+
+function authHeaders(extra = {}) {
+  const headers = { ...extra };
+  const token = getToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+function handleUnauthorized(response) {
+  if (response.status === 401) {
+    clearToken();
+    setStatus("Sesión no válida o expirada. Vuelve a iniciar sesión.", "error");
+    return true;
+  }
+  return false;
+}
+
+authToken.value = getToken();
+
+async function loginFromUi() {
+  setStatus("Iniciando sesión...");
+  try {
+    const body = new URLSearchParams();
+    body.set("username", authEmail.value.trim());
+    body.set("password", authPassword.value);
+    const response = await fetch(`${getApiBase()}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || `Error HTTP ${response.status}`);
+    }
+    const data = await response.json();
+    setToken(data.access_token);
+    setStatus("Sesión iniciada. Ya puedes analizar ficheros.", "success");
+  } catch (error) {
+    setStatus(`Login fallido: ${error.message}`, "error");
+  }
+}
+
+loginBtn.addEventListener("click", loginFromUi);
+logoutBtn.addEventListener("click", () => {
+  clearToken();
+  setStatus("Sesión cerrada.", "success");
+});
+
+
 async function pingApi() {
   const base = getApiBase();
   try {
@@ -144,10 +216,18 @@ async function analyzeFile() {
     const formData = new FormData();
     formData.append("file", selectedFile);
 
+    if (!getToken()) {
+      throw new Error("No autenticado. Inicia sesión arriba antes de analizar.");
+    }
+
     const response = await fetch(
       `${getApiBase()}/api/v1/incidents/analyze`,
-      { method: "POST", body: formData }
+      { method: "POST", body: formData, headers: authHeaders() }
     );
+
+    if (handleUnauthorized(response)) {
+      return;
+    }
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
@@ -180,10 +260,18 @@ async function exportFile() {
     const formData = new FormData();
     formData.append("file", selectedFile);
 
+    if (!getToken()) {
+      throw new Error("No autenticado. Inicia sesión arriba antes de exportar.");
+    }
+
     const response = await fetch(
       `${getApiBase()}/api/v1/incidents/export`,
-      { method: "POST", body: formData }
+      { method: "POST", body: formData, headers: authHeaders() }
     );
+
+    if (handleUnauthorized(response)) {
+      return;
+    }
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));

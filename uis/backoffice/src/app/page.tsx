@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import AppNav from "../components/AppNav";
 import RequireAuth from "../components/RequireAuth";
 
 const moduleCards = [
@@ -33,23 +34,7 @@ export default function BackofficeHome() {
   return (
     <RequireAuth>
       <main className="bo-shell">
-        <aside className="bo-sidebar" aria-label="Menu interno backoffice">
-          <p className="bo-brand">Brasaland OPS</p>
-          <nav>
-            <Link href="/" className="bo-nav-link bo-nav-link-active">
-              Dashboard
-            </Link>
-            <Link href="/proveedores" className="bo-nav-link">
-              Proveedores
-            </Link>
-            <Link href="/account/profile" className="bo-nav-link">
-              Mi perfil
-            </Link>
-            <Link href="/login" className="bo-nav-link">
-              Login
-            </Link>
-          </nav>
-        </aside>
+        <AppNav active="dashboard" />
 
         <section className="bo-content">
           <header id="overview" className="bo-topbar">

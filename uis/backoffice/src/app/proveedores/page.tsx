@@ -1,8 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import AppNav from "../../components/AppNav";
 import RequireAuth from "../../components/RequireAuth";
+import { apiFetch } from "../../lib/api";
+import { getApiBaseUrl } from "../../lib/auth";
 
 type SupplierStatus = "active" | "suspended";
 
@@ -30,20 +32,6 @@ const CATEGORIES = [
   "carbon_y_combustible",
 ] as const;
 
-function defaultApiUrl(): string {
-  if (typeof window === "undefined") {
-    return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  }
-  const { protocol, hostname, port } = window.location;
-  if (hostname.includes("github.dev") || hostname.includes("githubpreview.dev")) {
-    const apiHost = hostname.replace(/-\d+(?=\.)/, "-8000");
-    return `${protocol}//${apiHost}`;
-  }
-  if (port === "8000") {
-    return window.location.origin;
-  }
-  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-}
 
 const emptyForm = {
   name: "",
@@ -57,7 +45,6 @@ const emptyForm = {
 };
 
 export default function ProveedoresPage() {
-  const [apiUrl, setApiUrl] = useState("http://localhost:8000");
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [countryFilter, setCountryFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -66,10 +53,6 @@ export default function ProveedoresPage() {
   const [message, setMessage] = useState("");
   const [form, setForm] = useState(emptyForm);
   const [rateDrafts, setRateDrafts] = useState<Record<number, string>>({});
-
-  useEffect(() => {
-    setApiUrl(defaultApiUrl());
-  }, []);
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -83,7 +66,7 @@ export default function ProveedoresPage() {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(`${apiUrl.replace(/\/$/, "")}/suppliers${query}`);
+      const response = await apiFetch(`/suppliers${query}`);
       if (!response.ok) {
         throw new Error(`Error HTTP ${response.status}`);
       }
@@ -96,12 +79,12 @@ export default function ProveedoresPage() {
       setRateDrafts(drafts);
     } catch (err) {
       setError(
-        `No se pudo cargar el directorio. ¿API en ${apiUrl}? ${(err as Error).message}`
+        `No se pudo cargar el directorio. ¿API en ${getApiBaseUrl()}? ${(err as Error).message}`
       );
     } finally {
       setLoading(false);
     }
-  }, [apiUrl, query]);
+  }, [query]);
 
   useEffect(() => {
     void loadSuppliers();
@@ -123,7 +106,7 @@ export default function ProveedoresPage() {
     };
 
     try {
-      const response = await fetch(`${apiUrl.replace(/\/$/, "")}/suppliers`, {
+      const response = await apiFetch(`/suppliers`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -153,7 +136,7 @@ export default function ProveedoresPage() {
     setMessage("");
     const rate = Number(rateDrafts[id]);
     try {
-      const response = await fetch(`${apiUrl.replace(/\/$/, "")}/suppliers/${id}/rate`, {
+      const response = await apiFetch(`/suppliers/${id}/rate`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rate_per_unit: rate }),
@@ -174,14 +157,11 @@ export default function ProveedoresPage() {
     setMessage("");
     const next = supplier.status === "active" ? "suspended" : "active";
     try {
-      const response = await fetch(
-        `${apiUrl.replace(/\/$/, "")}/suppliers/${supplier.id}/status`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: next }),
-        }
-      );
+      const response = await apiFetch(`/suppliers/${supplier.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: next }),
+      });
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -213,23 +193,7 @@ export default function ProveedoresPage() {
   return (
     <RequireAuth>
     <main className="bo-shell">
-      <aside className="bo-sidebar" aria-label="Menu interno backoffice">
-        <p className="bo-brand">Brasaland OPS</p>
-        <nav>
-          <Link href="/" className="bo-nav-link">
-            Dashboard
-          </Link>
-          <Link href="/proveedores" className="bo-nav-link bo-nav-link-active">
-            Proveedores
-          </Link>
-          <Link href="/account/profile" className="bo-nav-link">
-            Mi perfil
-          </Link>
-          <Link href="/login" className="bo-nav-link">
-            Login
-          </Link>
-        </nav>
-      </aside>
+      <AppNav active="proveedores" />
 
       <section className="bo-content">
         <header className="bo-topbar">
@@ -241,14 +205,6 @@ export default function ProveedoresPage() {
         </header>
 
         <section className="bo-panel">
-          <label className="bo-field">
-            <span>URL API</span>
-            <input
-              value={apiUrl}
-              onChange={(event) => setApiUrl(event.target.value)}
-              aria-label="URL de la API"
-            />
-          </label>
           <div className="bo-filters">
             <label>
               País
@@ -453,5 +409,6 @@ export default function ProveedoresPage() {
         </section>
       </section>
     </main>
+    </RequireAuth>
   );
 }

@@ -1,9 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getApiBaseUrl, getToken } from "../../../lib/auth";
+import AppNav from "../../../components/AppNav";
+import RequireAuth from "../../../components/RequireAuth";
+import { apiFetch } from "../../../lib/api";
+import { getToken } from "../../../lib/auth";
 
 type AuthMe = {
   email: string;
@@ -30,8 +32,7 @@ export default function AccountProfilePage() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
+    if (!getToken()) {
       router.replace("/login");
       return;
     }
@@ -40,13 +41,7 @@ export default function AccountProfilePage() {
       setLoading(true);
       setError("");
       try {
-        const response = await fetch(`${getApiBaseUrl().replace(/\/$/, "")}/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (response.status === 401) {
-          router.replace("/login");
-          return;
-        }
+        const response = await apiFetch("/auth/me");
         if (!response.ok) {
           throw new Error(`Error HTTP ${response.status}`);
         }
@@ -68,8 +63,7 @@ export default function AccountProfilePage() {
 
   async function onSave(event: FormEvent) {
     event.preventDefault();
-    const token = getToken();
-    if (!token) {
+    if (!getToken()) {
       router.replace("/login");
       return;
     }
@@ -77,22 +71,15 @@ export default function AccountProfilePage() {
     setError("");
     setMessage("");
     try {
-      const response = await fetch(`${getApiBaseUrl().replace(/\/$/, "")}/profiles/me`, {
+      const response = await apiFetch("/profiles/me", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
           phone: phone.trim() || null,
           address: address.trim() || null,
         }),
       });
-      if (response.status === 401) {
-        router.replace("/login");
-        return;
-      }
       if (!response.ok) {
         const detail = await response.json().catch(() => ({}));
         throw new Error(
@@ -110,64 +97,50 @@ export default function AccountProfilePage() {
   }
 
   return (
-    <main className="bo-shell">
-      <aside className="bo-sidebar" aria-label="Menu interno backoffice">
-        <p className="bo-brand">Brasaland OPS</p>
-        <nav>
-          <Link href="/" className="bo-nav-link">
-            Dashboard
-          </Link>
-          <Link href="/proveedores" className="bo-nav-link">
-            Proveedores
-          </Link>
-          <Link href="/account/profile" className="bo-nav-link bo-nav-link-active">
-            Mi perfil
-          </Link>
-          <Link href="/login" className="bo-nav-link">
-            Login
-          </Link>
-        </nav>
-      </aside>
+    <RequireAuth>
+      <main className="bo-shell">
+        <AppNav active="profile" />
 
-      <section className="bo-content">
-        <header className="bo-topbar">
-          <div>
-            <p className="bo-kicker">Cuenta</p>
-            <h1>Mi perfil</h1>
-          </div>
-          <span className="bo-status">{role || "…"}</span>
-        </header>
+        <section className="bo-content">
+          <header className="bo-topbar">
+            <div>
+              <p className="bo-kicker">Cuenta</p>
+              <h1>Mi perfil</h1>
+            </div>
+            <span className="bo-status">{role || "…"}</span>
+          </header>
 
-        <section className="bo-panel">
-          {loading ? <p className="bo-soft">Cargando perfil…</p> : null}
-          {error ? <p className="bo-alert bo-alert-error">{error}</p> : null}
-          {message ? <p className="bo-alert bo-alert-ok">{message}</p> : null}
+          <section className="bo-panel">
+            {loading ? <p className="bo-soft">Cargando perfil…</p> : null}
+            {error ? <p className="bo-alert bo-alert-error">{error}</p> : null}
+            {message ? <p className="bo-alert bo-alert-ok">{message}</p> : null}
 
-          {!loading ? (
-            <form className="auth-form" onSubmit={onSave}>
-              <label className="bo-field">
-                <span>Email (solo lectura)</span>
-                <input value={email} readOnly />
-              </label>
-              <label className="bo-field">
-                <span>Nombre</span>
-                <input value={name} onChange={(e) => setName(e.target.value)} />
-              </label>
-              <label className="bo-field">
-                <span>Teléfono</span>
-                <input value={phone} onChange={(e) => setPhone(e.target.value)} />
-              </label>
-              <label className="bo-field">
-                <span>Dirección</span>
-                <input value={address} onChange={(e) => setAddress(e.target.value)} />
-              </label>
-              <button className="bo-btn bo-btn-primary" type="submit" disabled={saving}>
-                {saving ? "Guardando…" : "Guardar perfil"}
-              </button>
-            </form>
-          ) : null}
+            {!loading ? (
+              <form className="auth-form" onSubmit={onSave}>
+                <label className="bo-field">
+                  <span>Email (solo lectura)</span>
+                  <input value={email} readOnly />
+                </label>
+                <label className="bo-field">
+                  <span>Nombre</span>
+                  <input value={name} onChange={(e) => setName(e.target.value)} />
+                </label>
+                <label className="bo-field">
+                  <span>Teléfono</span>
+                  <input value={phone} onChange={(e) => setPhone(e.target.value)} />
+                </label>
+                <label className="bo-field">
+                  <span>Dirección</span>
+                  <input value={address} onChange={(e) => setAddress(e.target.value)} />
+                </label>
+                <button className="bo-btn bo-btn-primary" type="submit" disabled={saving}>
+                  {saving ? "Guardando…" : "Guardar perfil"}
+                </button>
+              </form>
+            ) : null}
+          </section>
         </section>
-      </section>
-    </main>
+      </main>
+    </RequireAuth>
   );
 }
