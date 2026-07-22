@@ -194,4 +194,6 @@ cd uis/backoffice && npm run dev
 - RequireAuth en dashboard, proveedores y perfil
 - apiFetch + logout + 401 → login; uis/web con login JWT
 - Website público (`uis/website`) sin auth
+- Fix UX `Failed to fetch`: campo editable URL API en login/register + mensaje de diagnóstico (puerto 8000 Public / Codespaces)
+- Nota: el admin sembrado (`seed_auth.py`) debe usar **Iniciar sesión**, no registrarse otra vez
 - PR a `main`: lo abre el alumno

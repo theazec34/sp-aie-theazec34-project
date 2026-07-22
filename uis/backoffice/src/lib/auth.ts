@@ -1,6 +1,8 @@
 const TOKEN_KEY = "brasaland_access_token";
+const API_BASE_KEY = "brasaland_api_base_url";
 
-export function getApiBaseUrl(): string {
+/** Default API URL from location / env (ignores localStorage override). */
+export function detectApiBaseUrl(): string {
   if (typeof window === "undefined") {
     return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
   }
@@ -13,6 +15,25 @@ export function getApiBaseUrl(): string {
     return window.location.origin;
   }
   return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+}
+
+export function getStoredApiBaseUrl(): string | null {
+  if (typeof window === "undefined") return null;
+  const value = localStorage.getItem(API_BASE_KEY)?.trim();
+  return value || null;
+}
+
+export function setStoredApiBaseUrl(url: string): void {
+  const cleaned = url.trim().replace(/\/$/, "");
+  if (cleaned) {
+    localStorage.setItem(API_BASE_KEY, cleaned);
+  } else {
+    localStorage.removeItem(API_BASE_KEY);
+  }
+}
+
+export function getApiBaseUrl(): string {
+  return getStoredApiBaseUrl() || detectApiBaseUrl();
 }
 
 export function getToken(): string | null {
@@ -30,6 +51,20 @@ export function clearToken(): void {
 
 export function isAuthenticated(): boolean {
   return Boolean(getToken());
+}
+
+/** Human-readable message when fetch cannot reach the API at all. */
+export function networkErrorMessage(err: unknown, apiBase: string): string {
+  const raw = err instanceof Error ? err.message : String(err);
+  if (/failed to fetch|networkerror|load failed|network request failed/i.test(raw)) {
+    return (
+      `No se pudo conectar con la API (${apiBase}). Comprueba: ` +
+      `1) uvicorn en el puerto 8000, ` +
+      `2) en Codespaces el puerto 8000 en Public (no Private), ` +
+      `3) la URL de API abajo (debe ser …-8000.app.github.dev, no localhost).`
+    );
+  }
+  return raw;
 }
 
 /** OAuth2PasswordRequestForm login — username field carries the email. */

@@ -376,6 +376,34 @@ a {
   font-weight: 500;
 }
 
+.api-base-field {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+}
+
+.api-base-hint {
+  font-size: 0.78rem;
+  color: var(--bo-soft);
+  line-height: 1.35;
+}
+
+.api-base-reset {
+  align-self: start;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.8rem;
+  background: transparent;
+  border: 1px solid #5eead4;
+  color: #0f766e;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.auth-soft code {
+  font-size: 0.85em;
+}
+
 .bo-logout {
   width: 100%;
   text-align: left;

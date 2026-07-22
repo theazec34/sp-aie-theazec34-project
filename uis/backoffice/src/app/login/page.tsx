@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getApiBaseUrl, loginRequest, setToken } from "../../lib/auth";
+import ApiBaseUrlField from "../../components/ApiBaseUrlField";
+import {
+  getApiBaseUrl,
+  loginRequest,
+  networkErrorMessage,
+  setToken,
+} from "../../lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,12 +22,13 @@ export default function LoginPage() {
     event.preventDefault();
     setError("");
     setLoading(true);
+    const apiBase = getApiBaseUrl().replace(/\/$/, "");
     try {
-      const token = await loginRequest(getApiBaseUrl(), email.trim(), password);
+      const token = await loginRequest(apiBase, email.trim(), password);
       setToken(token);
       router.replace("/proveedores");
     } catch (err) {
-      setError((err as Error).message);
+      setError(networkErrorMessage(err, apiBase));
     } finally {
       setLoading(false);
     }
@@ -35,6 +42,7 @@ export default function LoginPage() {
         <p className="bo-soft">Accede con tu email y contraseña de la API.</p>
 
         <form className="auth-form" onSubmit={onSubmit}>
+          <ApiBaseUrlField />
           <label className="bo-field">
             <span>Email</span>
             <input
