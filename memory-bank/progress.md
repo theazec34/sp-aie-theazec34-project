@@ -196,4 +196,15 @@ cd uis/backoffice && npm run dev
 - Website público (`uis/website`) sin auth
 - Fix UX `Failed to fetch`: campo editable URL API en login/register + mensaje de diagnóstico (puerto 8000 Public / Codespaces)
 - Nota: el admin sembrado (`seed_auth.py`) debe usar **Iniciar sesión**, no registrarse otra vez
+- PR #11 y #12 mergeados a `main`
+
+## Hito AUTH-03 Recuperación y cambio de contraseña (rama `Recuperar_contraseña`)
+- Backend:
+  - `POST /auth/forgot-password` (siempre 200, anti-enumeración)
+  - `POST /auth/reset-password` (JWT corto + jti single-use en TinyDB)
+  - `POST /auth/change-password` (Bearer + verifica contraseña actual)
+- Email: **Resend** (`RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `FRONTEND_URL`); HTML + rate-limit; fallback consola sin clave
+- Frontend backoffice:
+  - `/forgot-password`, `/reset-password?token=...`, `/account/change-password`
+  - Enlace «¿Olvidaste tu contraseña?» en `/login`
 - PR a `main`: lo abre el alumno
