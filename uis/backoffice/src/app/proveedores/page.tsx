@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import RequireAuth from "../../components/RequireAuth";
 
 type SupplierStatus = "active" | "suspended";
 
@@ -210,6 +211,7 @@ export default function ProveedoresPage() {
   }
 
   return (
+    <RequireAuth>
     <main className="bo-shell">
       <aside className="bo-sidebar" aria-label="Menu interno backoffice">
         <p className="bo-brand">Brasaland OPS</p>
@@ -219,6 +221,12 @@ export default function ProveedoresPage() {
           </Link>
           <Link href="/proveedores" className="bo-nav-link bo-nav-link-active">
             Proveedores
+          </Link>
+          <Link href="/account/profile" className="bo-nav-link">
+            Mi perfil
+          </Link>
+          <Link href="/login" className="bo-nav-link">
+            Login
           </Link>
         </nav>
       </aside>
