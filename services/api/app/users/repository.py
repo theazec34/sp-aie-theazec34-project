@@ -84,6 +84,12 @@ class UserRepository:
             self._table.update(patch, doc_ids=[user_id])
         return self.get(user_id)
 
+    def update_password(self, user_id: int, hashed_password: str) -> UserInDB | None:
+        if self._table.get(doc_id=user_id) is None:
+            return None
+        self._table.update({"hashed_password": hashed_password}, doc_ids=[user_id])
+        return self.get(user_id)
+
     def delete(self, user_id: int) -> bool:
         if self._table.get(doc_id=user_id) is None:
             return False
