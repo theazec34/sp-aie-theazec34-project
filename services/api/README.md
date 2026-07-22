@@ -69,6 +69,9 @@ cp services/api/.env.example services/api/.env
 |--------|------|--------|-------------|
 | `POST` | `/auth/login` | Público | Form OAuth2: `username`=email, `password` → JWT |
 | `GET` | `/auth/me` | Token | email, role + profile |
+| `POST` | `/auth/forgot-password` | Público | Siempre 200; envía email con enlace si el usuario existe |
+| `POST` | `/auth/reset-password` | Público | `{ token, new_password }` — valida JWT+jti, actualiza e invalida |
+| `POST` | `/auth/change-password` | Token | `{ current_password, new_password }` — 400 si la actual falla |
 | `POST` | `/users` | Público | Registro (role default `user` + Profile opcional) |
 | `GET` | `/users` | Token | Listado |
 | `GET` | `/users/{id}` | Token | Detalle |
@@ -76,14 +79,28 @@ cp services/api/.env.example services/api/.env
 | `DELETE` | `/users/{id}` | Token | Borra user + profile (self o admin) |
 | `GET/PUT` | `/profiles/me` | Token | Perfil del usuario autenticado |
 
+### Recuperación de contraseña (AUTH-03) — Resend
+
+Servicio elegido: **Resend**. Variables en `services/api/.env` (ver `.env.example`):
+
+| Variable | Uso |
+|----------|-----|
+| `RESEND_API_KEY` | API key de Resend (nunca en el código) |
+| `RESEND_FROM_EMAIL` | Remitente (p. ej. `Brasaland OPS <onboarding@resend.dev>`) |
+| `FRONTEND_URL` | Base del backoffice para el enlace `/reset-password?token=...` |
+| `RESET_TOKEN_EXPIRE_MINUTES` | Caducidad del token (15–60; default 30) |
+
+Sin `RESEND_API_KEY`, el enlace se imprime en la consola de uvicorn (útil en clase). Con clave, se envía un email HTML vía `https://api.resend.com/emails`.
+
+Siguen públicas: `/health`, `/docs`, `/`, `POST /auth/login`, `POST /auth/forgot-password`, `POST /auth/reset-password`, `POST /users`.
+
 ### Rutas existentes ahora protegidas (≥5)
 
 - `POST/GET /suppliers`
 - `GET/PATCH/DELETE /suppliers/{id}` (+ rate/status)
 - `POST /api/v1/incidents/analyze`
 - `POST /api/v1/incidents/export`
-
-Siguen públicas: `/health`, `/docs`, `/`, `POST /auth/login`, `POST /users`.
+- `POST /auth/change-password`
 
 ### Verificación rápida en `/docs`
 
@@ -91,6 +108,9 @@ Siguen públicas: `/health`, `/docs`, `/`, `POST /auth/login`, `POST /users`.
 2. `POST /auth/login` (Authorize con el token)  
 3. Llamar `GET /suppliers` / `GET /auth/me`  
 4. Sin token → **401**
+5. `POST /auth/forgot-password` con un email registrado → revisar Resend o consola
+6. `POST /auth/reset-password` con el token del enlace
+7. `POST /auth/change-password` con Bearer + contraseñas
 
 ## Proveedores e incidencias
 

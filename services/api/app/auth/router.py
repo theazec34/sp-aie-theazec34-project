@@ -7,7 +7,11 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
 from app.auth.deps import get_current_user
-from app.auth.email import build_reset_link, send_password_reset_email
+from app.auth.email import (
+    ResetEmailRateLimiter,
+    build_reset_link,
+    send_password_reset_email,
+)
 from app.auth.reset_tokens import PasswordResetTokenRepository
 from app.auth.schemas import (
     ChangePasswordRequest,
@@ -88,19 +92,23 @@ def forgot_password(payload: ForgotPasswordRequest) -> ForgotPasswordResponse:
     """Always 200 — never reveal whether the email is registered."""
     users = UserRepository()
     tokens = PasswordResetTokenRepository()
+    limiter = ResetEmailRateLimiter()
     try:
         user = users.get_by_email(str(payload.email))
         if user is not None and user.is_active:
-            reset_jwt, jti, expires_at = create_password_reset_token(user_id=user.id)
-            tokens.create(jti=jti, user_id=user.id, expires_at=expires_at)
-            send_password_reset_email(
-                to_email=str(user.email),
-                reset_link=build_reset_link(reset_jwt),
-            )
+            # Rate-limit quietly: still return the generic 200 message.
+            if limiter.allow(str(user.email)):
+                reset_jwt, jti, expires_at = create_password_reset_token(user_id=user.id)
+                tokens.create(jti=jti, user_id=user.id, expires_at=expires_at)
+                send_password_reset_email(
+                    to_email=str(user.email),
+                    reset_link=build_reset_link(reset_jwt),
+                )
         return ForgotPasswordResponse(message=GENERIC_FORGOT_MESSAGE)
     finally:
         users.close()
         tokens.close()
+        limiter.close()
 
 
 @router.post("/reset-password", response_model=MessageResponse)
