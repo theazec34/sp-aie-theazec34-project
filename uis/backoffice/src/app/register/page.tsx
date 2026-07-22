@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getApiBaseUrl, loginRequest, setToken } from "../../lib/auth";
+import ApiBaseUrlField from "../../components/ApiBaseUrlField";
+import {
+  getApiBaseUrl,
+  loginRequest,
+  networkErrorMessage,
+  setToken,
+} from "../../lib/auth";
 
 type FieldErrors = Record<string, string>;
 
@@ -60,7 +66,7 @@ export default function RegisterPage() {
       setToken(token);
       router.replace("/account/profile");
     } catch (err) {
-      setError((err as Error).message);
+      setError(networkErrorMessage(err, apiBase));
     } finally {
       setLoading(false);
     }
@@ -73,9 +79,12 @@ export default function RegisterPage() {
         <h1>Crear cuenta</h1>
         <p className="bo-soft">
           Registra credenciales y, si quieres, datos de perfil (nombre y contacto).
+          Si ya sembraste el admin con <code>seed_auth.py</code>, usa{" "}
+          <Link href="/login">Iniciar sesión</Link> en lugar de registrarte otra vez.
         </p>
 
         <form className="auth-form" onSubmit={onSubmit}>
+          <ApiBaseUrlField />
           <label className="bo-field">
             <span>Email</span>
             <input
