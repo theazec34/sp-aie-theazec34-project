@@ -70,6 +70,9 @@ export default function LoginPage() {
         </form>
 
         <p className="auth-footer">
+          <Link href="/forgot-password">¿Olvidaste tu contraseña?</Link>
+        </p>
+        <p className="auth-footer">
           ¿No tienes cuenta? <Link href="/register">Regístrate</Link>
         </p>
       </section>
