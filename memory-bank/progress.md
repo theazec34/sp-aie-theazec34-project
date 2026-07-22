@@ -197,3 +197,11 @@ cd uis/backoffice && npm run dev
 - Fix UX `Failed to fetch`: campo editable URL API en login/register + mensaje de diagnóstico (puerto 8000 Public / Codespaces)
 - Nota: el admin sembrado (`seed_auth.py`) debe usar **Iniciar sesión**, no registrarse otra vez
 - PR a `main`: lo abre el alumno
+
+## AUTH-03 — Exploración previa (recuperación de contraseña)
+- Inventario auth API en `services/api/app/auth/`: `config.py`, `security.py`, `deps.py`, `router.py` (solo `POST /auth/login` + `GET /auth/me`).
+- JWT: `python-jose`, secret `SECRET_KEY`, algoritmo `HS256` (default), expiración `ACCESS_TOKEN_EXPIRE_MINUTES=60`.
+- Usuarios: TinyDB `services/api/data/auth.json` (tabla `users`); passwords con `passlib` bcrypt (`hash_password` / `verify_password`).
+- `UserUpdate` **no** incluye password; no hay endpoints forgot/reset ni tokens de recuperación.
+- Backoffice: login/register/profile + `RequireAuth` / `AppNav` / `lib/auth.ts` / `lib/api.ts` — sin UI de recuperación.
+- Conclusión: **cero código de password reset** — AUTH-03 parte de cero sobre la base AUTH-01/02.
