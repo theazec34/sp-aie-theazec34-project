@@ -96,6 +96,18 @@ body {
   color: var(--muted);
 }
 
+.auth-box {
+  margin: 1rem 0 1.25rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fffaf5;
+}
+
+.auth-box h3 {
+  margin: 0 0 0.35rem;
+}
+
 .field input {
   width: 100%;
   border: 1px solid var(--border);

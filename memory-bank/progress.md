@@ -187,3 +187,11 @@ cd uis/backoffice && npm run dev
 - `.env` gitignored; usar `.env.example`
 - Tooling: `uv` + `.venv` en raíz del monorepo
 - PR a `main`: lo abre el alumno desde GitHub
+
+## Hito AUTH-02 Frontend (rama `Funcionamiento_Total`)
+- `/login` y `/register` en backoffice (token en localStorage)
+- `/account/profile` con GET /auth/me y PUT /profiles/me
+- RequireAuth en dashboard, proveedores y perfil
+- apiFetch + logout + 401 → login; uis/web con login JWT
+- Website público (`uis/website`) sin auth
+- PR a `main`: lo abre el alumno
