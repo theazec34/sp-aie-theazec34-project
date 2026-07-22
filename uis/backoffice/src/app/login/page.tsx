@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import ApiBaseUrlField from "../../components/ApiBaseUrlField";
 import {
   getApiBaseUrl,
@@ -11,8 +11,11 @@ import {
   setToken,
 } from "../../lib/auth";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const resetOk = searchParams.get("reset") === "ok";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -35,40 +38,58 @@ export default function LoginPage() {
   }
 
   return (
+    <>
+      {resetOk ? (
+        <p className="bo-alert bo-alert-ok" role="status">
+          Contraseña actualizada. Ya puedes iniciar sesión con la nueva.
+        </p>
+      ) : null}
+      <form className="auth-form" onSubmit={onSubmit}>
+        <ApiBaseUrlField />
+        <label className="bo-field">
+          <span>Email</span>
+          <input
+            type="email"
+            required
+            autoComplete="username"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </label>
+        <label className="bo-field">
+          <span>Contraseña</span>
+          <input
+            type="password"
+            required
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </label>
+        {error ? <p className="bo-alert bo-alert-error">{error}</p> : null}
+        <button className="bo-btn bo-btn-primary" type="submit" disabled={loading}>
+          {loading ? "Entrando…" : "Entrar"}
+        </button>
+      </form>
+    </>
+  );
+}
+
+export default function LoginPage() {
+  return (
     <main className="auth-shell">
       <section className="auth-card">
         <p className="bo-kicker">Brasaland OPS</p>
         <h1>Iniciar sesión</h1>
         <p className="bo-soft">Accede con tu email y contraseña de la API.</p>
 
-        <form className="auth-form" onSubmit={onSubmit}>
-          <ApiBaseUrlField />
-          <label className="bo-field">
-            <span>Email</span>
-            <input
-              type="email"
-              required
-              autoComplete="username"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </label>
-          <label className="bo-field">
-            <span>Contraseña</span>
-            <input
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </label>
-          {error ? <p className="bo-alert bo-alert-error">{error}</p> : null}
-          <button className="bo-btn bo-btn-primary" type="submit" disabled={loading}>
-            {loading ? "Entrando…" : "Entrar"}
-          </button>
-        </form>
+        <Suspense fallback={<p className="bo-soft">Cargando…</p>}>
+          <LoginForm />
+        </Suspense>
 
+        <p className="auth-footer">
+          <Link href="/forgot-password">¿Olvidaste tu contraseña?</Link>
+        </p>
         <p className="auth-footer">
           ¿No tienes cuenta? <Link href="/register">Regístrate</Link>
         </p>
