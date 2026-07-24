@@ -144,3 +144,52 @@ cd uis/web && python3 -m http.server 8080
 ### Estado del hito
 - Fases 1, 2a y 2b completadas.
 - Pendiente: merge PR `CSV` → `main`.
+
+## Exploracion AUTH/incidents centralized (2026-07-24)
+
+Auditoria del workspace (rama local `CSV`) + contraste con `origin/main` (AUTH + proveedores ya mergeados).
+
+### 1) Analizador CSV / API incidencias (en working tree)
+- Logica: `/workspace/services/api/app/analyzer.py` (`VALID_LOCATIONS`, `VALID_CATEGORIES`, `VALID_STATUSES`, `AnalysisResult`, `analyze_*`, `build_report`).
+- Schemas Pydantic reporte: `/workspace/services/api/app/schemas.py` (`AnalysisReport`, breakdowns) — **no** hay modelo `Incident`.
+- Endpoints (CSV branch, sin JWT): `POST /api/v1/incidents/analyze`, `POST /api/v1/incidents/export`, `GET /health`.
+- CLI: `/workspace/scripts/analyze.py` reutiliza el analyzer via `sys.path` → `services/api`.
+- UI estatica: `/workspace/uis/web/` llama a `/api/v1/incidents/{analyze,export}`.
+
+### 2) Modelo Incident
+- **No existe** entidad CRUD `Incident` / `IncidentRepository` / TinyDB `incidents` en ninguna rama revisada (`CSV`, `origin/main`).
+- Filas CSV se tratan como `dict[str, str]`; unico “modelo” de dominio analitico es `AnalysisResult` + `AnalysisReport`.
+
+### 3) CSV historico
+- `/workspace/incidents-brasaland.csv` y copia identica `/workspace/scripts/incidents-brasaland.csv` (100 filas + header).
+- Columnas: `incident_id,date,location_id,category,description,status,customer_id,satisfaction_score,reporter_id`.
+
+### 4) CONTEXT — categorias / sedes
+- Incidencias: `/workspace/CONTEXT-brasaland.es.md`
+  - Sedes: `COL-01`…`COL-10`, `FLA-01`…`FLA-04` (14).
+  - Categorias: `CUSTOMER_COMPLAINT`, `EQUIPMENT`, `SUPPLY`, `FOOD_QUALITY`, `STAFF`.
+  - Estados: `OPEN`, `CLOSED`, `DISCARDED`.
+- Proveedores (en `origin/main`, no en working tree CSV): `09-lightweight-storage/CONTEXT-brasaland.md` — categorias compra distintas (`carne`, `verduras_y_hortalizas`, …).
+- Backoffice hito2: `/workspace/uis/backoffice/context hito2.md` (MenuCategory Meat/Side/…; Location ids tipo `LOC-MEDELLIN-01` — distinto del CSV).
+
+### 5) Backoffice
+- **Working tree `CSV`:** shell Next.js minimo — hash-nav en `page.tsx`, sin auth, sin `/proveedores`.
+- **`origin/main`:** `AppNav` + `RequireAuth` + `lib/auth.ts` / `lib/api.ts` (JWT localStorage, Bearer, 401→login); paginas `/login`, `/register`, `/proveedores`, `/account/profile`, forgot/reset/change-password. **Sin pagina Incidencias** aun.
+
+### 6) `packages/shared`
+- Existe: `packages/shared/package.json` (`@repo/shared-types`) + `packages/shared/types/index.ts`.
+- Contenido: tipos elecciones (`Candidate`, `Vote`, `Election`) — **sin** tipos Incident/Supplier/User.
+
+### 7) TinyDB (solo en `origin/main` / ramas auth-proveedores; **ausente en working tree CSV**)
+- Suppliers: `services/api/data/suppliers.json`, table `suppliers` — CRUD + seed (`seed.py`).
+- Users/Profiles/reset: `services/api/data/auth.json`, tables `users`, `profiles`, `password_reset_tokens` — `seed_auth.py`.
+- Patron: repo class → `TinyDB` + `Query` + `doc_id` como `id` + `close()` en finally de routers.
+
+### 8) Rutas API
+- **`/api/incidents` no existe** (ninguna rama).
+- Solo: `/api/v1/incidents/analyze` y `/api/v1/incidents/export`.
+- En `origin/main` esos endpoints exigen `Depends(get_current_user)`.
+
+### Gap para milestone AUTH/incidents centralized
+- Falta persistencia TinyDB de incidencias, router CRUD `/api/.../incidents`, modelo Pydantic `Incident`, pagina backoffice, y posible unificacion bajo auth ya existente en `origin/main`.
+- Working tree `CSV` esta **detras** de `origin/main` (falta suppliers + AUTH-01/02/03).
