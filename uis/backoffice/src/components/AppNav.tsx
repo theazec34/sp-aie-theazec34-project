@@ -4,7 +4,14 @@ import Link from "next/link";
 import { logoutAndRedirect } from "../lib/api";
 
 type Props = {
-  active?: "dashboard" | "proveedores" | "profile" | "password";
+  active?:
+    | "dashboard"
+    | "proveedores"
+    | "profile"
+    | "password"
+    | "incidents"
+    | "incidents-new"
+    | "incidents-summary";
 };
 
 export default function AppNav({ active }: Props) {
@@ -23,6 +30,24 @@ export default function AppNav({ active }: Props) {
           className={`bo-nav-link${active === "proveedores" ? " bo-nav-link-active" : ""}`}
         >
           Proveedores
+        </Link>
+        <Link
+          href="/incidents/nueva"
+          className={`bo-nav-link${active === "incidents-new" ? " bo-nav-link-active" : ""}`}
+        >
+          Registrar incidencia
+        </Link>
+        <Link
+          href="/incidents"
+          className={`bo-nav-link${active === "incidents" ? " bo-nav-link-active" : ""}`}
+        >
+          Panel de incidencias
+        </Link>
+        <Link
+          href="/incidents/resumen"
+          className={`bo-nav-link${active === "incidents-summary" ? " bo-nav-link-active" : ""}`}
+        >
+          Resumen incidencias
         </Link>
         <Link
           href="/account/profile"

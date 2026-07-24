@@ -400,6 +400,44 @@ a {
   border-radius: 8px;
 }
 
+.branch-highlight {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+}
+
+.bo-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.bo-metric {
+  border: 1px solid var(--bo-border);
+  border-radius: 12px;
+  padding: 14px;
+  background: #fff;
+}
+
+.bo-metric strong {
+  display: block;
+  font-size: 1.4rem;
+  margin-top: 4px;
+}
+
+.bo-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 12px;
+}
+
+.bo-filters .bo-field {
+  min-width: 160px;
+}
+
 .auth-soft code {
   font-size: 0.85em;
 }
