@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from app.analyzer import analyze_text, build_report, export_to_csv_text
 from app.auth.deps import get_current_user
 from app.auth.router import router as auth_router
+from app.errors import register_exception_handlers
 from app.incidents.router import router as incidents_router
 from app.profiles.router import router as profiles_router
 from app.schemas import AnalysisReport
@@ -34,6 +35,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+register_exception_handlers(app)
 
 app.include_router(auth_router)
 app.include_router(users_router)
