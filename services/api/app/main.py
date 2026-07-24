@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from app.analyzer import analyze_text, build_report, export_to_csv_text
 from app.auth.deps import get_current_user
 from app.auth.router import router as auth_router
+from app.incidents.router import router as incidents_router
 from app.profiles.router import router as profiles_router
 from app.schemas import AnalysisReport
 from app.suppliers.router import router as suppliers_router
@@ -38,6 +39,7 @@ app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(profiles_router)
 app.include_router(suppliers_router)
+app.include_router(incidents_router)
 
 
 @app.get("/health")
@@ -58,6 +60,9 @@ def api_info() -> dict[str, object]:
         "incidents": {
             "analyze": "/api/v1/incidents/analyze",
             "export": "/api/v1/incidents/export",
+            "crud": "/api/incidents",
+            "summary": "/api/incidents/summary",
+            "auth_required": False,
         },
         "suppliers": {
             "list_create": "/suppliers",
