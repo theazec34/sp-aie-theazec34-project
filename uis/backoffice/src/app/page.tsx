@@ -6,6 +6,25 @@ import RequireAuth from "../components/RequireAuth";
 
 const moduleCards = [
   {
+    id: "incidents-new",
+    title: "Registrar incidencia",
+    description:
+      "Formulario en tiempo real para sedes, central y reportes de cliente.",
+    href: "/incidents/nueva",
+  },
+  {
+    id: "incidents",
+    title: "Panel de incidencias",
+    description: "Listado con filtros por estado, origen y sede; cambio de ciclo de vida.",
+    href: "/incidents",
+  },
+  {
+    id: "incidents-summary",
+    title: "Resumen de incidencias",
+    description: "Métricas agregadas para operaciones y dirección.",
+    href: "/incidents/resumen",
+  },
+  {
     id: "proveedores",
     title: "Directorio de proveedores",
     description:
@@ -17,16 +36,6 @@ const moduleCards = [
     title: "Mi cuenta",
     description: "Consulta y edita tu perfil (nombre y contacto) con sesión JWT.",
     href: "/account/profile",
-  },
-  {
-    id: "ventas",
-    title: "Ventas y margenes",
-    description: "Placeholder para analitica diaria, ticket promedio y comparativa por pais.",
-  },
-  {
-    id: "desperdicio",
-    title: "Control de desperdicio",
-    description: "Placeholder para costos por motivo, alertas y tendencias por locacion.",
   },
 ];
 
