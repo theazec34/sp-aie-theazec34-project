@@ -10,6 +10,7 @@ import {
   networkErrorMessage,
   setToken,
 } from "../../lib/auth";
+import { parseApiErrorPayload } from "../../lib/errors";
 
 type FieldErrors = Record<string, string>;
 
@@ -46,20 +47,9 @@ export default function RegisterPage() {
 
       if (!response.ok) {
         const detail = await response.json().catch(() => ({}));
-        if (Array.isArray(detail.detail)) {
-          const next: FieldErrors = {};
-          for (const item of detail.detail) {
-            const field = Array.isArray(item.loc) ? String(item.loc.at(-1)) : "form";
-            next[field] = item.msg || "Valor inválido";
-          }
-          setFieldErrors(next);
-          throw new Error("Revisa los campos marcados.");
-        }
-        throw new Error(
-          typeof detail.detail === "string"
-            ? detail.detail
-            : "No se pudo completar el registro."
-        );
+        const parsed = parseApiErrorPayload(detail);
+        setFieldErrors(parsed.fieldErrors);
+        throw new Error(parsed.message);
       }
 
       const token = await loginRequest(apiBase, email.trim(), password);

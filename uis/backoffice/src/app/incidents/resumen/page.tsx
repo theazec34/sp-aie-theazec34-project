@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import AppNav from "../../components/AppNav";
 import RequireAuth from "../../components/RequireAuth";
 import { apiFetch } from "../../lib/api";
+import { getApiBaseUrl } from "../../lib/auth";
+import { friendlyCatch, readApiError } from "../../lib/errors";
 import {
   INCIDENT_BRANCHES,
   INCIDENT_CATEGORIES,
@@ -53,11 +55,12 @@ export default function IncidentsSummaryPage() {
     try {
       const response = await apiFetch("/api/incidents/summary", { skipAuth: true });
       if (!response.ok) {
-        throw new Error(`Error HTTP ${response.status}`);
+        const parsed = await readApiError(response);
+        throw new Error(parsed.message);
       }
       setSummary((await response.json()) as IncidentSummary);
     } catch (err) {
-      setError((err as Error).message || "No se pudo cargar el resumen.");
+      setError(friendlyCatch(err, getApiBaseUrl()));
       setSummary(null);
     } finally {
       setLoading(false);

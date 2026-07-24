@@ -43,6 +43,12 @@ def main() -> int:
         print(f"  Role ............ {user.role.value}")
         print("OK — admin sembrado (password hasheada en TinyDB).")
         return 0
+    except OSError as exc:
+        print(f"ERROR — no se pudo acceder a TinyDB: {exc}", file=sys.stderr)
+        return 1
+    except Exception as exc:  # noqa: BLE001
+        print(f"ERROR — seed_auth falló: {exc}", file=sys.stderr)
+        return 1
     finally:
         users.close()
         profiles.close()

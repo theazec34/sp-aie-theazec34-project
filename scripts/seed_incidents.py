@@ -68,6 +68,15 @@ def main() -> int:
                 inserted += 1
 
         summary = repo.summary()
+    except UnicodeDecodeError as exc:
+        print(f"ERROR — el CSV debe ser UTF-8: {exc}", file=sys.stderr)
+        return 1
+    except OSError as exc:
+        print(f"ERROR — no se pudo leer/escribir datos: {exc}", file=sys.stderr)
+        return 1
+    except Exception as exc:  # noqa: BLE001
+        print(f"ERROR — seed de incidencias falló: {exc}", file=sys.stderr)
+        return 1
     finally:
         repo.close()
 

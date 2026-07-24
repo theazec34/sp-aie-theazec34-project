@@ -85,7 +85,14 @@ async def analyze_incidents(
     if not file.filename or not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="Se requiere un fichero CSV.")
 
-    content = (await file.read()).decode("utf-8")
+    raw = await file.read()
+    try:
+        content = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail="El fichero CSV debe estar codificado en UTF-8.",
+        ) from exc
     if not content.strip():
         raise HTTPException(status_code=400, detail="El fichero CSV está vacío.")
 
@@ -102,7 +109,14 @@ async def export_incidents(
     if not file.filename or not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="Se requiere un fichero CSV.")
 
-    content = (await file.read()).decode("utf-8")
+    raw = await file.read()
+    try:
+        content = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail="El fichero CSV debe estar codificado en UTF-8.",
+        ) from exc
     if not content.strip():
         raise HTTPException(status_code=400, detail="El fichero CSV está vacío.")
 
@@ -122,7 +136,10 @@ async def export_incidents(
 def serve_ui() -> FileResponse:
     index = WEB_DIR / "index.html"
     if not index.is_file():
-        raise HTTPException(status_code=500, detail=f"UI no encontrada en {WEB_DIR}")
+        raise HTTPException(
+            status_code=500,
+            detail="Interfaz de incidencias no disponible. Contacta con soporte.",
+        )
     return FileResponse(index)
 
 
@@ -133,9 +150,15 @@ if WEB_DIR.is_dir():
 
 @app.get("/styles.css", include_in_schema=False)
 def styles() -> FileResponse:
-    return FileResponse(WEB_DIR / "styles.css")
+    path = WEB_DIR / "styles.css"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Recurso no encontrado.")
+    return FileResponse(path)
 
 
 @app.get("/app.js", include_in_schema=False)
 def app_js() -> FileResponse:
-    return FileResponse(WEB_DIR / "app.js")
+    path = WEB_DIR / "app.js"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Recurso no encontrado.")
+    return FileResponse(path)

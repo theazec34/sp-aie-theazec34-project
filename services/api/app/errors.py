@@ -2,10 +2,27 @@
 
 from __future__ import annotations
 
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
+
+logger = logging.getLogger("brasaland.api")
+
+
+def _friendly_validation_message(raw: str) -> str:
+    msg = raw or "Valor inválido"
+    if "String should have at least 1 character" in msg or "at least 1" in msg:
+        return "Este campo es obligatorio"
+    if "Input should be a valid" in msg or "Input should be" in msg:
+        return "Valor no permitido para este campo"
+    if "value is not a valid email" in msg.lower():
+        return "Email no válido"
+    if "Field required" in msg or "missing" in msg.lower():
+        return "Este campo es obligatorio"
+    return "Valor inválido"
 
 
 def register_exception_handlers(app: FastAPI) -> None:
@@ -17,13 +34,12 @@ def register_exception_handlers(app: FastAPI) -> None:
         for item in exc.errors():
             loc = [str(part) for part in item.get("loc", ()) if part != "body"]
             field = loc[-1] if loc else "body"
-            msg = item.get("msg", "Valor inválido")
-            # Spanish-friendly messages for common cases
-            if "String should have at least 1 character" in msg or "at least 1" in msg:
-                msg = "Este campo es obligatorio"
-            elif "Input should be a valid" in msg or "Input should be" in msg:
-                msg = f"Valor no permitido ({msg})"
-            errors.append({"field": field, "message": msg})
+            errors.append(
+                {
+                    "field": field,
+                    "message": _friendly_validation_message(str(item.get("msg", ""))),
+                }
+            )
         return JSONResponse(
             status_code=400,
             content={
@@ -40,8 +56,15 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(
-        _request: Request, _exc: Exception
+        request: Request, exc: Exception
     ) -> JSONResponse:
+        # Log completo solo en servidor; el cliente recibe mensaje genérico.
+        logger.exception(
+            "Unhandled error on %s %s: %s",
+            request.method,
+            request.url.path,
+            exc,
+        )
         return JSONResponse(
             status_code=500,
             content={

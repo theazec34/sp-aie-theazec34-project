@@ -37,6 +37,32 @@ const authToken = document.getElementById("auth-token");
 const loginBtn = document.getElementById("login-btn");
 const logoutBtn = document.getElementById("logout-btn");
 
+function formatApiDetail(payload, fallback) {
+  if (!payload) return fallback;
+  if (typeof payload.detail === "string") return payload.detail;
+  if (payload.detail && typeof payload.detail === "object" && payload.detail.message) {
+    return payload.detail.message;
+  }
+  if (Array.isArray(payload.errors) && payload.errors.length) {
+    return payload.errors.map((e) => e.message || "Error").join(" · ");
+  }
+  if (Array.isArray(payload.detail) && payload.detail.length) {
+    return "Revisa los datos enviados e inténtalo de nuevo.";
+  }
+  return fallback;
+}
+
+function friendlyNetworkMessage(err, base) {
+  const raw = err && err.message ? String(err.message) : String(err || "");
+  if (/failed to fetch|networkerror|load failed/i.test(raw)) {
+    return (
+      `No hay conexión con la API en ${base}. En Ports marca el 8000 como Public, ` +
+      "reinicia uvicorn y pulsa «Probar API»."
+    );
+  }
+  return raw || "Error inesperado.";
+}
+
 function getToken() {
   return localStorage.getItem(TOKEN_KEY) || "";
 }
@@ -72,25 +98,28 @@ function handleUnauthorized(response) {
 authToken.value = getToken();
 
 async function loginFromUi() {
+  const base = getApiBase();
   setStatus("Iniciando sesión...");
   try {
     const body = new URLSearchParams();
     body.set("username", authEmail.value.trim());
     body.set("password", authPassword.value);
-    const response = await fetch(`${getApiBase()}/auth/login`, {
+    const response = await fetch(`${base}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body,
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || `Error HTTP ${response.status}`);
+      throw new Error(
+        formatApiDetail(error, "No se pudo iniciar sesión. Revisa email y contraseña.")
+      );
     }
     const data = await response.json();
     setToken(data.access_token);
     setStatus("Sesión iniciada. Ya puedes analizar ficheros.", "success");
   } catch (error) {
-    setStatus(`Login fallido: ${error.message}`, "error");
+    setStatus(`Login fallido: ${friendlyNetworkMessage(error, base)}`, "error");
   }
 }
 
@@ -112,10 +141,7 @@ async function pingApi() {
     setStatus(`API conectada: ${data.service || "ok"} (${base})`, "success");
     return true;
   } catch (error) {
-    setStatus(
-      `No hay conexión con la API en ${base}. En Ports marca el 8000 como Public y reinicia uvicorn. ${error.message}`,
-      "error"
-    );
+    setStatus(friendlyNetworkMessage(error, base), "error");
     return false;
   }
 }
@@ -231,7 +257,9 @@ async function analyzeFile() {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || `Error HTTP ${response.status}`);
+      throw new Error(
+        formatApiDetail(error, "No se pudo analizar el fichero. Revisa el CSV e inténtalo de nuevo.")
+      );
     }
 
     const report = await response.json();
@@ -239,7 +267,7 @@ async function analyzeFile() {
     setStatus("Análisis completado.", "success");
   } catch (error) {
     setStatus(
-      `No se pudo analizar el fichero. ${error.message}. ¿Está la API en ejecución?`,
+      `No se pudo analizar el fichero. ${friendlyNetworkMessage(error, getApiBase())}`,
       "error"
     );
   } finally {
@@ -275,7 +303,9 @@ async function exportFile() {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
-      throw new Error(error.detail || `Error HTTP ${response.status}`);
+      throw new Error(
+        formatApiDetail(error, "No se pudo exportar el CSV. Reinténtalo en unos segundos.")
+      );
     }
 
     const blob = await response.blob();
@@ -292,7 +322,10 @@ async function exportFile() {
 
     setStatus("CSV exportado correctamente.", "success");
   } catch (error) {
-    setStatus(`No se pudo exportar el CSV. ${error.message}`, "error");
+    setStatus(
+      `No se pudo exportar el CSV. ${friendlyNetworkMessage(error, getApiBase())}`,
+      "error"
+    );
   } finally {
     exportBtn.disabled = !selectedFile;
   }

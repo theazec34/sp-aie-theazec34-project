@@ -5,6 +5,8 @@ import Link from "next/link";
 import AppNav from "../../../components/AppNav";
 import RequireAuth from "../../../components/RequireAuth";
 import { apiFetch } from "../../../lib/api";
+import { getApiBaseUrl } from "../../../lib/auth";
+import { friendlyCatch, readApiError } from "../../../lib/errors";
 
 export default function ChangePasswordPage() {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -35,12 +37,8 @@ export default function ChangePasswordPage() {
         }),
       });
       if (!response.ok) {
-        const detail = await response.json().catch(() => ({}));
-        throw new Error(
-          typeof detail.detail === "string"
-            ? detail.detail
-            : "No se pudo cambiar la contraseña."
-        );
+        const parsed = await readApiError(response);
+        throw new Error(parsed.message);
       }
       const data = (await response.json()) as { message?: string };
       setMessage(data.message || "Contraseña cambiada correctamente.");
@@ -48,7 +46,7 @@ export default function ChangePasswordPage() {
       setNewPassword("");
       setConfirm("");
     } catch (err) {
-      setError((err as Error).message);
+      setError(friendlyCatch(err, getApiBaseUrl()));
     } finally {
       setLoading(false);
     }

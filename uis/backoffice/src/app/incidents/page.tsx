@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import AppNav from "../../components/AppNav";
 import RequireAuth from "../../components/RequireAuth";
 import { apiFetch } from "../../lib/api";
+import { getApiBaseUrl } from "../../lib/auth";
+import { friendlyCatch, readApiError } from "../../lib/errors";
 import {
   INCIDENT_BRANCHES,
   INCIDENT_CATEGORIES,
@@ -38,12 +40,13 @@ export default function IncidentsPanelPage() {
     try {
       const response = await apiFetch(`/api/incidents${query}`, { skipAuth: true });
       if (!response.ok) {
-        throw new Error(`Error HTTP ${response.status}`);
+        const parsed = await readApiError(response);
+        throw new Error(parsed.message);
       }
       const data = (await response.json()) as Incident[];
       setItems(data);
     } catch (err) {
-      setError((err as Error).message || "No se pudo cargar el listado.");
+      setError(friendlyCatch(err, getApiBaseUrl()));
       setItems([]);
     } finally {
       setLoading(false);
@@ -72,14 +75,8 @@ export default function IncidentsPanelPage() {
         body: JSON.stringify({ status: nextStatus }),
       });
       if (!response.ok) {
-        const detail = await response.json().catch(() => ({}));
-        const msg =
-          typeof detail.detail === "object" && detail.detail?.message
-            ? detail.detail.message
-            : typeof detail.detail === "string"
-              ? detail.detail
-              : "No se pudo actualizar el estado.";
-        throw new Error(msg);
+        const parsed = await readApiError(response);
+        throw new Error(parsed.message);
       }
       const updated = (await response.json()) as Incident;
       setItems((current) =>
@@ -92,7 +89,7 @@ export default function IncidentsPanelPage() {
           row.id === item.id ? { ...row, status: previous } : row
         )
       );
-      setError((err as Error).message);
+      setError(friendlyCatch(err, getApiBaseUrl()));
     }
   }
 

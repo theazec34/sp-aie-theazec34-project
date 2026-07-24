@@ -4,6 +4,8 @@ import { FormEvent, useState } from "react";
 import AppNav from "../../components/AppNav";
 import RequireAuth from "../../components/RequireAuth";
 import { apiFetch } from "../../lib/api";
+import { getApiBaseUrl } from "../../lib/auth";
+import { friendlyCatch, readApiError } from "../../lib/errors";
 import {
   INCIDENT_BRANCHES,
   INCIDENT_CATEGORIES,
@@ -45,30 +47,15 @@ export default function NuevaIncidenciaPage() {
       });
 
       if (!response.ok) {
-        const detail = await response.json().catch(() => ({}));
-        if (Array.isArray(detail.errors)) {
-          const next: FieldErrors = {};
-          for (const item of detail.errors) {
-            if (item.field) next[item.field] = item.message || "Valor inválido";
-          }
-          setFieldErrors(next);
-          throw new Error(detail.detail || "Revisa los campos marcados.");
-        }
-        if (detail.detail && typeof detail.detail === "object" && detail.detail.field) {
-          setFieldErrors({ [detail.detail.field]: detail.detail.message });
-          throw new Error(detail.detail.message);
-        }
-        throw new Error(
-          typeof detail.detail === "string"
-            ? detail.detail
-            : "No se pudo registrar la incidencia."
-        );
+        const parsed = await readApiError(response);
+        setFieldErrors(parsed.fieldErrors);
+        throw new Error(parsed.message);
       }
 
       setForm(emptyForm);
       setMessage("Incidencia registrada correctamente.");
     } catch (err) {
-      setError((err as Error).message);
+      setError(friendlyCatch(err, getApiBaseUrl()));
     } finally {
       setLoading(false);
     }

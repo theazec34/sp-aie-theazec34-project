@@ -56,6 +56,7 @@ export function ApplicationForm() {
   const [form, setForm] = useState<ApplicationFormData>(INITIAL_FORM);
   const [errors, setErrors] = useState<ApplicationFormErrors>({});
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors]);
 
@@ -70,15 +71,20 @@ export function ApplicationForm() {
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const validation = validate(form);
-    setErrors(validation);
-    const valid = Object.keys(validation).length === 0;
-    setSubmitted(valid);
+    setSubmitting(true);
+    try {
+      const validation = validate(form);
+      setErrors(validation);
+      const valid = Object.keys(validation).length === 0;
+      setSubmitted(valid);
 
-    if (!valid) {
-      const firstInvalid = Object.keys(validation)[0] as keyof ApplicationFormData;
-      const el = document.getElementById(firstInvalid);
-      if (el) el.focus();
+      if (!valid) {
+        const firstInvalid = Object.keys(validation)[0] as keyof ApplicationFormData;
+        const el = document.getElementById(firstInvalid);
+        el?.focus();
+      }
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -202,8 +208,8 @@ export function ApplicationForm() {
 
           {!submitted ? (
             <div className="form-actions">
-              <button type="submit" className="cta">
-                Enviar aplicacion
+              <button type="submit" className="cta" disabled={submitting}>
+                {submitting ? "Validando…" : "Enviar aplicacion"}
               </button>
               <button type="button" className="cta cta-secondary" onClick={onReset}>
                 Limpiar formulario
@@ -213,10 +219,23 @@ export function ApplicationForm() {
 
           {submitted && !hasErrors ? (
             <div className="form-success" role="status" aria-live="polite">
-              <p>Formulario enviado correctamente.</p>
-              <button type="button" className="cta cta-secondary" onClick={onReset}>
-                Enviar otra aplicacion
-              </button>
+              <p>
+                Validación local correcta. Este formulario de demo aún no envía
+                datos a un servidor de RRHH.
+              </p>
+              <p>
+                Si quieres postularte de verdad, escribe a{" "}
+                <a href="mailto:rrhh@brasaland.example">rrhh@brasaland.example</a>{" "}
+                o vuelve al inicio.
+              </p>
+              <div className="form-actions">
+                <button type="button" className="cta cta-secondary" onClick={onReset}>
+                  Editar otra vez
+                </button>
+                <a className="cta" href="/">
+                  Ir al inicio
+                </a>
+              </div>
             </div>
           ) : null}
         </form>
