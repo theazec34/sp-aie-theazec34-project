@@ -118,12 +118,15 @@ def send_password_reset_email(*, to_email: str, reset_link: str) -> dict[str, An
     text = _text_body(reset_link)
 
     if not api_key:
+        # Demo local sin Resend: el enlace solo va a logs del servidor (no a la respuesta HTTP).
         logger.warning(
-            "RESEND_API_KEY no configurada; enlace en consola → %s | %s",
+            "RESEND_API_KEY no configurada; modo demo — enlace de reset para %s disponible en logs de uvicorn",
             to_email,
-            reset_link,
         )
-        print(f"[brasaland-email] Reset link for {to_email}: {reset_link}", flush=True)
+        print(
+            f"[brasaland-email] Demo sin Resend — reset para {to_email}: {reset_link}",
+            flush=True,
+        )
         return {"provider": "console", "to": to_email}
 
     payload = {
@@ -144,14 +147,17 @@ def send_password_reset_email(*, to_email: str, reset_link: str) -> dict[str, An
             timeout=20.0,
         )
         if response.status_code >= 400:
-            logger.error("Resend error %s: %s", response.status_code, response.text)
-            # Still log link so demos are not blocked by email provider issues
-            print(f"[brasaland-email] Resend failed; link for {to_email}: {reset_link}", flush=True)
+            # No filtrar el JWT de reset en stdout; solo estado del proveedor.
+            logger.error(
+                "Resend error status=%s to=%s body=%s",
+                response.status_code,
+                to_email,
+                response.text[:200],
+            )
             return {"provider": "resend", "ok": False, "status": response.status_code}
         data = response.json()
         logger.info("Resend accepted email id=%s to=%s", data.get("id"), to_email)
         return {"provider": "resend", "ok": True, "id": data.get("id")}
     except httpx.HTTPError as exc:
-        logger.exception("Resend request failed: %s", exc)
-        print(f"[brasaland-email] Resend failed; link for {to_email}: {reset_link}", flush=True)
-        return {"provider": "resend", "ok": False, "error": str(exc)}
+        logger.exception("Resend request failed for %s: %s", to_email, exc)
+        return {"provider": "resend", "ok": False, "error": "provider_unreachable"}
