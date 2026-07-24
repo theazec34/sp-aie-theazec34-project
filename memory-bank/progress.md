@@ -217,4 +217,13 @@ cd uis/backoffice && npm run dev
 - Errores 400 por campo / 500 genérico (sin stack trace)
 - Backoffice: `/incidents/nueva`, `/incidents`, `/incidents/resumen`
 - Analizador legacy `/api/v1/incidents/analyze|export` intacto
+- PR mergeado a `main`
+
+## Hito Error-handling audit (rama `error-handling-audit`)
+- Informe: `docs/error-handling-audit.md`
+- Backend: 500 con log interno, UTF-8 CSV → 400, sin filtrar paths/JWT
+- Scripts: I/O defensivo + exit codes
+- Backoffice: loading/error/CTA + `lib/errors.ts` + `error.tsx`
+- `uis/web` + website: mensajes legibles; formulario demo honesto
+- Sin nuevas features (solo gestión de errores)
 - PR a `main`: lo abre el alumno

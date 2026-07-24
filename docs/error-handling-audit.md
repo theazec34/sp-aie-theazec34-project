@@ -50,3 +50,11 @@ La auditoría localizó huecos de consistencia: errores crudos en UI, falta de C
 
 ## Nota de alcance
 No se introducen features nuevas ni refactors ajenos a la gestión de errores.
+
+## Remediación aplicada (rama `error-handling-audit`)
+- Backend: logging en 500, validación 400 legible, UTF-8 CSV → 400, sin paths internos ni JWT en fallos Resend.
+- Scripts: I/O + `sys.exit(1)` en analyze/seeders.
+- Backoffice: helper `lib/errors.ts`, Reintentar, `error.tsx`, mensajes sin `JSON.stringify`.
+- `uis/web` + website: mensajes de red legibles; formulario de aplicación honesto + CTA.
+- Se deja el password de demo en `seed_auth.py` (decisión de clase; limpieza futura).
+- Enlace de reset en consola solo si no hay `RESEND_API_KEY` (modo demo).
