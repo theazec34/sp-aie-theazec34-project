@@ -1,21 +1,22 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppNav from "../../../components/AppNav";
 import RequireAuth from "../../../components/RequireAuth";
 import { apiFetch } from "../../../lib/api";
-import { getToken } from "../../../lib/auth";
+import { getApiBaseUrl, getToken } from "../../../lib/auth";
+import { friendlyCatch, readApiError } from "../../../lib/errors";
 
 type AuthMe = {
-  email: string;
-  role: string;
-  profile: {
-    id: number;
-    user_id: number;
-    name: string;
-    phone: string | null;
-    address: string | null;
+  email?: string;
+  role?: string;
+  profile?: {
+    id?: number;
+    user_id?: number;
+    name?: string | null;
+    phone?: string | null;
+    address?: string | null;
   } | null;
 };
 
@@ -30,36 +31,39 @@ export default function AccountProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [loadFailed, setLoadFailed] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!getToken()) {
       router.replace("/login");
       return;
     }
-
-    async function load() {
-      setLoading(true);
-      setError("");
-      try {
-        const response = await apiFetch("/auth/me");
-        if (!response.ok) {
-          throw new Error(`Error HTTP ${response.status}`);
-        }
-        const data = (await response.json()) as AuthMe;
-        setEmail(data.email);
-        setRole(data.role);
-        setName(data.profile?.name || "");
-        setPhone(data.profile?.phone || "");
-        setAddress(data.profile?.address || "");
-      } catch (err) {
-        setError((err as Error).message);
-      } finally {
-        setLoading(false);
+    setLoading(true);
+    setError("");
+    setLoadFailed(false);
+    try {
+      const response = await apiFetch("/auth/me");
+      if (!response.ok) {
+        const parsed = await readApiError(response);
+        throw new Error(parsed.message);
       }
+      const data = (await response.json()) as AuthMe;
+      setEmail(data.email || "");
+      setRole(data.role || "");
+      setName(data.profile?.name || "");
+      setPhone(data.profile?.phone || "");
+      setAddress(data.profile?.address || "");
+    } catch (err) {
+      setLoadFailed(true);
+      setError(friendlyCatch(err, getApiBaseUrl()));
+    } finally {
+      setLoading(false);
     }
-
-    void load();
   }, [router]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   async function onSave(event: FormEvent) {
     event.preventDefault();
@@ -81,16 +85,12 @@ export default function AccountProfilePage() {
         }),
       });
       if (!response.ok) {
-        const detail = await response.json().catch(() => ({}));
-        throw new Error(
-          typeof detail.detail === "string"
-            ? detail.detail
-            : `Error HTTP ${response.status}`
-        );
+        const parsed = await readApiError(response);
+        throw new Error(parsed.message);
       }
       setMessage("Perfil actualizado correctamente.");
     } catch (err) {
-      setError((err as Error).message);
+      setError(friendlyCatch(err, getApiBaseUrl()));
     } finally {
       setSaving(false);
     }
@@ -112,10 +112,23 @@ export default function AccountProfilePage() {
 
           <section className="bo-panel">
             {loading ? <p className="bo-soft">Cargando perfil…</p> : null}
-            {error ? <p className="bo-alert bo-alert-error">{error}</p> : null}
+            {error ? (
+              <div className="bo-alert bo-alert-error">
+                <p>{error}</p>
+                {loadFailed ? (
+                  <button
+                    type="button"
+                    className="bo-btn bo-btn-small"
+                    onClick={() => void load()}
+                  >
+                    Reintentar
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
             {message ? <p className="bo-alert bo-alert-ok">{message}</p> : null}
 
-            {!loading ? (
+            {!loading && !loadFailed ? (
               <form className="auth-form" onSubmit={onSave}>
                 <label className="bo-field">
                   <span>Email (solo lectura)</span>

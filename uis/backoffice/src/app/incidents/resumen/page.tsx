@@ -53,11 +53,12 @@ export default function IncidentsSummaryPage() {
     try {
       const response = await apiFetch("/api/incidents/summary", { skipAuth: true });
       if (!response.ok) {
-        throw new Error(`Error HTTP ${response.status}`);
+        const parsed = await readApiError(response);
+        throw new Error(parsed.message);
       }
       setSummary((await response.json()) as IncidentSummary);
     } catch (err) {
-      setError((err as Error).message || "No se pudo cargar el resumen.");
+      setError(friendlyCatch(err, getApiBaseUrl()));
       setSummary(null);
     } finally {
       setLoading(false);

@@ -5,6 +5,7 @@ import AppNav from "../../components/AppNav";
 import RequireAuth from "../../components/RequireAuth";
 import { apiFetch } from "../../lib/api";
 import { getApiBaseUrl } from "../../lib/auth";
+import { friendlyCatch, readApiError } from "../../lib/errors";
 
 type SupplierStatus = "active" | "suspended";
 
@@ -79,7 +80,7 @@ export default function ProveedoresPage() {
       setRateDrafts(drafts);
     } catch (err) {
       setError(
-        `No se pudo cargar el directorio. ¿API en ${getApiBaseUrl()}? ${(err as Error).message}`
+        `No se pudo cargar el directorio. ${friendlyCatch(err, getApiBaseUrl())}`
       );
     } finally {
       setLoading(false);
@@ -112,12 +113,8 @@ export default function ProveedoresPage() {
         body: JSON.stringify(payload),
       });
       if (!response.ok) {
-        const detail = await response.json().catch(() => ({}));
-        throw new Error(
-          typeof detail.detail === "string"
-            ? detail.detail
-            : JSON.stringify(detail.detail || detail)
-        );
+        const parsed = await readApiError(response);
+        throw new Error(parsed.message);
       }
       setForm({
         ...emptyForm,
@@ -127,7 +124,7 @@ export default function ProveedoresPage() {
       setMessage("Proveedor registrado correctamente.");
       await loadSuppliers();
     } catch (err) {
-      setError(`Alta rechazada: ${(err as Error).message}`);
+      setError(`Alta rechazada: ${friendlyCatch(err, getApiBaseUrl())}`);
     }
   }
 
@@ -142,13 +139,13 @@ export default function ProveedoresPage() {
         body: JSON.stringify({ rate_per_unit: rate }),
       });
       if (!response.ok) {
-        const detail = await response.json().catch(() => ({}));
-        throw new Error(JSON.stringify(detail.detail || detail));
+        const parsed = await readApiError(response);
+        throw new Error(parsed.message);
       }
       setMessage(`Tarifa del proveedor #${id} actualizada.`);
       await loadSuppliers();
     } catch (err) {
-      setError(`No se pudo actualizar la tarifa: ${(err as Error).message}`);
+      setError(`No se pudo actualizar la tarifa: ${friendlyCatch(err, getApiBaseUrl())}`);
     }
   }
 
@@ -163,12 +160,13 @@ export default function ProveedoresPage() {
         body: JSON.stringify({ status: next }),
       });
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        const parsed = await readApiError(response);
+        throw new Error(parsed.message);
       }
       setMessage(`Estado de ${supplier.name} → ${next}.`);
       await loadSuppliers();
     } catch (err) {
-      setError(`No se pudo cambiar el estado: ${(err as Error).message}`);
+      setError(`No se pudo cambiar el estado: ${friendlyCatch(err, getApiBaseUrl())}`);
     }
   }
 
@@ -236,12 +234,26 @@ export default function ProveedoresPage() {
             </button>
           </div>
           {loading ? <p className="bo-soft">Cargando…</p> : null}
-          {error ? <p className="bo-alert bo-alert-error">{error}</p> : null}
+          {error ? (
+            <div className="bo-alert bo-alert-error">
+              <p>{error}</p>
+              <button
+                type="button"
+                className="bo-btn bo-btn-small"
+                onClick={() => void loadSuppliers()}
+              >
+                Reintentar
+              </button>
+            </div>
+          ) : null}
           {message ? <p className="bo-alert bo-alert-ok">{message}</p> : null}
         </section>
 
         <section className="bo-panel">
           <h2>Listado ({suppliers.length})</h2>
+          {!loading && !error && suppliers.length === 0 ? (
+            <p className="bo-soft">No hay proveedores con estos filtros.</p>
+          ) : null}
           <div className="bo-table-wrap">
             <table className="bo-table">
               <thead>
