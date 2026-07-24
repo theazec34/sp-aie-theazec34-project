@@ -208,3 +208,13 @@ cd uis/backoffice && npm run dev
   - `/forgot-password`, `/reset-password?token=...`, `/account/change-password`
   - Enlace «¿Olvidaste tu contraseña?» en `/login`
 - PR a `main`: lo abre el alumno
+
+## Hito Gestor de Incidencias Centralizado (rama `incidents-centralized`)
+- CONTEXT: `CONTEXT-incidents-centralized.es.md`
+- Modelo TinyDB + seed desde `incidents-brasaland.csv` (96 válidos; conteos CONTEXT OK)
+- Helpers compartidos: `packages/shared/python/brasaland_incidents/`
+- API pública: `POST/GET /api/incidents`, `GET /summary`, `GET/{id}`, `PATCH /{id}/status`
+- Errores 400 por campo / 500 genérico (sin stack trace)
+- Backoffice: `/incidents/nueva`, `/incidents`, `/incidents/resumen`
+- Analizador legacy `/api/v1/incidents/analyze|export` intacto
+- PR a `main`: lo abre el alumno
