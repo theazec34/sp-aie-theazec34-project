@@ -16,10 +16,18 @@ from app.suppliers.seed_data import SUPPLIERS_SEED
 
 def main() -> int:
     repo = SupplierRepository()
-    before = repo.count()
-    inserted, skipped = repo.seed_if_empty(SUPPLIERS_SEED)
-    after = repo.count()
-    repo.close()
+    try:
+        before = repo.count()
+        inserted, skipped = repo.seed_if_empty(SUPPLIERS_SEED)
+        after = repo.count()
+    except OSError as exc:
+        print(f"ERROR — no se pudo acceder a la base TinyDB: {exc}", file=sys.stderr)
+        return 1
+    except Exception as exc:  # noqa: BLE001
+        print(f"ERROR — seeder de proveedores falló: {exc}", file=sys.stderr)
+        return 1
+    finally:
+        repo.close()
 
     print("Brasaland — Supplier directory seeder")
     print(f"  Database ........ {repo.db_path}")

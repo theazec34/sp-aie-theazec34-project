@@ -104,7 +104,11 @@ def print_report(result) -> None:
 
 
 def export_results(result, output_path: Path) -> None:
-    output_path.write_text(export_to_csv_text(result), encoding="utf-8")
+    try:
+        output_path.write_text(export_to_csv_text(result), encoding="utf-8")
+    except OSError as exc:
+        print(f"No se pudo escribir {output_path}: {exc}", file=sys.stderr)
+        raise
     print(f"Exported to {output_path}")
 
 
@@ -118,7 +122,18 @@ def main() -> int:
         print(f"File not found: {source}", file=sys.stderr)
         return 1
 
-    result = analyze_file(source)
+    try:
+        result = analyze_file(source)
+    except UnicodeDecodeError as exc:
+        print(f"El CSV debe ser UTF-8: {exc}", file=sys.stderr)
+        return 1
+    except OSError as exc:
+        print(f"Error al leer el fichero: {exc}", file=sys.stderr)
+        return 1
+    except Exception as exc:  # noqa: BLE001 — last-resort for CLI
+        print(f"Error al analizar el CSV: {exc}", file=sys.stderr)
+        return 1
+
     print_report(result)
 
     try:
@@ -128,7 +143,10 @@ def main() -> int:
 
     if answer in {"y", "yes", "s", "si", "sí"}:
         output_path = source.with_name(f"{source.stem}-analysis.csv")
-        export_results(result, output_path)
+        try:
+            export_results(result, output_path)
+        except OSError:
+            return 1
 
     return 0
 
