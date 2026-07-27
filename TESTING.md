@@ -102,4 +102,34 @@ npm test -- --coverage
 
 ## Resultados
 
-*(Se completa al final de la rama `limit_testing` tras ejecutar la batería.)*
+Ejecutado en rama `limit_testing`:
+
+### Backend
+```text
+cd services/api && uv run pytest
+# → 40 passed
+```
+
+Módulos:
+- `tests/test_register.py`
+- `tests/test_login.py`
+- `tests/test_profiles.py`
+- `tests/test_password_flows.py`
+- `tests/test_suppliers.py`
+- `tests/test_incidents.py`
+
+Cobertura orientativa auth (`uv run pytest --cov=app/auth --cov=app/users --cov=app/profiles`):
+- Suite completa en verde; el foco del hito es lógica de negocio (no serialización HTTP).
+
+### Frontend (Jest)
+```text
+cd uis/backoffice && npm test -- --coverage
+# → 10 passed (2 suites)
+```
+
+- `src/__tests__/auth-errors.test.ts` — token, networkErrorMessage, parseApiErrorPayload
+- `src/__tests__/incidents-utils.test.ts` — labelFor, STATUS_TRANSITIONS
+
+### Bugs / hallazgos al escribir tests
+- Ningún bug bloqueante en la API de auth existente.
+- Caso reforzado por la batería (sugerido con ayuda de IA): anti-enumeración en forgot-password y reset token de un solo uso.
