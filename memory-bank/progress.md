@@ -226,4 +226,12 @@ cd uis/backoffice && npm run dev
 - Backoffice: loading/error/CTA + `lib/errors.ts` + `error.tsx`
 - `uis/web` + website: mensajes legibles; formulario demo honesto
 - Sin nuevas features (solo gestión de errores)
+- PR mergeado a `main`
+
+## Hito AUTH-088 Testing (rama `limit_testing`)
+- `TESTING.md` en raíz (plan + cómo ejecutar + resultados)
+- pytest en `services/api/tests/`: register, login, me, profiles, forgot/reset/change-password
+- Extras bulletproof: anti-enumeración, token malformado/reusado, usuario inactivo
+- Ampliación: suppliers + incidents; Jest en `uis/backoffice` (auth/errors + incidents utils)
+- `uv run pytest` → 40 passed; Jest → 10 passed; cov auth~82%
 - PR a `main`: lo abre el alumno
