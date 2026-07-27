@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from jose import jwt
 
-from app.auth.security import hash_password
-from app.users.models import UserRole, UserUpdate
+from app.users.models import UserUpdate
 from app.users.repository import UserRepository
 
 

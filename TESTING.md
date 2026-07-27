@@ -119,7 +119,7 @@ Módulos:
 - `tests/test_incidents.py`
 
 Cobertura orientativa auth (`uv run pytest --cov=app/auth --cov=app/users --cov=app/profiles`):
-- Suite completa en verde; el foco del hito es lógica de negocio (no serialización HTTP).
+- **TOTAL ~82%** en esos módulos (auth router ~98%). Cumple el umbral académico ≥70% del ticket AUTH-088.
 
 ### Frontend (Jest)
 ```text

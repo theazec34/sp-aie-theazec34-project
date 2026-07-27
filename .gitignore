@@ -31,3 +31,8 @@ services/api/data/
 *.db
 
 
+
+# Test / coverage artifacts
+services/api/.coverage
+**/coverage/
+**/.nyc_output/
