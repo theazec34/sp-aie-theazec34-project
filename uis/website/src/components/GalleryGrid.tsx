@@ -18,7 +18,7 @@ export function GalleryGrid() {
                 src={photo.path}
                 alt={photo.title}
                 width={360}
-                height={220}
+                height={196}
                 className="gallery-image"
                 sizes="(max-width: 920px) 50vw, 25vw"
                 loading="lazy"

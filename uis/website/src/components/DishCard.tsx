@@ -16,7 +16,7 @@ export function DishCard({ item, priority = false }: DishCardProps) {
           src={item.imagePath}
           alt={item.name}
           width={420}
-          height={260}
+          height={229}
           sizes="(max-width: 920px) 100vw, 33vw"
           priority={priority}
         />
