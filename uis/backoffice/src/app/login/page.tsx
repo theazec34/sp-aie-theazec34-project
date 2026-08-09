@@ -83,7 +83,17 @@ export default function LoginPage() {
         <h1>Iniciar sesión</h1>
         <p className="bo-soft">Accede con tu email y contraseña de la API.</p>
 
-        <Suspense fallback={<p className="bo-soft">Cargando…</p>}>
+        <Suspense
+          fallback={
+            <div className="auth-form" aria-busy="true" aria-label="Cargando formulario">
+              <div className="bo-field"><span>Email</span><input disabled /></div>
+              <div className="bo-field"><span>Contraseña</span><input disabled type="password" /></div>
+              <button className="bo-btn bo-btn-primary" type="button" disabled>
+                Entrando…
+              </button>
+            </div>
+          }
+        >
           <LoginForm />
         </Suspense>
 
