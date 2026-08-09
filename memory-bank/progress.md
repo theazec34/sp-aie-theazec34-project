@@ -260,10 +260,11 @@ cd uis/backoffice && npm run dev
 - Nav: añadir links en `AppNav.tsx` + card en `page.tsx` (dashboard).
 - **Cero** código inventario en backoffice; API ya existe en `services/api/app/inventory/`.
 
-## Hito Docker / infra (rama `docker-infra`) — en curso
+## Hito Docker / infra (rama `docker-infra`)
 - Ticket: dockerizar monorepo (`docker compose up` desde la raíz).
 - `uis/Dockerfile` + `start.sh`: website:3000 + backoffice:3001 en un contenedor.
-- `services/Dockerfile` + `entrypoint.sh`: FastAPI en `services/api`, uv, seeds idempotentes, uvicorn `--reload`.
+- `services/Dockerfile` (contexto raíz, incluye `packages/shared`) + `entrypoint.sh`.
 - `docker-compose.yml`: red `brasaland-net`; browser → `localhost`; interno → `http://backend:8000`.
+- Fallback: si Supabase no responde → SQLite local (marcador `.sqlite_fallback`).
 - `.env.example` versionado; `.env` local gitignored (secretos solo ahí).
-- Guía: `DOCKER.md`.
+- Guía: `DOCKER.md`. PR draft #19.

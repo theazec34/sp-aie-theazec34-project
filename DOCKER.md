@@ -42,7 +42,18 @@ El entrypoint del backend ejecuta (idempotente) antes de uvicorn:
 
 1. `seed_auth.py`
 2. `seed.py` (proveedores)
-3. `seed_inventory.py`
+3. `seed_inventory.py` (con timeout; no bloquea el arranque)
+
+## Supabase / SQLite
+
+- Si `DATABASE_URL` es alcanzable → inventario en Postgres/Supabase.
+- Si no (firewall, proyecto pausado, etc.) → **fallback automático a SQLite** en el volumen `backend_data`.
+- Queda un marcador `services/api/data/.sqlite_fallback` (dentro del volumen). Bórralo para reintentar Supabase:
+
+```bash
+docker compose exec backend rm -f /app/api/data/.sqlite_fallback
+docker compose restart backend
+```
 
 ## Secretos
 

@@ -8,8 +8,9 @@
 services:
   backend:
     build:
-      context: ./services
-      dockerfile: Dockerfile
+      # Root context: needed for packages/shared/python (analyzer imports)
+      context: .
+      dockerfile: services/Dockerfile
     container_name: brasaland-backend
     env_file:
       - .env
@@ -18,6 +19,7 @@ services:
     volumes:
       # Hot reload: código del host → contenedor
       - ./services/api:/app/api
+      - ./packages:/packages
       # Persistencia TinyDB / SQLite local si no hay DATABASE_URL
       - backend_data:/app/api/data
     networks:

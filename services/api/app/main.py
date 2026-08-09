@@ -26,7 +26,11 @@ WEB_DIR = Path(__file__).resolve().parents[3] / "uis" / "web"
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    init_db()
+    try:
+        init_db()
+    except Exception as exc:  # noqa: BLE001 — boot must not hang if DB is unreachable
+        # Auth/suppliers (TinyDB) still work; inventory routes will fail until DB is up.
+        print(f"[startup] WARN — init_db skipped: {exc}", flush=True)
     yield
 
 
