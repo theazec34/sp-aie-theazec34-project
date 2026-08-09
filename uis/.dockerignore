@@ -1,0 +1,16 @@
+**/node_modules
+**/.next
+**/out
+**/.env
+**/.env.*
+!**/.env.example
+**/*.log
+**/coverage
+**/.nyc_output
+**/*.tsbuildinfo
+.git
+.gitignore
+README.md
+web
+**/__tests__
+**/.DS_Store

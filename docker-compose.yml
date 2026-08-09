@@ -1,0 +1,65 @@
+# Brasaland Digital — plataforma local con un comando:
+#   docker compose up --build
+#
+# Secrets viven en `.env` (gitignored). No hardcodear claves aquí.
+# Red interna: los servicios se resuelven por nombre (`backend`, `interfaces`).
+# El navegador del host usa localhost (ver NEXT_PUBLIC_* en `.env`).
+
+services:
+  backend:
+    build:
+      # Root context: needed for packages/shared/python (analyzer imports)
+      context: .
+      dockerfile: services/Dockerfile
+    container_name: brasaland-backend
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      # Hot reload: código del host → contenedor
+      - ./services/api:/app/api
+      - ./packages:/packages
+      # Persistencia TinyDB / SQLite local si no hay DATABASE_URL
+      - backend_data:/app/api/data
+    networks:
+      - brasaland-net
+    restart: unless-stopped
+
+  interfaces:
+    build:
+      context: ./uis
+      dockerfile: Dockerfile
+    container_name: brasaland-interfaces
+    env_file:
+      - .env
+    environment:
+      # Explicit for Next.js at runtime (browser still sees host localhost URLs)
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_INVENTORY_API_URL: ${NEXT_PUBLIC_INVENTORY_API_URL}
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    volumes:
+      - ./uis/website:/app/website
+      - ./uis/backoffice:/app/backoffice
+      # Preserve image node_modules under bind mounts
+      - website_node_modules:/app/website/node_modules
+      - backoffice_node_modules:/app/backoffice/node_modules
+    depends_on:
+      - backend
+    networks:
+      - brasaland-net
+    restart: unless-stopped
+
+networks:
+  brasaland-net:
+    name: brasaland-net
+    driver: bridge
+
+volumes:
+  backend_data:
+  website_node_modules:
+  backoffice_node_modules:
