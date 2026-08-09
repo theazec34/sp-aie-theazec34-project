@@ -48,8 +48,8 @@ Conclusión tecnica: la parte web refleja Brasaland, pero la parte TypeScript de
 - Integracion de imagenes de platos mediante mapeo en JS.
 
 ## Estado de rama
-- Rama activa de trabajo: `inventory-orm` (hito backend inventario SQLModel / dual DB).
-- `main` incluye auth JWT, suppliers, incidents CRUD y testing AUTH-088.
+- Rama activa de trabajo: `docker-infra` (Docker Compose monorepo).
+- `main` incluye inventario ORM + UI backoffice inventario.
 
 ## Inventario (dual DB)
 - Motor SQL: `services/api/app/database.py` (`get_db`, `init_db`).

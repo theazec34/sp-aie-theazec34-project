@@ -13,7 +13,8 @@ playwright-report/
 # Dependency folders in nested apps
 **/node_modules/
 
-# Local env/secrets files
+# Local env/secrets files (incluye .env en la raíz para docker compose)
+.env
 **/.env
 **/.env.*
 !.env.example

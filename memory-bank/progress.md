@@ -259,3 +259,11 @@ cd uis/backoffice && npm run dev
 - CRUD de referencia: `proveedores/page.tsx` (list+create+PATCH autenticado) e `incidents/*` (forms + `readApiError` / `fieldErrors`).
 - Nav: añadir links en `AppNav.tsx` + card en `page.tsx` (dashboard).
 - **Cero** código inventario en backoffice; API ya existe en `services/api/app/inventory/`.
+
+## Hito Docker / infra (rama `docker-infra`) — en curso
+- Ticket: dockerizar monorepo (`docker compose up` desde la raíz).
+- `uis/Dockerfile` + `start.sh`: website:3000 + backoffice:3001 en un contenedor.
+- `services/Dockerfile` + `entrypoint.sh`: FastAPI en `services/api`, uv, seeds idempotentes, uvicorn `--reload`.
+- `docker-compose.yml`: red `brasaland-net`; browser → `localhost`; interno → `http://backend:8000`.
+- `.env.example` versionado; `.env` local gitignored (secretos solo ahí).
+- Guía: `DOCKER.md`.
