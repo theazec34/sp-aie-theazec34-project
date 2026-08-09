@@ -268,3 +268,14 @@ cd uis/backoffice && npm run dev
 - Fallback: si Supabase no responde → SQLite local (marcador `.sqlite_fallback`).
 - `.env.example` versionado; `.env` local gitignored (secretos solo ahí).
 - Guía: `DOCKER.md`. PR draft #19.
+
+## Auditoría Lighthouse / CWV + duplicación — `uis/backoffice` (2026-08-09)
+- Rama: `cursor/backoffice-cwv-audit-c620` (solo informe; sin rewrite de arquitectura).
+- Hallazgos clave:
+  - **100% páginas `"use client"`** (incl. dashboard); sin `middleware.ts`, sin `loading.tsx`, sin `dynamic()`.
+  - Auth solo cliente (`RequireAuth` + JWT `localStorage`) → flash «Comprobando sesión…» antes de LCP útil.
+  - Sin imágenes / `public/` / favicon; metadata mínima en `layout.tsx`; 2 Google fonts × 6 pesos.
+  - Vistas pesadas: `proveedores` (426L), `inventory/orders/outbound` (259L), `incidents` (238L), tablas stock/historial.
+  - Duplicación clara: shell `RequireAuth`+`AppNav`+`bo-shell` (~12 rutas); patrón load/error/retry; auth cards + `ApiBaseUrlField`; inbound/outbound boot de ingredientes.
+  - Bug shell: `account/change-password` usa clases `bo-layout`/`bo-main`/`bo-header` **inexistentes** en `globals.css`.
+- Fixes de alto impacto (sin rediseñar): layout compartido autenticado, recortar pesos de fuente, icons+`robots: noindex`, hook `useApiList`, `AuthShell`, unificar change-password al shell estándar, evitar doble fetch en outbound.
