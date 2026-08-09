@@ -279,3 +279,14 @@ cd uis/backoffice && npm run dev
   - Duplicación clara: shell `RequireAuth`+`AppNav`+`bo-shell` (~12 rutas); patrón load/error/retry; auth cards + `ApiBaseUrlField`; inbound/outbound boot de ingredientes.
   - Bug shell: `account/change-password` usa clases `bo-layout`/`bo-main`/`bo-header` **inexistentes** en `globals.css`.
 - Fixes de alto impacto (sin rediseñar): layout compartido autenticado, recortar pesos de fuente, icons+`robots: noindex`, hook `useApiList`, `AuthShell`, unificar change-password al shell estándar, evitar doble fetch en outbound.
+
+## Auditoría Lighthouse / CWV + duplicación — `uis/website` (2026-08-09)
+- Rama: `cursor/website-lighthouse-audit-c620` (informe; sin cambios de código de producto).
+- App Router mínimo: solo `/` (`src/app/page.tsx`) + `error.tsx` + `layout.tsx`; anclas `#inicio|#carta|#galeria|#aplicar`.
+- Imágenes: `next/image` en Header/DishCard/GalleryGrid; fuentes ~2MB PNG (1408×768) en `public/Imagenes/`; sin `sizes`; CSS fuerza `height` fijo vs `width`/`height` props → riesgo CLS; galería re-descarga los mismos assets que la carta.
+- Fuentes: `next/font/google` DM_Sans + Playfair_Display (display swap por defecto); sin `display` explícito.
+- SEO: `lang="es"`, title/description en metadata; sin Open Graph/Twitter/canonical/sitemap/robots; favicons duplicados (`app/favicon.ico`, `public/favicon.png`, `public/icon.png`, `Imagenes/favicon.jpg`).
+- Cliente: `ApplicationForm` (`"use client"`) import estático en home → JS/hidratación below-the-fold; `error.tsx` client.
+- Dead code: `FeatureCard.tsx`, `SectionTitle.tsx` no usados; `page.module.css` boilerplate CNA sin import.
+- Duplicación: títulos de sección inline vs `SectionTitle`; brand Header+footer; `menuImageMap` ∩ `allProjectPhotos`.
+- Fixes top: comprimir/WebP assets + `sizes`/`priority` LCP; alinear aspect-ratio CSS; lazy `ApplicationForm`; metadata OG + sitemap; usar `SectionTitle`/Brand compartidos.
