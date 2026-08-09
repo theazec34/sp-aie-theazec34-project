@@ -235,3 +235,14 @@ cd uis/backoffice && npm run dev
 - Ampliación: suppliers + incidents; Jest en `uis/backoffice` (auth/errors + incidents utils)
 - `uv run pytest` → 40 passed; Jest → 10 passed; cov auth~82%
 - PR a `main`: lo abre el alumno
+
+## Hito Inventario ORM backend (rama `inventory-orm`) — en curso
+- CONTEXT: `05-backend-inventory-orm/CONTEXT-brasaland.es.md`
+- Integrado en `services/api/app/` (no layout literal `services/main.py` del enunciado).
+- Dual DB: TinyDB (auth/users/…) + SQLModel (`DATABASE_URL` Supabase o SQLite local).
+- Modelos: `Ingredient`, `IngredientEntry`, `IngredientExit` — sin `current_stock` persistido.
+- Rutas JWT bajo `/inventory/products` y `/inventory/orders/*`.
+- **`user_uuid` = id numérico TinyDB como string** (ej. `"1"`), no UUID Supabase.
+- Seed: `seed_inventory.py` (≥6 ingredientes, ≥4 entradas, ≥3 salidas con 1 waste).
+- Frontend fotos / UI inventario: pendiente (hito posterior).
+- Smoke local: stock BRS-BEEF-001 = 68.0; outbound excesivo → 400 mensaje CONTEXT; pytest auth 40 OK.

@@ -48,8 +48,14 @@ Conclusión tecnica: la parte web refleja Brasaland, pero la parte TypeScript de
 - Integracion de imagenes de platos mediante mapeo en JS.
 
 ## Estado de rama
-- Rama activa de trabajo: `CSV` (hito analisis de incidencias postventa).
-- Rama anterior: `hito-4` (web Brasaland + dominio TS restaurante).
+- Rama activa de trabajo: `inventory-orm` (hito backend inventario SQLModel / dual DB).
+- `main` incluye auth JWT, suppliers, incidents CRUD y testing AUTH-088.
+
+## Inventario (dual DB)
+- Motor SQL: `services/api/app/database.py` (`get_db`, `init_db`).
+- Dominio: `services/api/app/inventory/` (models, schemas, stock, router).
+- `DATABASE_URL` en `.env` → Postgres/Supabase; vacío → SQLite `services/api/data/inventory.db`.
+- Auth sigue en TinyDB; no hay tabla User en SQL.
 
 ## Nuevo hito CSV (Python + API + web)
 - Script objetivo: `scripts/analyze.py` (Fase 1).

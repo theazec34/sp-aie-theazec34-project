@@ -1,6 +1,6 @@
 # Brasaland API
 
-Backend FastAPI: autenticación JWT, usuarios/perfiles, proveedores e incidencias (TinyDB).
+Backend FastAPI: autenticación JWT (TinyDB), inventario SQLModel (Postgres/Supabase o SQLite), proveedores e incidencias.
 
 ## Arranque rápido (para clase / demo)
 
@@ -13,13 +13,15 @@ source .venv/bin/activate
 # Si aún no existe el venv:
 #   uv venv && source .venv/bin/activate
 
-# 2) Instalar dependencias de la API (FastAPI, TinyDB, jose, passlib, etc.)
+# 2) Instalar dependencias de la API (FastAPI, TinyDB, SQLModel, jose, passlib, etc.)
 #    Usamos uv (no pip install suelto) según el estándar del proyecto.
 uv pip install -r services/api/requirements.txt
 
 # 3) Copiar plantilla de secretos a .env local
-#    SECRET_KEY y caducidad del JWT viven aquí; .env NO se sube a GitHub.
+#    SECRET_KEY, JWT y opcional DATABASE_URL (Supabase); .env NO se sube a GitHub.
 cp services/api/.env.example services/api/.env
+# Opcional: pega la URI Transaction pooler de Supabase en DATABASE_URL.
+# Si DATABASE_URL queda vacío → SQLite local en services/api/data/inventory.db
 
 # 4) Entrar en el paquete de la API
 cd services/api
@@ -32,7 +34,10 @@ PYTHONPATH=. python seed_auth.py
 #    Así /suppliers no arranca vacío en la demo.
 PYTHONPATH=. python seed.py
 
-# 7) Levantar la API en el puerto 8000 con recarga automática
+# 7) Sembrar inventario demo (CONTEXT: 6 ingredientes, entradas y salidas)
+PYTHONPATH=. python seed_inventory.py
+
+# 8) Levantar la API en el puerto 8000 con recarga automática
 #    Docs interactivos: http://localhost:8000/docs
 #    Health público:     http://localhost:8000/health
 uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
@@ -111,6 +116,31 @@ Siguen públicas: `/health`, `/docs`, `/`, `POST /auth/login`, `POST /auth/forgo
 5. `POST /auth/forgot-password` con un email registrado → revisar Resend o consola
 6. `POST /auth/reset-password` con el token del enlace
 7. `POST /auth/change-password` con Bearer + contraseñas
+
+## Inventario (SQLModel / dual DB)
+
+CONTEXT: `05-backend-inventory-orm/CONTEXT-brasaland.es.md`
+
+| Método | Ruta | Acceso | Descripción |
+|--------|------|--------|-------------|
+| `GET` | `/inventory/products` | JWT | Lista ingredientes + `current_stock` calculado |
+| `POST` | `/inventory/products` | JWT | Crea ingrediente |
+| `GET` | `/inventory/products/{id}` | JWT | Detalle + stock |
+| `POST` | `/inventory/orders/inbound` | JWT | Entrada de proveedor |
+| `POST` | `/inventory/orders/outbound` | JWT | Consumo/merma (400 si stock insuficiente) |
+| `GET` | `/inventory/orders` | JWT | Entradas + salidas con datos del ingrediente |
+
+### Dual database
+- **TinyDB** (`data/auth.json`, etc.): usuarios, perfiles, proveedores, incidencias.
+- **SQL / Supabase** (`DATABASE_URL`): tablas `ingredient`, `ingredient_entry`, `ingredient_exit`.
+- **Sin tabla User en SQL.** El campo `user_uuid` de las órdenes es el **id numérico TinyDB como string** (ej. `"1"`), no un UUID de Supabase Auth.
+- `current_stock` **nunca se almacena**: `sum(entries) − sum(exits)`.
+
+### Conectar Supabase
+1. Dashboard del proyecto → **Connect** → **Transaction pooler** → URI `postgresql://...`
+2. Pegarla en `services/api/.env` como `DATABASE_URL=...` (nunca committear `.env`)
+3. Reiniciar uvicorn; `init_db()` crea las tablas al arrancar.
+4. `PYTHONPATH=. python seed_inventory.py`
 
 ## Proveedores e incidencias
 

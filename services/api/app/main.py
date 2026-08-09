@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
@@ -8,8 +9,11 @@ from fastapi.staticfiles import StaticFiles
 from app.analyzer import analyze_text, build_report, export_to_csv_text
 from app.auth.deps import get_current_user
 from app.auth.router import router as auth_router
+from app.database import init_db
 from app.errors import register_exception_handlers
 from app.incidents.router import router as incidents_router
+from app.inventory import models as _inventory_models  # noqa: F401 — register metadata
+from app.inventory.router import router as inventory_router
 from app.profiles.router import router as profiles_router
 from app.schemas import AnalysisReport
 from app.suppliers.router import router as suppliers_router
@@ -19,13 +23,21 @@ from app.users.router import router as users_router
 # services/api/app/main.py → monorepo root → uis/web
 WEB_DIR = Path(__file__).resolve().parents[3] / "uis" / "web"
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    init_db()
+    yield
+
+
 app = FastAPI(
     title="Brasaland API",
-    version="1.2.0",
+    version="1.3.0",
     description=(
-        "API Brasaland Digital: auth JWT, usuarios/perfiles, proveedores e incidencias "
-        "(TinyDB)."
+        "API Brasaland Digital: auth JWT (TinyDB), inventario SQLModel "
+        "(Postgres/Supabase o SQLite), proveedores e incidencias."
     ),
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -43,6 +55,7 @@ app.include_router(users_router)
 app.include_router(profiles_router)
 app.include_router(suppliers_router)
 app.include_router(incidents_router)
+app.include_router(inventory_router)
 
 
 @app.get("/health")
@@ -73,6 +86,15 @@ def api_info() -> dict[str, object]:
             "rate": "/suppliers/{id}/rate",
             "status": "/suppliers/{id}/status",
             "auth_required": True,
+        },
+        "inventory": {
+            "products": "/inventory/products",
+            "product_detail": "/inventory/products/{id}",
+            "orders_inbound": "/inventory/orders/inbound",
+            "orders_outbound": "/inventory/orders/outbound",
+            "orders": "/inventory/orders",
+            "auth_required": True,
+            "user_uuid_note": "TinyDB numeric user id as string (e.g. '1')",
         },
     }
 
