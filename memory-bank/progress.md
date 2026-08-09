@@ -268,3 +268,11 @@ cd uis/backoffice && npm run dev
 - Fallback: si Supabase no responde → SQLite local (marcador `.sqlite_fallback`).
 - `.env.example` versionado; `.env` local gitignored (secretos solo ahí).
 - Guía: `DOCKER.md`. PR draft #19.
+
+## Hito Performance / Lighthouse (rama `performance-audit`)
+- Ciclo: baseline → `AUDIT.md` → correcciones (1 commit / problema) → `audit/after` → `REPORT.md`.
+- Skills: `core-web-vitals`, `performance`, `web-perf` en `.agents/skills/`.
+- Website: JPEG carta (~19MB→1.8MB), `sizes`/`priority`, `dynamic(ApplicationForm)`, `SectionTitle`, ratios reales, OG metadata.
+- Backoffice: menos font weights, CLS login (min-height + Suspense), contraste AA, favicon, `useAsyncResource` + `AuthenticatedShell`.
+- Mejora medible: website BP 96→100 y Perf desktop 83→100; backoffice Perf/A11y/BP y CLS mobile 0.199→0.099.
+- Entregables: `AUDIT.md`, `REPORT.md`, `audit/before/*`, `audit/after/*`.
