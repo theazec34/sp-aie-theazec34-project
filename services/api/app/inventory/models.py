@@ -4,10 +4,8 @@ Entity names match CONTEXT exactly. `current_stock` is never a column —
 it is computed in schemas/services from entries − exits.
 """
 
-from __future__ import annotations
-
 from datetime import datetime, timezone
-from typing import Optional
+from typing import List, Optional
 
 from sqlalchemy import Column, DateTime
 from sqlmodel import Field, Relationship, SQLModel
@@ -27,8 +25,8 @@ class Ingredient(SQLModel, table=True):
     category: str = Field(index=True)
     country: str = Field(index=True)
 
-    entries: list["IngredientEntry"] = Relationship(back_populates="ingredient")
-    exits: list["IngredientExit"] = Relationship(back_populates="ingredient")
+    entries: List["IngredientEntry"] = Relationship(back_populates="ingredient")
+    exits: List["IngredientExit"] = Relationship(back_populates="ingredient")
 
 
 class IngredientEntry(SQLModel, table=True):
