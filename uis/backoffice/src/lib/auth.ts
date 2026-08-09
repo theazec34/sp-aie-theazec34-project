@@ -2,9 +2,17 @@ const TOKEN_KEY = "brasaland_access_token";
 const API_BASE_KEY = "brasaland_api_base_url";
 
 /** Default API URL from location / env (ignores localStorage override). */
+function envApiBaseUrl(): string {
+  return (
+    process.env.NEXT_PUBLIC_INVENTORY_API_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    "http://localhost:8000"
+  );
+}
+
 export function detectApiBaseUrl(): string {
   if (typeof window === "undefined") {
-    return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    return envApiBaseUrl();
   }
   const { protocol, hostname, port } = window.location;
   if (hostname.includes("github.dev") || hostname.includes("githubpreview.dev")) {
@@ -14,7 +22,7 @@ export function detectApiBaseUrl(): string {
   if (port === "8000") {
     return window.location.origin;
   }
-  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  return envApiBaseUrl();
 }
 
 export function getStoredApiBaseUrl(): string | null {
