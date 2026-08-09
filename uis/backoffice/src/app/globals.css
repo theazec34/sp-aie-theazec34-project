@@ -376,6 +376,8 @@ a {
 
 .auth-card {
   width: min(420px, 100%);
+  /* Reserve vertical space to reduce CLS while fonts/content settle (mobile). */
+  min-height: 420px;
   background: #fff;
   border: 1px solid var(--bo-border);
   border-radius: 16px;
