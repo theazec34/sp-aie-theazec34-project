@@ -236,13 +236,26 @@ cd uis/backoffice && npm run dev
 - `uv run pytest` → 40 passed; Jest → 10 passed; cov auth~82%
 - PR a `main`: lo abre el alumno
 
-## Hito Inventario ORM backend (rama `inventory-orm`) — en curso
+## Hito Inventario ORM + backoffice UI (rama `inventory-orm`)
 - CONTEXT: `05-backend-inventory-orm/CONTEXT-brasaland.es.md`
-- Integrado en `services/api/app/` (no layout literal `services/main.py` del enunciado).
-- Dual DB: TinyDB (auth/users/…) + SQLModel (`DATABASE_URL` Supabase o SQLite local).
-- Modelos: `Ingredient`, `IngredientEntry`, `IngredientExit` — sin `current_stock` persistido.
-- Rutas JWT bajo `/inventory/products` y `/inventory/orders/*`.
-- **`user_uuid` = id numérico TinyDB como string** (ej. `"1"`), no UUID Supabase.
-- Seed: `seed_inventory.py` (≥6 ingredientes, ≥4 entradas, ≥3 salidas con 1 waste).
-- Frontend fotos / UI inventario: pendiente (hito posterior).
-- Smoke local: stock BRS-BEEF-001 = 68.0; outbound excesivo → 400 mensaje CONTEXT; pytest auth 40 OK.
+- Backend en `services/api/app/inventory/` (SQLModel dual DB + JWT).
+- **`user_uuid` = id numérico TinyDB como string** (ej. `"1"`).
+- Seed: `seed_inventory.py`.
+- Frontend backoffice (`uis/backoffice`):
+  - Módulo API: `src/lib/inventory.ts` (sin fetch directo en componentes)
+  - `/inventory/products` — stock con colores (umbrales 0 / 10 / 30)
+  - `/inventory/orders/inbound` — IngredientEntry
+  - `/inventory/orders/outbound` — stock reactivo + aviso cliente + error 400 inline
+  - `/inventory/orders` — historial solo lectura (tipo, nombre, cantidad, fecha, user_uuid)
+  - `RequireAuth` en las 4 vistas; nav + dashboard actualizados
+  - Env: `NEXT_PUBLIC_INVENTORY_API_URL` (alias de `NEXT_PUBLIC_API_URL`)
+- PR #17 (draft) en la misma rama.
+
+## Exploración backoffice para UI inventario (2026-08-09)
+- Auditado `uis/backoffice` (patrones para sección inventario).
+- App Router en `src/app/`: rutas planas `/proveedores`, `/incidents/*`, `/account/*` — **sin** prefijo `/backoffice` ni `basePath`.
+- Auth: solo cliente (`RequireAuth` + JWT en `localStorage`); **no hay** `middleware.ts`.
+- API: `apiFetch` (`lib/api.ts`) + `getApiBaseUrl` / token (`lib/auth.ts`); env `NEXT_PUBLIC_API_URL` en `.env.example`.
+- CRUD de referencia: `proveedores/page.tsx` (list+create+PATCH autenticado) e `incidents/*` (forms + `readApiError` / `fieldErrors`).
+- Nav: añadir links en `AppNav.tsx` + card en `page.tsx` (dashboard).
+- **Cero** código inventario en backoffice; API ya existe en `services/api/app/inventory/`.

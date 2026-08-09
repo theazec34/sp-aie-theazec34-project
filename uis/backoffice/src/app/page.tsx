@@ -32,6 +32,32 @@ const moduleCards = [
     href: "/proveedores",
   },
   {
+    id: "inventory-products",
+    title: "Stock de ingredientes",
+    description:
+      "Inventario en tiempo real con current_stock calculado y alertas de stock bajo.",
+    href: "/inventory/products",
+  },
+  {
+    id: "inventory-inbound",
+    title: "Entrada de ingredientes",
+    description: "Registrar entregas de proveedor (IngredientEntry) por local 1–14.",
+    href: "/inventory/orders/inbound",
+  },
+  {
+    id: "inventory-outbound",
+    title: "Salida / merma",
+    description:
+      "Consumo o merma (IngredientExit) con stock visible antes de enviar.",
+    href: "/inventory/orders/outbound",
+  },
+  {
+    id: "inventory-orders",
+    title: "Historial de inventario",
+    description: "Órdenes de entrada y salida con ingrediente y user_uuid del autor.",
+    href: "/inventory/orders",
+  },
+  {
     id: "perfil",
     title: "Mi cuenta",
     description: "Consulta y edita tu perfil (nombre y contacto) con sesión JWT.",
