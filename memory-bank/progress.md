@@ -246,3 +246,12 @@ cd uis/backoffice && npm run dev
 - Seed: `seed_inventory.py` (≥6 ingredientes, ≥4 entradas, ≥3 salidas con 1 waste).
 - Frontend fotos / UI inventario: pendiente (hito posterior).
 - Smoke local: stock BRS-BEEF-001 = 68.0; outbound excesivo → 400 mensaje CONTEXT; pytest auth 40 OK.
+
+## Exploración backoffice para UI inventario (2026-08-09)
+- Auditado `uis/backoffice` (patrones para sección inventario).
+- App Router en `src/app/`: rutas planas `/proveedores`, `/incidents/*`, `/account/*` — **sin** prefijo `/backoffice` ni `basePath`.
+- Auth: solo cliente (`RequireAuth` + JWT en `localStorage`); **no hay** `middleware.ts`.
+- API: `apiFetch` (`lib/api.ts`) + `getApiBaseUrl` / token (`lib/auth.ts`); env `NEXT_PUBLIC_API_URL` en `.env.example`.
+- CRUD de referencia: `proveedores/page.tsx` (list+create+PATCH autenticado) e `incidents/*` (forms + `readApiError` / `fieldErrors`).
+- Nav: añadir links en `AppNav.tsx` + card en `page.tsx` (dashboard).
+- **Cero** código inventario en backoffice; API ya existe en `services/api/app/inventory/`.
