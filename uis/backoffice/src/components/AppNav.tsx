@@ -11,7 +11,11 @@ type Props = {
     | "password"
     | "incidents"
     | "incidents-new"
-    | "incidents-summary";
+    | "incidents-summary"
+    | "inventory-products"
+    | "inventory-inbound"
+    | "inventory-outbound"
+    | "inventory-orders";
 };
 
 export default function AppNav({ active }: Props) {
@@ -30,6 +34,30 @@ export default function AppNav({ active }: Props) {
           className={`bo-nav-link${active === "proveedores" ? " bo-nav-link-active" : ""}`}
         >
           Proveedores
+        </Link>
+        <Link
+          href="/inventory/products"
+          className={`bo-nav-link${active === "inventory-products" ? " bo-nav-link-active" : ""}`}
+        >
+          Stock ingredientes
+        </Link>
+        <Link
+          href="/inventory/orders/inbound"
+          className={`bo-nav-link${active === "inventory-inbound" ? " bo-nav-link-active" : ""}`}
+        >
+          Entrada inventario
+        </Link>
+        <Link
+          href="/inventory/orders/outbound"
+          className={`bo-nav-link${active === "inventory-outbound" ? " bo-nav-link-active" : ""}`}
+        >
+          Salida inventario
+        </Link>
+        <Link
+          href="/inventory/orders"
+          className={`bo-nav-link${active === "inventory-orders" ? " bo-nav-link-active" : ""}`}
+        >
+          Historial inventario
         </Link>
         <Link
           href="/incidents/nueva"
