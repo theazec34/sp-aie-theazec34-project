@@ -263,6 +263,45 @@ a {
   color: #991b1b;
 }
 
+/* Inventory stock levels (thresholds in lib/inventory.ts) */
+.inv-badge-empty {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.inv-badge-low {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.inv-badge-medium {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.inv-badge-healthy {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.inv-badge-inbound {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.inv-badge-outbound {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.inv-stock-low td:first-child strong {
+  color: #991b1b;
+}
+
+.inv-stock-empty td:first-child strong {
+  color: #6b7280;
+}
+
 .bo-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
