@@ -86,10 +86,12 @@ export default function LoginPage() {
         <Suspense
           fallback={
             <div className="auth-form" aria-busy="true" aria-label="Cargando formulario">
+              {/* Mirror real form height (incl. API URL field) to keep CLS ≈ 0. */}
+              <div className="bo-field"><span>URL de la API</span><input disabled /></div>
               <div className="bo-field"><span>Email</span><input disabled /></div>
               <div className="bo-field"><span>Contraseña</span><input disabled type="password" /></div>
               <button className="bo-btn bo-btn-primary" type="button" disabled>
-                Entrando…
+                Entrar
               </button>
             </div>
           }
