@@ -7,14 +7,11 @@ export const navItems: NavItem[] = [
   { id: "aplicar", label: "Formulario", href: "#aplicar" },
 ];
 
+/** Gallery shows a smaller unique set to avoid re-downloading carta images (LCP/network). */
 export const allProjectPhotos: GalleryPhoto[] = [
-  { id: "arroz-bogavante", title: "Arroz bogavante", path: "/Imagenes/Arroz bogavante.jpg" },
-  { id: "arroz-caldoso", title: "Arroz caldoso", path: "/Imagenes/Arroz caldoso.jpg" },
-  { id: "corte-carne", title: "Corte de carne", path: "/Imagenes/Corte carne.jpg" },
-  { id: "entranha", title: "Entrana argentina", path: "/Imagenes/Entraña argentina.jpg" },
   { id: "icono-principal", title: "Icono principal", path: "/Imagenes/Icono principal.png" },
-  { id: "pata-cordero", title: "Pata de cordero", path: "/Imagenes/Pata de cordero.jpg" },
-  { id: "pescado-braseado", title: "Pescado braseado", path: "/Imagenes/Pescado braseado.jpg" },
+  { id: "corte-carne", title: "Corte de carne", path: "/Imagenes/Corte carne.jpg" },
+  { id: "arroz-bogavante", title: "Arroz bogavante", path: "/Imagenes/Arroz bogavante.jpg" },
   { id: "tabla-ibericos", title: "Tabla ibericos", path: "/Imagenes/Tabla ibericos.jpg" },
   { id: "tarta-galleta", title: "Tarta de galleta", path: "/Imagenes/Tarta de galleta.jpg" },
   { id: "tiramisu", title: "Tiramisu", path: "/Imagenes/tiramisu.jpg" },
