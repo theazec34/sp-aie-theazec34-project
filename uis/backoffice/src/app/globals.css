@@ -4,7 +4,8 @@
   --bo-card: #ffffff;
   --bo-ink: #101828;
   --bo-soft: #667085;
-  --bo-accent: #0891b2;
+  /* Darker accent for WCAG AA contrast on white/#ecfeff labels (LH a11y). */
+  --bo-accent: #0e7490;
   --bo-accent-weak: #cffafe;
   --bo-border: #d0d5dd;
 }
@@ -187,7 +188,7 @@ a {
 
 .bo-btn-primary {
   background: var(--bo-accent);
-  color: #ecfeff;
+  color: #ffffff;
 }
 
 .bo-btn-small {
@@ -376,6 +377,9 @@ a {
 
 .auth-card {
   width: min(420px, 100%);
+  /* Stable box: reserve space for ApiBaseUrlField + form (CLS on Suspense). */
+  contain: layout;
+  min-height: 560px;
   background: #fff;
   border: 1px solid var(--bo-border);
   border-radius: 16px;
@@ -390,6 +394,11 @@ a {
 .auth-card h1 {
   font-family: var(--font-display), sans-serif;
   margin: 4px 0 8px;
+  min-height: 1.2em;
+}
+
+.auth-card .bo-soft {
+  min-height: 1.4em;
 }
 
 .auth-form {

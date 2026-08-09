@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import { SectionTitle } from "@/components/SectionTitle";
 import { ApplicationFormData, ApplicationFormErrors } from "@/types/site";
 
 const INITIAL_FORM: ApplicationFormData = {
@@ -97,10 +98,11 @@ export function ApplicationForm() {
   return (
     <section id="aplicar" className="section">
       <div className="container">
-        <h2 className="section-title">Formulario de aplicacion</h2>
-        <p className="section-text">
-          Version React + TypeScript del formulario del proyecto, con validacion en cliente.
-        </p>
+        <SectionTitle
+          id="aplicar-title"
+          title="Formulario de aplicacion"
+          description="Version React + TypeScript del formulario del proyecto, con validacion en cliente."
+        />
 
         {hasErrors ? (
           <div className="error-summary" role="alert" aria-live="assertive">

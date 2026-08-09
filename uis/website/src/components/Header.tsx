@@ -14,9 +14,10 @@ export function Header({ navItems }: HeaderProps) {
             className="brand-mark"
             src="/Imagenes/Icono principal.png"
             alt="Icono Brasaland"
-            width={44}
-            height={44}
-            priority
+            width={192}
+            height={181}
+            sizes="44px"
+            style={{ width: 44, height: "auto" }}
           />
           <span>
             Brasa<span className="brand-highlight">land</span>

@@ -79,6 +79,7 @@ a {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  min-height: 44px;
   font-family: var(--font-display), serif;
   font-size: 1.45rem;
   font-weight: 900;
@@ -97,9 +98,16 @@ a {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
   color: rgba(255, 255, 255, 0.88);
   font-size: 0.95rem;
+}
+
+.nav-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 8px;
 }
 
 .nav-links a:hover {
@@ -127,9 +135,11 @@ a {
 }
 
 .hero-title {
+  /* Keep display face on H1 so LCP stays above-the-fold text (not a below-fold dish img). */
   font-family: var(--font-display), serif;
-  font-size: clamp(2.1rem, 4.4vw, 3.6rem);
-  line-height: 1.08;
+  font-weight: 900;
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  line-height: 1.05;
   margin-bottom: var(--space-3);
 }
 
@@ -196,7 +206,9 @@ a {
 
 .dish-image {
   width: 100%;
-  height: 190px;
+  height: auto;
+  /* Source JPEGs are 960×523 (~1.836); width/height attrs must match. */
+  aspect-ratio: 960 / 523;
   object-fit: cover;
   display: block;
 }
@@ -299,7 +311,8 @@ a {
 
 .gallery-image {
   width: 100%;
-  height: 210px;
+  height: auto;
+  aspect-ratio: 960 / 523;
   object-fit: cover;
   display: block;
 }

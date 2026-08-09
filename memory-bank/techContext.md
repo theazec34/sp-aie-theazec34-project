@@ -48,8 +48,15 @@ Conclusión tecnica: la parte web refleja Brasaland, pero la parte TypeScript de
 - Integracion de imagenes de platos mediante mapeo en JS.
 
 ## Estado de rama
-- Rama activa de trabajo: `docker-infra` (Docker Compose monorepo).
-- `main` incluye inventario ORM + UI backoffice inventario.
+- Rama activa de trabajo: `performance-audit` (Lighthouse / CWV).
+- `main` incluye Docker Compose + inventario ORM + UI backoffice inventario.
+
+## Performance / auditoría
+- Medición Lighthouse en producción local (`next build` + `next start`), no `next dev`.
+- Artefactos: `audit/before/`, `audit/after/`; docs `AUDIT.md` + `REPORT.md`.
+- Skills CWV: `.agents/skills/core-web-vitals`, `performance`, `web-perf`.
+- Website: imágenes carta en JPEG bajo `uis/website/public/Imagenes/`; `SectionTitle` compartido.
+- Backoffice: `useAsyncResource`, `AuthenticatedShell`; login con reserva de layout (CLS).
 
 ## Inventario (dual DB)
 - Motor SQL: `services/api/app/database.py` (`get_db`, `init_db`).

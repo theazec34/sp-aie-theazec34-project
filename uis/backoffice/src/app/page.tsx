@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import AppNav from "../components/AppNav";
-import RequireAuth from "../components/RequireAuth";
+import AuthenticatedShell from "../components/AuthenticatedShell";
 
 const moduleCards = [
   {
@@ -67,44 +66,38 @@ const moduleCards = [
 
 export default function BackofficeHome() {
   return (
-    <RequireAuth>
-      <main className="bo-shell">
-        <AppNav active="dashboard" />
+    <AuthenticatedShell active="dashboard">
+      <header id="overview" className="bo-topbar">
+        <div>
+          <p className="bo-kicker">Backoffice interno</p>
+          <h1>Brasaland Digital OPS</h1>
+        </div>
+        <span className="bo-status">Sesión autenticada</span>
+      </header>
 
-        <section className="bo-content">
-          <header id="overview" className="bo-topbar">
-            <div>
-              <p className="bo-kicker">Backoffice interno</p>
-              <h1>Brasaland Digital OPS</h1>
-            </div>
-            <span className="bo-status">Sesión autenticada</span>
-          </header>
-
-          <section id="modulos" className="bo-grid">
-            {moduleCards.map((moduleCard) => (
-              <article key={moduleCard.id} className="bo-panel">
-                <h3>{moduleCard.title}</h3>
-                <p>{moduleCard.description}</p>
-                {"href" in moduleCard && moduleCard.href ? (
-                  <p style={{ marginTop: 12 }}>
-                    <Link
-                      className="bo-nav-link"
-                      href={moduleCard.href}
-                      style={{
-                        display: "inline-block",
-                        background: "#ecfeff",
-                        color: "#0e7490",
-                      }}
-                    >
-                      Abrir módulo
-                    </Link>
-                  </p>
-                ) : null}
-              </article>
-            ))}
-          </section>
-        </section>
-      </main>
-    </RequireAuth>
+      <section id="modulos" className="bo-grid">
+        {moduleCards.map((moduleCard) => (
+          <article key={moduleCard.id} className="bo-panel">
+            <h3>{moduleCard.title}</h3>
+            <p>{moduleCard.description}</p>
+            {"href" in moduleCard && moduleCard.href ? (
+              <p style={{ marginTop: 12 }}>
+                <Link
+                  className="bo-nav-link"
+                  href={moduleCard.href}
+                  style={{
+                    display: "inline-block",
+                    background: "#ecfeff",
+                    color: "#0e7490",
+                  }}
+                >
+                  Abrir módulo
+                </Link>
+              </p>
+            ) : null}
+          </article>
+        ))}
+      </section>
+    </AuthenticatedShell>
   );
 }

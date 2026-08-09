@@ -1,9 +1,24 @@
-import { ApplicationForm } from "@/components/ApplicationForm";
+import dynamic from "next/dynamic";
 import { GalleryGrid } from "@/components/GalleryGrid";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { MenuSection } from "@/components/MenuSection";
 import { navItems } from "@/data/home";
+
+// Below-the-fold client form — keep out of the critical JS path (LCP / TBT).
+const ApplicationForm = dynamic(
+  () =>
+    import("@/components/ApplicationForm").then((mod) => mod.ApplicationForm),
+  {
+    loading: () => (
+      <section id="aplicar" className="section" aria-busy="true">
+        <div className="container">
+          <p className="section-text">Cargando formulario…</p>
+        </div>
+      </section>
+    ),
+  }
+);
 
 export default function Home() {
   return (
@@ -25,7 +40,9 @@ export default function Home() {
           <p className="brand">
             Brasa<span className="brand-highlight">land</span>
           </p>
-          <p className="footer-text">Next.js + TypeScript + React components reutilizables para la web principal.</p>
+          <p className="footer-text">
+            Next.js + TypeScript + React components reutilizables para la web principal.
+          </p>
         </div>
       </footer>
     </>

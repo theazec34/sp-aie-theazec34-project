@@ -3,9 +3,11 @@ import { DishItem } from "@/types/site";
 
 interface DishCardProps {
   item: DishItem;
+  /** Mark the likely LCP candidate (first carta image). */
+  priority?: boolean;
 }
 
-export function DishCard({ item }: DishCardProps) {
+export function DishCard({ item, priority = false }: DishCardProps) {
   return (
     <article className="card dish-card">
       {item.imagePath ? (
@@ -13,8 +15,10 @@ export function DishCard({ item }: DishCardProps) {
           className="dish-image"
           src={item.imagePath}
           alt={item.name}
-          width={420}
-          height={260}
+          width={960}
+          height={523}
+          sizes="(max-width: 920px) 100vw, 33vw"
+          priority={priority}
         />
       ) : (
         <div className="dish-image dish-image-fallback" aria-hidden="true" />
