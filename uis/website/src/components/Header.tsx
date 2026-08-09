@@ -16,7 +16,6 @@ export function Header({ navItems }: HeaderProps) {
             alt="Icono Brasaland"
             width={44}
             height={44}
-            priority
           />
           <span>
             Brasa<span className="brand-highlight">land</span>

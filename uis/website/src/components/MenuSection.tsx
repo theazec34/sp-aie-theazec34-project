@@ -1,4 +1,5 @@
 import { DishCard } from "@/components/DishCard";
+import { SectionTitle } from "@/components/SectionTitle";
 import menuData from "@/data/menu.json";
 import { menuImageMap } from "@/data/home";
 import { MenuData } from "@/types/menu";
@@ -26,13 +27,16 @@ const dishNameOverrides: Record<string, string> = {
 };
 
 export function MenuSection() {
+  let isFirstDish = true;
+
   return (
     <section id="carta" className="section">
       <div className="container">
-        <h2 className="section-title">Carta completa Brasaland</h2>
-        <p className="section-text">
-          Datos conectados a menu.json para reflejar categorias, platos, precios y alergenos del proyecto.
-        </p>
+        <SectionTitle
+          id="carta-title"
+          title="Carta completa Brasaland"
+          description="Datos conectados a menu.json para reflejar categorias, platos, precios y alergenos del proyecto."
+        />
         <div className="menu-summary">
           <p>
             <strong>{typedMenuData.restaurante.nombre}</strong> · {typedMenuData.restaurante.slogan}
@@ -51,23 +55,28 @@ export function MenuSection() {
             <div className="grid-3">
               {category.platos
                 .filter((dish) => !excludedDishIds.has(dish.id))
-                .map((dish) => (
-                <DishCard
-                  key={dish.id}
-                  item={{
-                    id: dish.id,
-                    name: dishNameOverrides[dish.id] ?? dish.nombre,
-                    description: dish.descripcion,
-                    priceEur: dish.precio,
-                    imagePath: menuImageMap[dish.id],
-                    badge: dish.badge,
-                    weight: dish.peso,
-                    extras: dish.extras,
-                    allergens: dish.alergenos,
-                    category: category.nombre,
-                  }}
-                />
-                ))}
+                .map((dish) => {
+                  const priority = isFirstDish;
+                  if (isFirstDish) isFirstDish = false;
+                  return (
+                    <DishCard
+                      key={dish.id}
+                      priority={priority}
+                      item={{
+                        id: dish.id,
+                        name: dishNameOverrides[dish.id] ?? dish.nombre,
+                        description: dish.descripcion,
+                        priceEur: dish.precio,
+                        imagePath: menuImageMap[dish.id],
+                        badge: dish.badge,
+                        weight: dish.peso,
+                        extras: dish.extras,
+                        allergens: dish.alergenos,
+                        category: category.nombre,
+                      }}
+                    />
+                  );
+                })}
             </div>
           </section>
         ))}
