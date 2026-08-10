@@ -277,6 +277,13 @@ cd uis/backoffice && npm run dev
 - Mejora medible: website BP 96→100 y Perf desktop 83→100; backoffice Perf/A11y/BP y CLS mobile 0.199→0.099.
 - Entregables: `AUDIT.md`, `REPORT.md`, `audit/before/*`, `audit/after/*`.
 
+## Hito Caching (rama `cursor/caching-optimisation-c620`)
+- Middleware `api.timing` + headers `X-Response-Time-Ms` / `X-Cache`.
+- Cache in-process TTL: `GET /api/incidents/summary` (30s) y `GET /suppliers` (60s) con invalidación en writes.
+- Seeder carga: `services/api/seed_load.py` (~800 incidencias, ~40 proveedores).
+- Frontend: `dynamic(GalleryGrid)` + `SupplierCreateForm` lazy; `useMemo` en stock de inventario.
+- Informe: `CACHING_REPORT.md`. Tests: `tests/test_cache.py`.
+
 ## Exploración caching frontend (2026-08-10) — website + backoffice
 - **`next/dynamic` / `React.lazy`:** solo 1 uso — `uis/website/src/app/page.tsx` → `dynamic(ApplicationForm)`. Cero `React.lazy`. Backoffice: `Suspense` en login/reset/outbound (searchParams), no code-split.
 - **`useMemo` existente:** trivial (query strings, `Number(quantity)`, `hasErrors`, token). Sin agregaciones/filtros derivados no triviales memoizados.

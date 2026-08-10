@@ -1,5 +1,4 @@
 import dynamic from "next/dynamic";
-import { GalleryGrid } from "@/components/GalleryGrid";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { MenuSection } from "@/components/MenuSection";
@@ -14,6 +13,21 @@ const ApplicationForm = dynamic(
       <section id="aplicar" className="section" aria-busy="true">
         <div className="container">
           <p className="section-text">Cargando formulario…</p>
+        </div>
+      </section>
+    ),
+  }
+);
+
+// Gallery ships many next/image nodes — defer until after hero + carta.
+const GalleryGrid = dynamic(
+  () =>
+    import("@/components/GalleryGrid").then((mod) => mod.GalleryGrid),
+  {
+    loading: () => (
+      <section id="galeria" className="section section-soft" aria-busy="true">
+        <div className="container">
+          <p className="section-text">Cargando galería…</p>
         </div>
       </section>
     ),

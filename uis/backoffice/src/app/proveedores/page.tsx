@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import AppNav from "../../components/AppNav";
 import RequireAuth from "../../components/RequireAuth";
 import { apiFetch } from "../../lib/api";
@@ -33,17 +34,17 @@ const CATEGORIES = [
   "carbon_y_combustible",
 ] as const;
 
-
-const emptyForm = {
-  name: "",
-  country: "Colombia" as "Colombia" | "USA",
-  categories: ["carne"] as string[],
-  rate_per_unit: "",
-  currency: "COP" as "COP" | "USD",
-  status: "active" as SupplierStatus,
-  contact_email: "",
-  notes: "",
-};
+const SupplierCreateForm = dynamic(
+  () => import("../../components/SupplierCreateForm"),
+  {
+    loading: () => (
+      <section className="bo-panel" aria-busy="true">
+        <p className="bo-soft">Cargando formulario de alta…</p>
+      </section>
+    ),
+    ssr: false,
+  }
+);
 
 export default function ProveedoresPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -52,7 +53,6 @@ export default function ProveedoresPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [form, setForm] = useState(emptyForm);
   const [rateDrafts, setRateDrafts] = useState<Record<number, string>>({});
 
   const query = useMemo(() => {
@@ -90,43 +90,6 @@ export default function ProveedoresPage() {
   useEffect(() => {
     void loadSuppliers();
   }, [loadSuppliers]);
-
-  async function handleCreate(event: FormEvent) {
-    event.preventDefault();
-    setError("");
-    setMessage("");
-    const payload = {
-      name: form.name.trim(),
-      country: form.country,
-      categories: form.categories,
-      rate_per_unit: Number(form.rate_per_unit),
-      currency: form.country === "Colombia" ? "COP" : "USD",
-      status: form.status,
-      contact_email: form.contact_email.trim() || null,
-      notes: form.notes.trim() || null,
-    };
-
-    try {
-      const response = await apiFetch(`/suppliers`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!response.ok) {
-        const parsed = await readApiError(response);
-        throw new Error(parsed.message);
-      }
-      setForm({
-        ...emptyForm,
-        country: form.country,
-        currency: form.country === "Colombia" ? "COP" : "USD",
-      });
-      setMessage("Proveedor registrado correctamente.");
-      await loadSuppliers();
-    } catch (err) {
-      setError(`Alta rechazada: ${friendlyCatch(err, getApiBaseUrl())}`);
-    }
-  }
 
   async function updateRate(id: number) {
     setError("");
@@ -168,24 +131,6 @@ export default function ProveedoresPage() {
     } catch (err) {
       setError(`No se pudo cambiar el estado: ${friendlyCatch(err, getApiBaseUrl())}`);
     }
-  }
-
-  function onCountryChange(country: "Colombia" | "USA") {
-    setForm((prev) => ({
-      ...prev,
-      country,
-      currency: country === "Colombia" ? "COP" : "USD",
-    }));
-  }
-
-  function toggleCategory(category: string) {
-    setForm((prev) => {
-      const exists = prev.categories.includes(category);
-      const categories = exists
-        ? prev.categories.filter((item) => item !== category)
-        : [...prev.categories, category];
-      return { ...prev, categories: categories.length ? categories : prev.categories };
-    });
   }
 
   return (
@@ -326,99 +271,11 @@ export default function ProveedoresPage() {
           </div>
         </section>
 
-        <section className="bo-panel">
-          <h2>Registrar proveedor</h2>
-          <form className="bo-form" onSubmit={handleCreate}>
-            <label className="bo-field">
-              <span>Nombre</span>
-              <input
-                required
-                value={form.name}
-                onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-              />
-            </label>
-            <label className="bo-field">
-              <span>País</span>
-              <select
-                value={form.country}
-                onChange={(event) =>
-                  onCountryChange(event.target.value as "Colombia" | "USA")
-                }
-              >
-                <option value="Colombia">Colombia</option>
-                <option value="USA">USA</option>
-              </select>
-            </label>
-            <label className="bo-field">
-              <span>Moneda (auto)</span>
-              <input value={form.currency} readOnly />
-            </label>
-            <label className="bo-field">
-              <span>Tarifa por unidad</span>
-              <input
-                required
-                type="number"
-                min="0.01"
-                step="0.01"
-                value={form.rate_per_unit}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, rate_per_unit: event.target.value }))
-                }
-              />
-            </label>
-            <label className="bo-field">
-              <span>Estado</span>
-              <select
-                value={form.status}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    status: event.target.value as SupplierStatus,
-                  }))
-                }
-              >
-                <option value="active">active</option>
-                <option value="suspended">suspended</option>
-              </select>
-            </label>
-            <label className="bo-field">
-              <span>Email de contacto</span>
-              <input
-                type="email"
-                value={form.contact_email}
-                onChange={(event) =>
-                  setForm((prev) => ({ ...prev, contact_email: event.target.value }))
-                }
-              />
-            </label>
-            <fieldset className="bo-fieldset">
-              <legend>Categorías</legend>
-              <div className="bo-chips">
-                {CATEGORIES.map((category) => (
-                  <label key={category} className="bo-chip">
-                    <input
-                      type="checkbox"
-                      checked={form.categories.includes(category)}
-                      onChange={() => toggleCategory(category)}
-                    />
-                    {category}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-            <label className="bo-field bo-field-wide">
-              <span>Notas</span>
-              <textarea
-                rows={3}
-                value={form.notes}
-                onChange={(event) => setForm((prev) => ({ ...prev, notes: event.target.value }))}
-              />
-            </label>
-            <button type="submit" className="bo-btn bo-btn-primary">
-              Crear proveedor
-            </button>
-          </form>
-        </section>
+        <SupplierCreateForm
+          onCreated={loadSuppliers}
+          onError={setError}
+          onMessage={setMessage}
+        />
       </section>
     </main>
     </RequireAuth>
