@@ -45,8 +45,11 @@ def tmp_dbs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Path]:
 
 @pytest.fixture()
 def client(tmp_dbs: dict[str, Path]) -> TestClient:
+    from app.cache import incidents_cache, suppliers_cache
     from app.main import app
 
+    incidents_cache.clear()
+    suppliers_cache.clear()
     return TestClient(app)
 
 

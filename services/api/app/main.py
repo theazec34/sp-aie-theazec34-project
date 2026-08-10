@@ -1,7 +1,9 @@
+import logging
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
@@ -9,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from app.analyzer import analyze_text, build_report, export_to_csv_text
 from app.auth.deps import get_current_user
 from app.auth.router import router as auth_router
+from app.cache import incidents_cache, suppliers_cache
 from app.database import init_db
 from app.errors import register_exception_handlers
 from app.incidents.router import router as incidents_router
@@ -19,6 +22,13 @@ from app.schemas import AnalysisReport
 from app.suppliers.router import router as suppliers_router
 from app.users.models import UserInDB
 from app.users.router import router as users_router
+
+logger = logging.getLogger("api.timing")
+if not logging.getLogger().handlers:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(name)s %(levelname)s %(message)s",
+    )
 
 # services/api/app/main.py → monorepo root → uis/web
 WEB_DIR = Path(__file__).resolve().parents[3] / "uis" / "web"
@@ -52,6 +62,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def timing_middleware(request: Request, call_next):
+    """Log per-request latency so cache candidates are chosen from evidence."""
+    start = time.perf_counter()
+    response = await call_next(request)
+    duration_ms = (time.perf_counter() - start) * 1000
+    logger.info(
+        "%s %s -> %s | %.1fms",
+        request.method,
+        request.url.path,
+        response.status_code,
+        duration_ms,
+    )
+    response.headers["X-Response-Time-Ms"] = f"{duration_ms:.1f}"
+    return response
+
+
 register_exception_handlers(app)
 
 app.include_router(auth_router)
@@ -65,6 +93,15 @@ app.include_router(inventory_router)
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "brasaland-api"}
+
+
+@app.get("/api/cache-stats", include_in_schema=False)
+def cache_stats() -> dict[str, object]:
+    """Ops helper for CACHING_REPORT measurements (no private payloads)."""
+    return {
+        "incidents": incidents_cache.stats(),
+        "suppliers": suppliers_cache.stats(),
+    }
 
 
 @app.get("/api")

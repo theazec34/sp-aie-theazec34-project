@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 
+from app.cache import INCIDENTS_SUMMARY_TTL, incidents_cache
 from app.incidents.models import (
     Incident,
     IncidentCreate,
@@ -14,12 +15,20 @@ from app.incidents.repository import IncidentRepository
 
 router = APIRouter(prefix="/api/incidents", tags=["incidents"])
 
+_SUMMARY_KEY = "incidents:summary"
+
+
+def _invalidate_incident_caches() -> None:
+    incidents_cache.invalidate(_SUMMARY_KEY)
+
 
 @router.post("", response_model=Incident, status_code=status.HTTP_201_CREATED)
 def create_incident(payload: IncidentCreate) -> Incident:
     repo = IncidentRepository()
     try:
-        return repo.create(payload)
+        created = repo.create(payload)
+        _invalidate_incident_caches()
+        return created
     finally:
         repo.close()
 
@@ -44,10 +53,22 @@ def list_incidents(
 
 
 @router.get("/summary", response_model=IncidentSummary)
-def incidents_summary() -> IncidentSummary:
+def incidents_summary(response: Response) -> IncidentSummary:
+    cached = incidents_cache.get(_SUMMARY_KEY)
+    if cached is not None:
+        response.headers["X-Cache"] = "HIT"
+        return IncidentSummary.model_validate(cached)
+
     repo = IncidentRepository()
     try:
-        return repo.summary()
+        summary = repo.summary()
+        incidents_cache.set(
+            _SUMMARY_KEY,
+            summary.model_dump(mode="json"),
+            INCIDENTS_SUMMARY_TTL,
+        )
+        response.headers["X-Cache"] = "MISS"
+        return summary
     finally:
         repo.close()
 
@@ -87,6 +108,7 @@ def patch_incident_status(
                 detail={"field": "status", "message": str(exc)},
             ) from exc
         assert updated is not None
+        _invalidate_incident_caches()
         return updated
     finally:
         repo.close()
