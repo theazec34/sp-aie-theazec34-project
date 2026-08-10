@@ -276,3 +276,11 @@ cd uis/backoffice && npm run dev
 - Backoffice: menos font weights, CLS login (min-height + Suspense), contraste AA, favicon, `useAsyncResource` + `AuthenticatedShell`.
 - Mejora medible: website BP 96→100 y Perf desktop 83→100; backoffice Perf/A11y/BP y CLS mobile 0.199→0.099.
 - Entregables: `AUDIT.md`, `REPORT.md`, `audit/before/*`, `audit/after/*`.
+
+## Exploración caching FastAPI (rama `cursor/caching-optimisation-c620`) — 2026-08-10
+- App: `services/api/app/main.py` — único middleware: `CORSMiddleware`; handlers en `app/errors.py`; lifespan `init_db()`.
+- **Sin utilidades de cache de respuesta**: no Redis / fastapi-cache / TTL. Solo `functools.lru_cache` en `app/auth/config.py` (`get_settings`) + `cache_clear` en tests.
+- Agregaciones caras (candidatos): `GET /api/incidents/summary` (Counters O(n)), `GET /inventory/products` (stock bulk entries−exits), `GET /suppliers` (directorio estable, respuesta no user-scoped), `GET /inventory/orders` (merge+sort).
+- **No cachear con clave compartida**: `/auth/me`, `/profiles/me`, `/users/{id}`, mutaciones auth/password, analyze/export (dependen del fichero).
+- Seeds: `seed_auth.py`, `seed.py` (+ `suppliers/seed_data.py`), `seed_inventory.py`, `scripts/seed_incidents.py`.
+- Modelos: TinyDB (users/profiles/suppliers/incidents) + SQLModel inventory (`Ingredient`, `IngredientEntry`, `IngredientExit`).
