@@ -25,3 +25,10 @@
 
 ## Cómo arrancar
 Ver `PROJECT.md` §2 (puertos 3000 / 3001 / 8000) o `DOCKER.md`.
+
+## Hito Telemetría (rama `telemetria`) — diseño
+- CONTEXT: `docs/telemetry/CONTEXT-brasaland.es.telemetria.md`
+- Plan: `docs/telemetry/telemetry-plan.md` (18 eventos: 6 obligatorios + 12 oportunidades)
+- Schemas: `docs/telemetry/event-schemas.json` (draft-07)
+- Solo diseño (sin instrumentación de código en este PR)
+- PR título exigido: `docs: telemetry design plan`
