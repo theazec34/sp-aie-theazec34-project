@@ -1,5 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
+/**
+ * E2E against the Next.js corporate site (uis/website), not the retired static HTML.
+ */
 export default defineConfig({
   testDir: "tests/e2e",
   fullyParallel: true,
@@ -12,10 +15,10 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: "npm run serve",
+    command: "npm run dev --prefix uis/website -- --hostname 127.0.0.1 --port 3000",
     url: "http://127.0.0.1:3000",
     reuseExistingServer: true,
-    timeout: 120000,
+    timeout: 180000,
   },
   projects: [
     {

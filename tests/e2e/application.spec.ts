@@ -1,19 +1,14 @@
 import { expect, test } from "@playwright/test";
 
-test("application page shows validation errors when submitting empty form", async ({ page }) => {
-  await page.goto("/application.html");
+test("application form shows validation when submitted empty", async ({ page }) => {
+  await page.goto("/#aplicar");
 
-  await page.getByRole("button", { name: /enviar aplicaci[oó]n/i }).click();
+  const formSection = page.locator("#aplicar");
+  await expect(formSection).toBeVisible({ timeout: 20000 });
 
-  await expect(page.locator("#error-summary")).toBeVisible();
-  await expect(page.locator("#error-list")).toContainText(/el nombre es obligatorio/i);
-  await expect(page.locator("#error-list")).toContainText(/el correo electr[oó]nico es obligatorio/i);
-});
+  await formSection.getByRole("button", { name: /enviar aplicacion/i }).click();
 
-test("application page has menu link to carta", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/application.html");
-
-  const menuLink = page.getByRole("link", { name: /ir a la carta/i });
-  await expect(menuLink).toHaveAttribute("href", "index.html#carta");
+  await expect(formSection.locator(".error-summary")).toBeVisible({ timeout: 10000 });
+  await expect(formSection).toContainText(/el nombre es obligatorio/i);
+  await expect(formSection).toContainText(/el correo electronico es obligatorio/i);
 });
