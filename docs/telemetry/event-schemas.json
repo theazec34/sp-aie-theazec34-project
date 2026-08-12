@@ -1,0 +1,734 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://brasaland.local/schemas/telemetry/events.json",
+  "title": "Brasaland Digital — Telemetry Events",
+  "description": "Event envelope + allowlisted properties per event_type (schemaVersion 1.0.0). Aligns with docs/telemetry/telemetry-plan.md and CONTEXT-brasaland.es.telemetria.md.",
+  "version": "1.0.0",
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "iso8601": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "country": {
+      "type": "string",
+      "enum": ["CO", "US"]
+    },
+    "currency": {
+      "type": "string",
+      "enum": ["COP", "USD"]
+    },
+    "productCategory": {
+      "type": "string",
+      "enum": ["meat", "produce", "sauce", "beverage", "packaging", "cleaning"]
+    },
+    "unit": {
+      "type": "string",
+      "enum": ["kg", "litro", "unidad"]
+    },
+    "locationId": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 14
+    },
+    "wasteReason": {
+      "type": "string",
+      "enum": ["expired", "kitchen_error", "theft_suspected"]
+    },
+    "envelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eventId",
+        "timestamp",
+        "event_type",
+        "schemaVersion",
+        "requestId",
+        "properties"
+      ],
+      "properties": {
+        "eventId": { "$ref": "#/$defs/uuid" },
+        "timestamp": { "$ref": "#/$defs/iso8601" },
+        "sessionId": {
+          "oneOf": [
+            { "$ref": "#/$defs/uuid" },
+            { "type": "null" }
+          ]
+        },
+        "userId": {
+          "oneOf": [
+            { "type": "string", "minLength": 1, "pattern": "^[0-9]+$" },
+            { "type": "null" }
+          ]
+        },
+        "event_type": { "type": "string" },
+        "schemaVersion": {
+          "type": "string",
+          "const": "1.0.0"
+        },
+        "requestId": { "$ref": "#/$defs/uuid" },
+        "properties": { "type": "object" }
+      }
+    },
+    "inventoryBaseProps": {
+      "type": "object",
+      "properties": {
+        "location_id": { "$ref": "#/$defs/locationId" },
+        "country": { "$ref": "#/$defs/country" },
+        "product_id": { "type": "integer", "minimum": 1 },
+        "product_sku": { "type": "string", "minLength": 1 },
+        "product_category": { "$ref": "#/$defs/productCategory" },
+        "quantity": { "type": "number", "exclusiveMinimum": 0 },
+        "unit": { "$ref": "#/$defs/unit" },
+        "currency": { "$ref": "#/$defs/currency" },
+        "city": { "type": "string", "minLength": 1 }
+      }
+    },
+    "inbound_order_created": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "inbound_order_created" },
+            "sessionId": { "$ref": "#/$defs/uuid" },
+            "userId": { "type": "string", "pattern": "^[0-9]+$" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "location_id",
+                "country",
+                "product_id",
+                "product_category",
+                "quantity",
+                "unit",
+                "currency",
+                "supplier_name",
+                "order_id"
+              ],
+              "properties": {
+                "location_id": { "$ref": "#/$defs/locationId" },
+                "country": { "$ref": "#/$defs/country" },
+                "product_id": { "type": "integer", "minimum": 1 },
+                "product_sku": { "type": "string" },
+                "product_category": { "$ref": "#/$defs/productCategory" },
+                "quantity": { "type": "number", "exclusiveMinimum": 0 },
+                "unit": { "$ref": "#/$defs/unit" },
+                "currency": { "$ref": "#/$defs/currency" },
+                "unit_cost": { "type": "number", "exclusiveMinimum": 0 },
+                "supplier_id": {
+                  "oneOf": [{ "type": "string" }, { "type": "null" }]
+                },
+                "supplier_name": { "type": "string", "minLength": 1 },
+                "order_id": { "type": "integer", "minimum": 1 },
+                "city": { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "outbound_order_created": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "outbound_order_created" },
+            "sessionId": { "$ref": "#/$defs/uuid" },
+            "userId": { "type": "string", "pattern": "^[0-9]+$" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "location_id",
+                "country",
+                "product_id",
+                "product_category",
+                "quantity",
+                "unit",
+                "currency",
+                "reason",
+                "order_id"
+              ],
+              "properties": {
+                "location_id": { "$ref": "#/$defs/locationId" },
+                "country": { "$ref": "#/$defs/country" },
+                "product_id": { "type": "integer", "minimum": 1 },
+                "product_sku": { "type": "string" },
+                "product_category": { "$ref": "#/$defs/productCategory" },
+                "quantity": { "type": "number", "exclusiveMinimum": 0 },
+                "unit": { "$ref": "#/$defs/unit" },
+                "currency": { "$ref": "#/$defs/currency" },
+                "reason": { "const": "consumption" },
+                "order_id": { "type": "integer", "minimum": 1 },
+                "city": { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "stock_waste_registered": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "stock_waste_registered" },
+            "sessionId": { "$ref": "#/$defs/uuid" },
+            "userId": { "type": "string", "pattern": "^[0-9]+$" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "location_id",
+                "country",
+                "product_id",
+                "product_category",
+                "quantity",
+                "unit",
+                "currency",
+                "reason",
+                "order_id"
+              ],
+              "properties": {
+                "location_id": { "$ref": "#/$defs/locationId" },
+                "country": { "$ref": "#/$defs/country" },
+                "product_id": { "type": "integer", "minimum": 1 },
+                "product_sku": { "type": "string" },
+                "product_category": { "$ref": "#/$defs/productCategory" },
+                "quantity": { "type": "number", "exclusiveMinimum": 0 },
+                "unit": { "$ref": "#/$defs/unit" },
+                "currency": { "$ref": "#/$defs/currency" },
+                "reason": { "$ref": "#/$defs/wasteReason" },
+                "order_id": { "type": "integer", "minimum": 1 },
+                "city": { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "stock_threshold_triggered": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "stock_threshold_triggered" },
+            "sessionId": { "$ref": "#/$defs/uuid" },
+            "userId": { "type": "string", "pattern": "^[0-9]+$" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "location_id",
+                "country",
+                "product_id",
+                "product_category",
+                "unit",
+                "current_stock",
+                "threshold",
+                "triggering_order_kind",
+                "triggering_order_id"
+              ],
+              "properties": {
+                "location_id": { "$ref": "#/$defs/locationId" },
+                "country": { "$ref": "#/$defs/country" },
+                "product_id": { "type": "integer", "minimum": 1 },
+                "product_sku": { "type": "string" },
+                "product_category": { "$ref": "#/$defs/productCategory" },
+                "unit": { "$ref": "#/$defs/unit" },
+                "current_stock": { "type": "number" },
+                "threshold": { "type": "number", "minimum": 0 },
+                "triggering_order_kind": {
+                  "type": "string",
+                  "enum": ["inbound", "outbound"]
+                },
+                "triggering_order_id": { "type": "integer", "minimum": 1 },
+                "city": { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "direct_stock_edit_rejected": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "direct_stock_edit_rejected" },
+            "sessionId": {
+              "oneOf": [{ "$ref": "#/$defs/uuid" }, { "type": "null" }]
+            },
+            "userId": {
+              "oneOf": [
+                { "type": "string", "pattern": "^[0-9]+$" },
+                { "type": "null" }
+              ]
+            },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["attempted_field", "http_status", "route"],
+              "properties": {
+                "location_id": {
+                  "oneOf": [{ "$ref": "#/$defs/locationId" }, { "type": "null" }]
+                },
+                "country": {
+                  "oneOf": [{ "$ref": "#/$defs/country" }, { "type": "null" }]
+                },
+                "product_id": {
+                  "oneOf": [
+                    { "type": "integer", "minimum": 1 },
+                    { "type": "null" }
+                  ]
+                },
+                "attempted_field": { "type": "string", "minLength": 1 },
+                "http_status": {
+                  "type": "integer",
+                  "minimum": 400,
+                  "maximum": 499
+                },
+                "route": { "type": "string", "minLength": 1 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ingredient_price_variance_detected": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "ingredient_price_variance_detected" },
+            "sessionId": { "$ref": "#/$defs/uuid" },
+            "userId": { "type": "string", "pattern": "^[0-9]+$" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "location_id",
+                "country",
+                "product_id",
+                "product_category",
+                "unit",
+                "currency",
+                "supplier_name",
+                "unit_cost",
+                "baseline_unit_cost",
+                "variance_pct",
+                "threshold_pct",
+                "order_id"
+              ],
+              "properties": {
+                "location_id": { "$ref": "#/$defs/locationId" },
+                "country": { "$ref": "#/$defs/country" },
+                "product_id": { "type": "integer", "minimum": 1 },
+                "product_sku": { "type": "string" },
+                "product_category": { "$ref": "#/$defs/productCategory" },
+                "unit": { "$ref": "#/$defs/unit" },
+                "currency": { "$ref": "#/$defs/currency" },
+                "supplier_name": { "type": "string", "minLength": 1 },
+                "unit_cost": { "type": "number", "exclusiveMinimum": 0 },
+                "baseline_unit_cost": { "type": "number", "exclusiveMinimum": 0 },
+                "variance_pct": { "type": "number" },
+                "threshold_pct": { "type": "number", "exclusiveMinimum": 0 },
+                "order_id": { "type": "integer", "minimum": 1 },
+                "city": { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "auth_login_succeeded": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "auth_login_succeeded" },
+            "sessionId": { "$ref": "#/$defs/uuid" },
+            "userId": { "type": "string", "pattern": "^[0-9]+$" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["result"],
+              "properties": {
+                "result": { "const": "success" },
+                "role": {
+                  "type": "string",
+                  "enum": ["admin", "ops", "user", "unknown"]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "auth_login_failed": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "auth_login_failed" },
+            "sessionId": {
+              "oneOf": [{ "$ref": "#/$defs/uuid" }, { "type": "null" }]
+            },
+            "userId": { "type": "null" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["result", "failure_reason"],
+              "properties": {
+                "result": { "const": "failure" },
+                "failure_reason": {
+                  "type": "string",
+                  "enum": [
+                    "bad_credentials",
+                    "inactive",
+                    "network",
+                    "unknown"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "auth_session_expired": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "auth_session_expired" },
+            "sessionId": { "$ref": "#/$defs/uuid" },
+            "userId": {
+              "oneOf": [
+                { "type": "string", "pattern": "^[0-9]+$" },
+                { "type": "null" }
+              ]
+            },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["route", "http_status"],
+              "properties": {
+                "route": { "type": "string" },
+                "http_status": { "const": 401 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "outbound_order_rejected": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "outbound_order_rejected" },
+            "sessionId": { "$ref": "#/$defs/uuid" },
+            "userId": { "type": "string", "pattern": "^[0-9]+$" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "location_id",
+                "country",
+                "product_id",
+                "product_category",
+                "quantity",
+                "unit",
+                "error_code",
+                "available_stock"
+              ],
+              "properties": {
+                "location_id": { "$ref": "#/$defs/locationId" },
+                "country": { "$ref": "#/$defs/country" },
+                "product_id": { "type": "integer", "minimum": 1 },
+                "product_category": { "$ref": "#/$defs/productCategory" },
+                "quantity": { "type": "number", "exclusiveMinimum": 0 },
+                "unit": { "$ref": "#/$defs/unit" },
+                "error_code": { "const": "insufficient_stock" },
+                "available_stock": { "type": "number" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "inventory_validation_failed": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "inventory_validation_failed" },
+            "sessionId": { "$ref": "#/$defs/uuid" },
+            "userId": { "type": "string", "pattern": "^[0-9]+$" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["route", "field", "message_key", "http_status"],
+              "properties": {
+                "route": { "type": "string" },
+                "field": { "type": "string" },
+                "message_key": { "type": "string" },
+                "http_status": {
+                  "type": "integer",
+                  "enum": [400, 422]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "product_created": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "product_created" },
+            "sessionId": { "$ref": "#/$defs/uuid" },
+            "userId": { "type": "string", "pattern": "^[0-9]+$" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "product_id",
+                "product_sku",
+                "product_category",
+                "country",
+                "unit"
+              ],
+              "properties": {
+                "product_id": { "type": "integer", "minimum": 1 },
+                "product_sku": { "type": "string" },
+                "product_category": { "$ref": "#/$defs/productCategory" },
+                "country": { "$ref": "#/$defs/country" },
+                "unit": { "$ref": "#/$defs/unit" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "inventory_products_viewed": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "inventory_products_viewed" },
+            "sessionId": { "$ref": "#/$defs/uuid" },
+            "userId": { "type": "string", "pattern": "^[0-9]+$" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["route", "result_count"],
+              "properties": {
+                "route": { "const": "/inventory/products" },
+                "result_count": { "type": "integer", "minimum": 0 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "api_latency_recorded": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "api_latency_recorded" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["route", "method", "status_code", "duration_ms"],
+              "properties": {
+                "route": { "type": "string" },
+                "method": {
+                  "type": "string",
+                  "enum": ["GET", "POST", "PATCH", "PUT", "DELETE"]
+                },
+                "status_code": {
+                  "type": "integer",
+                  "minimum": 100,
+                  "maximum": 599
+                },
+                "duration_ms": { "type": "number", "minimum": 0 },
+                "cache_status": {
+                  "type": "string",
+                  "enum": ["HIT", "MISS", "BYPASS", "NA"]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "frontend_error_captured": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "frontend_error_captured" },
+            "sessionId": {
+              "oneOf": [{ "$ref": "#/$defs/uuid" }, { "type": "null" }]
+            },
+            "userId": {
+              "oneOf": [
+                { "type": "string", "pattern": "^[0-9]+$" },
+                { "type": "null" }
+              ]
+            },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["route", "error_name", "message_sanitized"],
+              "properties": {
+                "route": { "type": "string" },
+                "error_name": { "type": "string" },
+                "message_sanitized": {
+                  "type": "string",
+                  "maxLength": 200
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "page_viewed": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "page_viewed" },
+            "sessionId": { "$ref": "#/$defs/uuid" },
+            "userId": { "type": "string", "pattern": "^[0-9]+$" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["route"],
+              "properties": {
+                "route": { "type": "string" },
+                "referrer_route": { "type": "string" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "flow_abandoned": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "flow_abandoned" },
+            "sessionId": { "$ref": "#/$defs/uuid" },
+            "userId": { "type": "string", "pattern": "^[0-9]+$" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["route", "dwell_ms", "had_interaction"],
+              "properties": {
+                "route": {
+                  "type": "string",
+                  "enum": [
+                    "/inventory/orders/inbound",
+                    "/inventory/orders/outbound"
+                  ]
+                },
+                "dwell_ms": { "type": "integer", "minimum": 0 },
+                "had_interaction": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "supplier_directory_viewed": {
+      "allOf": [
+        { "$ref": "#/$defs/envelope" },
+        {
+          "properties": {
+            "event_type": { "const": "supplier_directory_viewed" },
+            "sessionId": { "$ref": "#/$defs/uuid" },
+            "userId": { "type": "string", "pattern": "^[0-9]+$" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["route", "result_count"],
+              "properties": {
+                "route": { "const": "/proveedores" },
+                "result_count": { "type": "integer", "minimum": 0 },
+                "country_filter": {
+                  "oneOf": [
+                    { "type": "string", "enum": ["Colombia", "USA", ""] },
+                    { "type": "null" }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/inbound_order_created" },
+    { "$ref": "#/$defs/outbound_order_created" },
+    { "$ref": "#/$defs/stock_waste_registered" },
+    { "$ref": "#/$defs/stock_threshold_triggered" },
+    { "$ref": "#/$defs/direct_stock_edit_rejected" },
+    { "$ref": "#/$defs/ingredient_price_variance_detected" },
+    { "$ref": "#/$defs/auth_login_succeeded" },
+    { "$ref": "#/$defs/auth_login_failed" },
+    { "$ref": "#/$defs/auth_session_expired" },
+    { "$ref": "#/$defs/outbound_order_rejected" },
+    { "$ref": "#/$defs/inventory_validation_failed" },
+    { "$ref": "#/$defs/product_created" },
+    { "$ref": "#/$defs/inventory_products_viewed" },
+    { "$ref": "#/$defs/api_latency_recorded" },
+    { "$ref": "#/$defs/frontend_error_captured" },
+    { "$ref": "#/$defs/page_viewed" },
+    { "$ref": "#/$defs/flow_abandoned" },
+    { "$ref": "#/$defs/supplier_directory_viewed" }
+  ],
+  "x-event-catalog": {
+    "mandatory_from_context": [
+      "inbound_order_created",
+      "outbound_order_created",
+      "stock_waste_registered",
+      "stock_threshold_triggered",
+      "direct_stock_edit_rejected",
+      "ingredient_price_variance_detected"
+    ],
+    "identified_opportunities": [
+      "auth_login_succeeded",
+      "auth_login_failed",
+      "auth_session_expired",
+      "outbound_order_rejected",
+      "inventory_validation_failed",
+      "product_created",
+      "inventory_products_viewed",
+      "api_latency_recorded",
+      "frontend_error_captured",
+      "page_viewed",
+      "flow_abandoned",
+      "supplier_directory_viewed"
+    ],
+    "categories": [
+      "business_inventory",
+      "authentication",
+      "performance",
+      "errors",
+      "navigation"
+    ]
+  }
+}

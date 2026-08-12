@@ -26,7 +26,8 @@
 - `PROJECT.md` — mapa completo
 - `README.md`, `DOCKER.md`, `CACHING_REPORT.md`, `AUDIT.md`, `REPORT.md`, `TESTING.md`
 - Contextos: `Brasaland.md`, `CONTEXT-brasaland.es.md`, `CONTEXT-incidents-centralized.es.md`, `05-backend-inventory-orm/`
+- Telemetría (diseño): `docs/telemetry/telemetry-plan.md`, `event-schemas.json`
 
 ## Rama
-- Trabajo de limpieza/docs: `cursor/project-cleanup-docs-c620`
+- Trabajo telemetría: `telemetria`
 - Producto estable: **`main`**
