@@ -2,22 +2,23 @@
   "name": "sp-aie-theazec34-project",
   "version": "0.1.0",
   "private": true,
-  "description": "Proyecto compañía AI Engineering — Brasaland (Hito 2)",
+  "description": "Brasaland Digital — monorepo (website, backoffice, FastAPI)",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "tsc",
     "demo": "npm run build && node dist/demo.js",
-    "build:web": "esbuild src/demo-browser.ts --bundle --outfile=dist-web/app.js --format=esm --platform=browser",
-    "serve": "npx --yes http-server . -p 3000 -a 0.0.0.0",
+    "dev:website": "npm run dev --prefix uis/website",
+    "dev:backoffice": "npm run dev --prefix uis/backoffice",
+    "dev:api": "cd services/api && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
     "test:e2e": "playwright test",
-    "test:e2e:headed": "playwright test --headed"
+    "test:e2e:headed": "playwright test --headed",
+    "test:api": "cd services/api && uv run pytest -q"
   },
   "engines": {
     "node": ">=18"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.1",
-    "esbuild": "^0.25.0",
     "typescript": "^5.7.0"
   }
 }

@@ -1,72 +1,32 @@
-# Technical Context (concreto y actualizado)
+# Technical Context — Brasaland Digital (actualizado 2026-08-12)
 
-## Runtime y scripts reales
-- Node.js >= 18 (segun `package.json`).
-- Scripts disponibles:
-	- `npm run typecheck` -> `tsc --noEmit`
-	- `npm run build` -> `tsc`
-	- `npm run demo` -> build + `node dist/demo.js`
-	- `npm run build:web` -> bundle browser con `esbuild`
-	- `npm run serve` -> `http-server` en puerto 3000
+## Runtime
+- **Website** `uis/website` — Next.js 16, puerto **3000**
+- **Backoffice** `uis/backoffice` — Next.js 16, puerto **3001**
+- **API** `services/api` — FastAPI/uvicorn, puerto **8000** (`/docs`)
+- **Docker:** `docker compose up` (ver `DOCKER.md`)
+- **TS Hito 2:** `src/` — `npm run typecheck` / `npm run demo`
+- **E2E:** Playwright → website `:3000` (`npm run test:e2e`)
+- **API tests:** `cd services/api && uv run pytest`
 
-## Estructura relevante actual
-- Web restaurante:
-	- `index.html`
-	- `application.html`
-	- `validation.js`
-	- `menu.json`
-	- `Imagenes/*`
-- Capa TypeScript existente:
-	- `src/types/models.ts`
-	- `src/utils/collections.ts`
-	- `src/utils/search.ts`
-	- `src/utils/transformations.ts`
-	- `src/utils/validations.ts`
-	- `src/demo.ts`
+## Persistencia
+- TinyDB: auth, profiles, suppliers, incidents (gitignored bajo `services/api/data/`)
+- SQLModel inventario: `DATABASE_URL` (Supabase) o SQLite fallback
 
-## Requisito de negocio/academico (fuente: Brasaland.md)
-El modelo de dominio esperado en TypeScript debe basarse en 4 entidades:
-- `EncargoProveedor`
-- `PlatoCarta`
-- `ReservaMesa`
-- `PedidoDomicilio`
+## API (grupos)
+- Auth/users/profiles · Suppliers · Incidents (`/api/incidents`, analyze/export) · Inventory (`/inventory/*`)
+- Cache TTL: summary 30s, suppliers 60s (`app/cache.py`) + middleware `api.timing`
 
-Con reglas estrictas de validacion (ISO, rangos, literales permitidos) y reportes de agregacion por estado/categoria/plataforma.
+## Frontends
+- Website: carta + galería lazy + formulario lazy
+- Backoffice: JWT, proveedores, incidencias, inventario (`useAsyncResource`, `AuthenticatedShell`)
+- `uis/web`: analizador CSV montado en API `/`
 
-## Hallazgo importante de coherencia
-Actualmente `src/` no implementa aun ese dominio Brasaland:
-- `src/types/models.ts` reexporta tipos de elecciones desde `packages/shared/types`.
-- `src/utils/validations.ts` valida `Candidate`, `Vote`, `Election`.
-- `src/demo.ts` ejecuta demo de "sistema de elecciones".
+## Docs canónicos
+- `PROJECT.md` — mapa completo
+- `README.md`, `DOCKER.md`, `CACHING_REPORT.md`, `AUDIT.md`, `REPORT.md`, `TESTING.md`
+- Contextos: `Brasaland.md`, `CONTEXT-brasaland.es.md`, `CONTEXT-incidents-centralized.es.md`, `05-backend-inventory-orm/`
 
-Conclusión tecnica: la parte web refleja Brasaland, pero la parte TypeScript de hito 2 sigue en dominio distinto y necesita migracion para quedar acorde con `Brasaland.md` y README.
-
-## Frontend realizado sobre Brasaland
-- Favicon y logo usan `Imagenes/Icono principal.png`.
-- Carta en vista unica (sin tabs visibles).
-- Carga de menu desde `menu.json` con fallback inline.
-- Integracion de imagenes de platos mediante mapeo en JS.
-
-## Estado de rama
-- Rama activa de trabajo: `cursor/caching-optimisation-c620` (caching TTL + lazy/memo).
-- `main` incluye performance audit Lighthouse + Docker + inventario.
-
-## Caching
-- `services/api/app/cache.py` — `TtlCache` in-process (incidents + suppliers).
-- Timing middleware en `app/main.py` (`api.timing`, `X-Response-Time-Ms`).
-- Seed de carga: `services/api/seed_load.py`.
-- Informe: `CACHING_REPORT.md`.
-- Frontend: `next/dynamic` en website (Gallery + Form) y backoffice (`SupplierCreateForm`); `useMemo` en inventory products.
-
-## Inventario (dual DB)
-- Motor SQL: `services/api/app/database.py` (`get_db`, `init_db`).
-- Dominio: `services/api/app/inventory/` (models, schemas, stock, router).
-- `DATABASE_URL` en `.env` → Postgres/Supabase; vacío → SQLite `services/api/data/inventory.db`.
-- Auth sigue en TinyDB; no hay tabla User en SQL.
-
-## Nuevo hito CSV (Python + API + web)
-- Script objetivo: `scripts/analyze.py` (Fase 1).
-- Datos de prueba: `scripts/incidents-brasaland.csv` (100 registros).
-- Backend objetivo: `services/api/` (FastAPI o similar, pendiente de definir al integrar).
-- UI objetivo: `uis/web/` (carga CSV, resumen, exportacion).
-- Contexto de negocio especifico: `CONTEXT-brasaland.es.md` (incidencias postventa; distinto de `Brasaland.md`).
+## Rama
+- Trabajo de limpieza/docs: `cursor/project-cleanup-docs-c620`
+- Producto estable: **`main`**

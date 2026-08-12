@@ -5,7 +5,8 @@ Ciclo: **Medir → Analizar → Corregir → Medir de nuevo**
 Herramienta: Lighthouse CLI 12.8 (Chrome headless), builds de producción (`next build` + `next start`).  
 Skills de agente: `core-web-vitals`, `performance`, `web-perf` (`.agents/skills/`).
 
-Evidencia: `audit/before/` y `audit/after/` (HTML + JSON + PNG). Análisis previo: `AUDIT.md`.
+Evidencia: `audit/before/` y `audit/after/` (PNG). Análisis previo: `AUDIT.md`.  
+(Los reportes HTML/JSON completos de Lighthouse se eliminaron en la limpieza del monorepo; los scores están documentados aquí.)
 
 ---
 

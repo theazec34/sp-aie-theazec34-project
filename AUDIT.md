@@ -5,7 +5,8 @@ Herramienta: Lighthouse CLI 12.8 (Chrome headless)
 Modo de medición: builds de producción (`next build` + `next start`) — métricas más realistas que `next dev`.  
 Skills de agente usadas: `core-web-vitals`, `performance`, `web-perf` (instaladas en `.agents/skills/`).
 
-Evidencia: `audit/before/*.report.html`, `*.report.json`, `*.png`.
+Evidencia: `audit/before/*.png`, `audit/after/*.png` (capturas Lighthouse).  
+Los dumps HTML/JSON completos se retiraron en la limpieza del monorepo; los scores y causas siguen en este archivo y en `REPORT.md`.
 
 ---
 
