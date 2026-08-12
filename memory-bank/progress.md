@@ -299,3 +299,29 @@ cd uis/backoffice && npm run dev
 - **No cachear con clave compartida**: `/auth/me`, `/profiles/me`, `/users/{id}`, mutaciones auth/password, analyze/export (dependen del fichero).
 - Seeds: `seed_auth.py`, `seed.py` (+ `suppliers/seed_data.py`), `seed_inventory.py`, `scripts/seed_incidents.py`.
 - Modelos: TinyDB (users/profiles/suppliers/incidents) + SQLModel inventory (`Ingredient`, `IngredientEntry`, `IngredientExit`).
+
+## Auditoría de limpieza en `main` (2026-08-12)
+
+Exploración solo-lectura del árbol en `main` (~34 MB sin `.git`). Hallazgos priorizados:
+
+### P0 — peso / obsolescencia clara
+- **`Imagenes/` raíz (~18 MB)** — PNGs sin comprimir del sitio estático legacy; el website Next usa `uis/website/public/Imagenes/` JPEG (~1.6 MB). Solo lo necesitan `index.html` + Playwright e2e (`npm run serve`).
+- **`audit/**/*.report.{html,json}` (~9.5 MB)** — Lighthouse crudos; conservar PNGs (~658 KB) + `AUDIT.md`/`REPORT.md`.
+- **`favicon.jpg` no referenciado (~715 KB ×2)** en raíz `Imagenes/` y `uis/website/public/Imagenes/`.
+
+### P1 — frontends duplicados / docs desfasados
+- Sitio estático raíz (`index.html`, `application.html`, `menu.json`, `validation.js`, `server.js`) vs **`uis/website`** (Next, puerto 3000 en Docker).
+- **`uis/web/`** (~23 KB) sigue vivo: FastAPI lo sirve en `/` + `/app.js` + `/styles.css` (analizador CSV legacy); distinto de website/backoffice.
+- Memory-bank (`techContext`/`projectbrief`/`context`) aún dice que `src/` es dominio elecciones — **falso hoy**: `src/` ya es Brasaland; el resto elecciones está solo en `packages/shared/types`.
+- README raíz lista ficheros inexistentes (`demo-browser.ts`, `src/index.html`, etc.).
+
+### P2 — basura / dead code
+- Election types huérfanos en `packages/shared/types/index.ts` (0 imports).
+- `esbuild` + script `build:web` rotos; `server.log` trackeado pese a `*.log`.
+- Scaffolding vacío 4Geeks (`data/`, `apps/`, `agents/`, `workflows/`, `shared/`) solo READMEs.
+- CSV duplicado raíz vs `scripts/`; SVGs create-next-app sin uso; `.bak` vacío.
+
+### Arquitectura real en `main` hoy
+- **3000** `uis/website` (Next) · **3001** `uis/backoffice` (Next) · **8000** `services/api` (FastAPI; también monta `uis/web`).
+- Auth/users/profiles/suppliers/incidents (TinyDB) + inventory SQLModel; caching TTL en summary/suppliers.
+- Sin `node_modules`/`.next`/`__pycache__`/`.env`/sqlite commiteados. Root `package-lock.json` es del hito TS/Playwright (no monorepo workspace); cada Next app tiene su propio lock.
