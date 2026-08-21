@@ -53,3 +53,11 @@ Ver `PROJECT.md` §2 (puertos 3000 / 3001 / 8000) o `DOCKER.md`.
 - Seed: `services/api/seed_telemetry.py`.
 - PR título exigido: `feat: telemetry report endpoint`.
 - Notas: `docs/telemetry/REPORT.md`.
+
+## Hito Pipeline de negocio — Diseño (rama `pipeline-design`)
+- CONTEXT: `docs/pipelines/CONTEXT-brasaland.es.pipeline.md`
+- Diseño: `data/pipelines/PIPELINE_DESIGN.md` (5 fases: estado, ETL, resiliencia, Prefect, reporting)
+- Destino: `reporting.weekly_location_performance` (SQL en `services/api/sql/`)
+- Stub módulo: `services/reporting/` (sin ETL)
+- PR título: `docs: business performance pipeline design`
+- Solo diseño (sin orquestación Prefect aún)

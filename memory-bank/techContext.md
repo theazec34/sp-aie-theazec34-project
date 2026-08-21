@@ -32,10 +32,16 @@
 - Diseño: `docs/telemetry/telemetry-plan.md`, `event-schemas.json`
 - Captura: `uis/backoffice/src/services/telemetry.ts` (`track`)
 - Almacenamiento: `POST /telemetry/events` → `telemetry_events` (bulk); SQL `services/api/sql/telemetry_events.sql`
-- Reporte: `services/telemetry/analysis.py` + `GET /telemetry/report` (cache 60s) + UI `/telemetry`
+- Reporte técnico: `services/telemetry/analysis.py` + `GET /telemetry/report` (cache 60s) + UI `/telemetry`
 - Docs: `docs/telemetry/CAPTURE.md`, `STORAGE.md`, `REPORT.md`
 
+## Pipeline de negocio (diseño)
+- CONTEXT: `docs/pipelines/CONTEXT-brasaland.es.pipeline.md`
+- Diseño: `data/pipelines/PIPELINE_DESIGN.md`
+- Destino: `reporting.weekly_location_performance`
+- API futura: `services/reporting/`
+
 ## Rama
-- Diseño / captura / almacenamiento: mergeados (#23–#25)
-- Reporte técnico: `cursor/telemetry-report-c620`
+- Telemetría (diseño→reporte): mergeados (#23–#26)
+- Pipeline negocio (diseño): `pipeline-design`
 - Producto estable: **`main`**
