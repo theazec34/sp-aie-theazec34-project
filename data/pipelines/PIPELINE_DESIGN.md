@@ -261,3 +261,57 @@ Tabla: `reporting.pipeline_run_log` (definida en el SQL de Fase 2).
 | `checkpoint` | `jsonb` | Punto de progreso / semana / stage para recuperación |
 
 *(Más de cinco campos a propósito: el enunciado pide mínimo cinco; producción necesita el set completo anterior.)*
+
+---
+
+## Fase 4 — Mapeo a Prefect
+
+### 4.1 Flow principal
+
+| Concepto Prefect | Nombre propuesto | Rol |
+|------------------|------------------|-----|
+| **Flow** | `weekly_location_performance_flow` | Orquesta una semana ISO (`week_start: date`) de extremo a extremo |
+| Deployments | `weekly_location_performance_monday` | Schedule lunes 05:00 UTC (o domingo 23:30) |
+| | `weekly_location_performance_manual` | Sin schedule; invocado desde API |
+
+### 4.2 Tasks (≥3, alineadas al ETL)
+
+| Task | Etapa | Responsabilidad | I/O |
+|------|-------|-----------------|-----|
+| `extract_telemetry_week` | Extract | SQL a `telemetry_events` por ventana + allowlist de `event_type` | → DataFrame/parquet staging en `data/raw/` (opcional) |
+| `transform_location_kpis` | Transform | Refine tags, costos, groupby `location_id`×`week_start`, KPIs | → registros listos para Load (`data/process/`) |
+| `load_weekly_location_performance` | Load | UPSERT a `reporting.weekly_location_performance` + cierre de `pipeline_run_log` | → conteo `rows_upserted` |
+
+Tasks auxiliares (recomendadas, no sustituyen las tres anteriores):
+
+- `open_pipeline_run` — inserta log `status=running` + lock
+- `validate_kpi_rows` — asserts (currency coherente con country, ratio ∈ [0,∞), ids 1–14)
+
+### 4.3 States
+
+| Estado Prefect / de negocio | Cuándo |
+|-----------------------------|--------|
+| `Running` | Flow aceptado; log `running` |
+| `Completed` | Load OK; log `completed` |
+| `Failed` | Excepción en cualquier task; log `failed` + `error_message` |
+| `Cancelled` / `Skipped` | Lock activo (`skipped_locked`) o cancelación manual |
+
+### 4.4 Blocks (configuración / secretos)
+
+| Block | Contenido | Uso |
+|-------|-----------|-----|
+| `supabase-reporting-db` (SQL/connection) | `DATABASE_URL` pooler (mismo Postgres; schema `reporting`) | Extract + Load |
+| `brasaland-pipeline-config` (JSON/custom) | `pipeline_name`, cron TZ, lista `event_types`, umbral de alerta `rows_extracted` | Parámetros sin redeploy |
+| (Opcional) `slack-ops-webhook` | Aviso si `Failed` o silencio > SLA lunes | Observabilidad humana |
+
+**Regla:** credenciales solo en Blocks/secretos de entorno — nunca hardcode en `data/pipelines/` ni en `services/`.
+
+### 4.5 Relación carpetas ↔ Prefect
+
+```text
+data/pipelines/   → flows + deployments (orquestación)
+data/process/     → funciones puras llamadas por tasks (transform)
+data/raw/         → artefactos de extract (opcional, debug)
+data/eval/        → checks de calidad post-Load (futuro)
+services/reporting/ → HTTP que dispara/consulta flows; NO contiene ETL
+```
