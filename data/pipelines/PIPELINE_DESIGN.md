@@ -315,3 +315,86 @@ data/raw/         → artefactos de extract (opcional, debug)
 data/eval/        → checks de calidad post-Load (futuro)
 services/reporting/ → HTTP que dispara/consulta flows; NO contiene ETL
 ```
+
+---
+
+## Fase 5 — Integración con la aplicación (solo diseño)
+
+> En este hito **no** se implementa el ETL ni Prefect. Sí se deja el contrato HTTP y el esqueleto de `services/reporting/` para el siguiente hito de implementación.
+
+### 5.1 Endpoints en `services/reporting/`
+
+| Método | Ruta | Rol | Llama a (futuro) |
+|--------|------|-----|------------------|
+| `GET` | `/reporting/weekly-location-performance` | KPIs del dashboard CEO/Ops | `data/pipelines/.../query_weekly_location_performance(week_start)` — **lectura** de `reporting.weekly_location_performance` |
+| `GET` | `/reporting/pipeline-runs/latest` | Estado / metadata última corrida | `data/pipelines/.../get_latest_run(pipeline_name)` — lee `reporting.pipeline_run_log` |
+| `POST` | `/reporting/pipeline-runs` | Trigger manual / backfill | `data/pipelines/.../trigger_weekly_location_performance_flow(week_start, triggered_by="api_manual")` — **no** calcula KPIs dentro del router |
+
+**Regla de oro:** cero lógica ETL dentro de `services/`. Los routers solo validan params, autorizan, y delegan.
+
+### 5.2 Contrato KPI (CONTEXT)
+
+`GET /reporting/weekly-location-performance?week_start=YYYY-MM-DD`  
+Default: `week_start` de la semana más reciente con filas (o lunes de la semana UTC anterior si aún no hay datos).
+
+```json
+{
+  "week_start": "2026-07-13",
+  "locations": [
+    {
+      "location_id": "1",
+      "country": "CO",
+      "total_purchase_cost": 8420000,
+      "total_waste_cost": 610000,
+      "waste_ratio": 0.072,
+      "stockout_events_count": 2,
+      "price_alert_events_count": 1,
+      "currency": "COP"
+    }
+  ]
+}
+```
+
+Notas de dominio:
+
+- `location_id` string del id numérico **1–14** (estado actual del monorepo).
+- Locales `CO` y `US` lado a lado; **no** sumar COP+USD.
+
+### 5.3 Contrato trigger / status
+
+`POST /reporting/pipeline-runs`
+
+```json
+{ "week_start": "2026-08-17", "pipeline_name": "weekly_location_performance" }
+```
+
+Respuesta 202:
+
+```json
+{ "run_id": "…", "status": "accepted" }
+```
+
+`GET /reporting/pipeline-runs/latest` → última fila de log (campos Fase 3).
+
+### 5.4 Checklist de evaluación (auto)
+
+- [x] Existe `data/pipelines/PIPELINE_DESIGN.md` legible
+- [x] Estado actual + gap de negocio vs reporte técnico
+- [x] Propósito en una frase con entregable + KPIs CONTEXT
+- [x] Extracción (fuente, formato, frecuencia) documentada
+- [x] Diagrama ≥3 etapas con nombres reales (`telemetry_events` → `reporting.weekly_location_performance`)
+- [x] Estrategia de update/upsert explícita
+- [x] Idempotencia si falla a mitad de Load
+- [x] Log de ejecución con ≥5 campos tipados y justificados
+- [x] Prefect: 1 flow + ≥3 tasks + blocks
+- [x] ≥3 endpoints en `services/reporting/` con funciones a importar desde `data/pipelines/`
+- [x] Sin modificar `services/telemetry/analysis.py` ni `GET /telemetry/report`
+- [x] Destino ≠ `telemetry_events`; schema `reporting`
+- [x] Vocabulario Brasaland (`location_id` 1–14, `country`, monedas, event_types obligatorios)
+
+### 5.5 Fuera de alcance (próximos hitos)
+
+- Código Prefect (flows/tasks reales)
+- Implementación FastAPI completa de reporting + authz
+- Conversión FX COP↔USD
+- Dashboard ejecutivo pulido (este diseño alimenta esa UI después)
