@@ -38,6 +38,7 @@ PROPERTY_ALLOWLISTS: dict[str, frozenset[str]] = {
             "unit",
             "currency",
             "unit_cost",
+            "total_cost",
             "supplier_id",
             "supplier_name",
             "order_id",
@@ -72,6 +73,8 @@ PROPERTY_ALLOWLISTS: dict[str, frozenset[str]] = {
             "reason",
             "order_id",
             "city",
+            "unit_cost",
+            "total_cost",
         }
     ),
     "stock_threshold_triggered": frozenset(

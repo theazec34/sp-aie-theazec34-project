@@ -204,7 +204,9 @@
                 "currency": { "$ref": "#/$defs/currency" },
                 "reason": { "$ref": "#/$defs/wasteReason" },
                 "order_id": { "type": "integer", "minimum": 1 },
-                "city": { "type": "string" }
+                "city": { "type": "string" },
+                "unit_cost": { "type": "number", "exclusiveMinimum": 0 },
+                "total_cost": { "type": "number", "exclusiveMinimum": 0 }
               }
             }
           }
