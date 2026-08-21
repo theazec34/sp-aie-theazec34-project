@@ -45,3 +45,11 @@ Ver `PROJECT.md` §2 (puertos 3000 / 3001 / 8000) o `DOCKER.md`.
 - Endpoint real: validación por evento + bulk INSERT; respuesta `{ received, stored, rejected }`.
 - `TelemetryEvent` y frontend sin cambios; tags con allowlist CONTEXT (sin PII).
 - Notas: `docs/telemetry/STORAGE.md`.
+
+## Hito Telemetría — Reporte técnico (rama `cursor/telemetry-report-c620`)
+- Pipeline Pandas: `services/telemetry/analysis.py` (events_per_day, error_rate_by_type, auth_failure_rate, latency_by_route).
+- `GET /telemetry/report` con ventana de fechas (default 7 días UTC) + cache TTL 60s.
+- Dashboard mínimo backoffice: `/telemetry`.
+- Seed: `services/api/seed_telemetry.py`.
+- PR título exigido: `feat: telemetry report endpoint`.
+- Notas: `docs/telemetry/REPORT.md`.

@@ -69,7 +69,9 @@ class TtlCache:
 # Process-wide caches (separate namespaces keep invalidation simple).
 incidents_cache = TtlCache()
 suppliers_cache = TtlCache()
+telemetry_report_cache = TtlCache()
 
 # TTL choices documented in CACHING_REPORT.md
 INCIDENTS_SUMMARY_TTL = 30.0  # seconds — dashboard aggregates; writes invalidate
 SUPPLIERS_LIST_TTL = 60.0  # seconds — directory changes rarely
+TELEMETRY_REPORT_TTL = 60.0  # seconds — report pipeline; key = start_date|end_date

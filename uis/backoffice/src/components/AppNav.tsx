@@ -15,7 +15,8 @@ type Props = {
     | "inventory-products"
     | "inventory-inbound"
     | "inventory-outbound"
-    | "inventory-orders";
+    | "inventory-orders"
+    | "telemetry";
 };
 
 export default function AppNav({ active }: Props) {
@@ -58,6 +59,12 @@ export default function AppNav({ active }: Props) {
           className={`bo-nav-link${active === "inventory-orders" ? " bo-nav-link-active" : ""}`}
         >
           Historial inventario
+        </Link>
+        <Link
+          href="/telemetry"
+          className={`bo-nav-link${active === "telemetry" ? " bo-nav-link-active" : ""}`}
+        >
+          Telemetría (ops)
         </Link>
         <Link
           href="/incidents/nueva"
