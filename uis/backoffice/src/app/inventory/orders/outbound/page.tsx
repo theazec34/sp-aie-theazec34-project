@@ -13,8 +13,16 @@ import {
   getIngredient,
   Ingredient,
   listIngredients,
+  LOW_STOCK_THRESHOLD,
   REASON_LABELS,
 } from "../../../../lib/inventory";
+import { track } from "../../../../services/telemetry";
+import {
+  inventoryBaseProps,
+  isBelowThreshold,
+  resolveWasteReason,
+  type WasteReason,
+} from "../../../../lib/telemetryInventory";
 
 function OutboundForm() {
   const searchParams = useSearchParams();
@@ -25,6 +33,7 @@ function OutboundForm() {
   const [selected, setSelected] = useState<Ingredient | null>(null);
   const [quantity, setQuantity] = useState("");
   const [reason, setReason] = useState<ExitReason>("consumption");
+  const [wasteDetail, setWasteDetail] = useState<WasteReason>("expired");
   const [locationId, setLocationId] = useState("1");
   const [loading, setLoading] = useState(false);
   const [bootLoading, setBootLoading] = useState(true);
@@ -100,29 +109,80 @@ function OutboundForm() {
     setQuantityError("");
     setMessage("");
     setLoading(true);
+    const loc = Number(locationId);
+    const qty = Number(quantity);
+    const item =
+      selected || ingredients.find((i) => i.id === Number(ingredientId)) || null;
     try {
-      await createOutboundOrder({
+      if (!item) throw new Error("Ingrediente no encontrado");
+      const created = await createOutboundOrder({
         ingredient_id: Number(ingredientId),
-        quantity: Number(quantity),
+        quantity: qty,
         reason,
-        location_id: Number(locationId),
+        location_id: loc,
       });
+      const base = inventoryBaseProps(item, loc, qty);
+      if (reason === "consumption") {
+        track("outbound_order_created", {
+          ...base,
+          reason: "consumption",
+          order_id: created.id,
+        });
+      } else {
+        const wasteReason = resolveWasteReason(reason, wasteDetail) || "expired";
+        track("stock_waste_registered", {
+          ...base,
+          reason: wasteReason,
+          order_id: created.id,
+        });
+      }
+
+      const refreshed = await getIngredient(Number(ingredientId));
+      setSelected(refreshed);
+      setIngredients((prev) =>
+        prev.map((row) => (row.id === refreshed.id ? refreshed : row))
+      );
+      if (isBelowThreshold(refreshed.current_stock)) {
+        track("stock_threshold_triggered", {
+          location_id: loc,
+          country: base.country,
+          product_id: item.id,
+          product_category: item.category,
+          unit: item.unit,
+          current_stock: refreshed.current_stock,
+          threshold: LOW_STOCK_THRESHOLD,
+          triggering_order_kind: "outbound",
+          triggering_order_id: created.id,
+        });
+      }
+
       setQuantity("");
       setReason("consumption");
+      setWasteDetail("expired");
       setLocationId("1");
       setMessage("Salida de ingrediente registrada correctamente.");
-      if (ingredientId) {
-        const refreshed = await getIngredient(Number(ingredientId));
-        setSelected(refreshed);
-        setIngredients((prev) =>
-          prev.map((item) => (item.id === refreshed.id ? refreshed : item))
-        );
-      }
     } catch (err) {
       const text = friendlyCatch(err, getApiBaseUrl());
       setError(text);
-      if (text.toLowerCase().includes("insufficient stock") || text.includes("stock")) {
+      if (
+        text.toLowerCase().includes("insufficient stock") ||
+        text.toLowerCase().includes("stock")
+      ) {
         setQuantityError(text);
+        if (item) {
+          track("outbound_order_rejected", {
+            ...inventoryBaseProps(item, loc, qty),
+            error_code: "insufficient_stock",
+            available_stock: item.current_stock,
+          });
+        }
+      } else {
+        track("inventory_validation_failed", {
+          route: "/inventory/orders/outbound",
+          field: "form",
+          message_key: "outbound_failed",
+          http_status: 400,
+        });
       }
     } finally {
       setLoading(false);
@@ -220,6 +280,21 @@ function OutboundForm() {
               ))}
             </select>
           </label>
+
+          {reason === "waste" ? (
+            <label className="bo-field">
+              <span>Detalle de merma (telemetría CONTEXT)</span>
+              <select
+                value={wasteDetail}
+                onChange={(e) => setWasteDetail(e.target.value as WasteReason)}
+                disabled={loading}
+              >
+                <option value="expired">expired</option>
+                <option value="kitchen_error">kitchen_error</option>
+                <option value="theft_suspected">theft_suspected</option>
+              </select>
+            </label>
+          ) : null}
 
           <label className="bo-field">
             <span>Local (location_id 1–14)</span>

@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans, Space_Grotesk } from "next/font/google";
+import TelemetryProvider from "../components/TelemetryProvider";
+import WebVitalsReporter from "../components/WebVitalsReporter";
 import "./globals.css";
 
 const bodyFont = IBM_Plex_Sans({
   variable: "--font-body",
   subsets: ["latin"],
-  // Fewer weights → less font bytes / lower CLS risk (skill: core-web-vitals)
   weight: ["400", "600"],
   display: "swap",
 });
@@ -37,7 +38,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={`${bodyFont.variable} ${displayFont.variable}`}>
-      <body>{children}</body>
+      <body>
+        <TelemetryProvider>
+          <WebVitalsReporter />
+          {children}
+        </TelemetryProvider>
+      </body>
     </html>
   );
 }

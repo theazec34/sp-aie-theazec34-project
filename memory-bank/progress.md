@@ -32,3 +32,10 @@ Ver `PROJECT.md` §2 (puertos 3000 / 3001 / 8000) o `DOCKER.md`.
 - Schemas: `docs/telemetry/event-schemas.json` (draft-07)
 - Solo diseño (sin instrumentación de código en este PR)
 - PR título exigido: `docs: telemetry design plan`
+
+## Hito Telemetría — Captura (rama `cursor/telemetry-capture-c620`)
+- Stub `POST /telemetry/events` + modelo `TelemetryEvent` (sin persistencia).
+- `TelemetryService` en backoffice: cola, batch 10s/20, sendBeacon, retry backoff.
+- Instrumentadas métricas obligatorias CONTEXT + capa técnica (auth, nav, errores, latency, web vitals).
+- Env: `NEXT_PUBLIC_TELEMETRY_ENDPOINT` / `TELEMETRY_ENDPOINT`.
+- Notas: `docs/telemetry/CAPTURE.md`.
