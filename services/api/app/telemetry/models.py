@@ -1,4 +1,4 @@
-"""Pydantic models for telemetry intake (stub — no persistence yet)."""
+"""Pydantic models for telemetry intake (envelope unchanged from capture hito)."""
 
 from __future__ import annotations
 
@@ -20,9 +20,13 @@ class TelemetryEvent(BaseModel):
     properties: dict[str, Any] = Field(default_factory=dict)
 
 
-class TelemetryBatch(BaseModel):
-    events: list[TelemetryEvent] = Field(min_length=1)
+class TelemetryBatchLoose(BaseModel):
+    """Loose envelope so one bad event does not 422 the whole batch."""
+
+    events: list[dict[str, Any]] = Field(min_length=1)
 
 
 class TelemetryReceiveResponse(BaseModel):
     received: int
+    stored: int
+    rejected: int

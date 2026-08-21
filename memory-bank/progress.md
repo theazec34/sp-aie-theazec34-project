@@ -39,3 +39,9 @@ Ver `PROJECT.md` §2 (puertos 3000 / 3001 / 8000) o `DOCKER.md`.
 - Instrumentadas métricas obligatorias CONTEXT + capa técnica (auth, nav, errores, latency, web vitals).
 - Env: `NEXT_PUBLIC_TELEMETRY_ENDPOINT` / `TELEMETRY_ENDPOINT`.
 - Notas: `docs/telemetry/CAPTURE.md`.
+
+## Hito Telemetría — Almacenamiento (rama `cursor/telemetry-storage-c620`)
+- Tabla `telemetry_events` (8 cols + índices timestamp/event_type/GIN tags); SQL en `services/api/sql/telemetry_events.sql`.
+- Endpoint real: validación por evento + bulk INSERT; respuesta `{ received, stored, rejected }`.
+- `TelemetryEvent` y frontend sin cambios; tags con allowlist CONTEXT (sin PII).
+- Notas: `docs/telemetry/STORAGE.md`.
