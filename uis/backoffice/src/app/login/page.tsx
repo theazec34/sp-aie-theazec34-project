@@ -10,6 +10,7 @@ import {
   networkErrorMessage,
   setToken,
 } from "../../lib/auth";
+import { telemetry, track, userIdFromToken } from "../../services/telemetry";
 
 function LoginForm() {
   const router = useRouter();
@@ -29,8 +30,21 @@ function LoginForm() {
     try {
       const token = await loginRequest(apiBase, email.trim(), password);
       setToken(token);
+      telemetry.ensureSession();
+      telemetry.setUserId(userIdFromToken(token));
+      track("auth_login_succeeded", { result: "success", role: "unknown" });
       router.replace("/proveedores");
     } catch (err) {
+      const raw = err instanceof Error ? err.message : String(err);
+      const failure_reason = /failed to fetch|networkerror|load failed/i.test(raw)
+        ? "network"
+        : /inactiv/i.test(raw)
+          ? "inactive"
+          : "bad_credentials";
+      track("auth_login_failed", {
+        result: "failure",
+        failure_reason,
+      });
       setError(networkErrorMessage(err, apiBase));
     } finally {
       setLoading(false);

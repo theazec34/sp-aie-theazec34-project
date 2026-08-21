@@ -20,6 +20,7 @@ from app.inventory.router import router as inventory_router
 from app.profiles.router import router as profiles_router
 from app.schemas import AnalysisReport
 from app.suppliers.router import router as suppliers_router
+from app.telemetry.router import router as telemetry_router
 from app.users.models import UserInDB
 from app.users.router import router as users_router
 
@@ -88,6 +89,7 @@ app.include_router(profiles_router)
 app.include_router(suppliers_router)
 app.include_router(incidents_router)
 app.include_router(inventory_router)
+app.include_router(telemetry_router)
 
 
 @app.get("/health")

@@ -1,4 +1,5 @@
 import { clearToken, getApiBaseUrl, getToken } from "./auth";
+import { track } from "../services/telemetry";
 
 export class ApiError extends Error {
   status: number;
@@ -18,6 +19,7 @@ type FetchOptions = RequestInit & {
  * Authenticated fetch helper:
  * - attaches Bearer token from localStorage
  * - on 401 clears token and redirects to /login
+ * - samples API latency for telemetry (non-blocking)
  */
 export async function apiFetch(
   path: string,
@@ -35,9 +37,29 @@ export async function apiFetch(
     }
   }
 
+  const started = performance.now();
   const response = await fetch(url, { ...rest, headers: finalHeaders });
+  const durationMs = performance.now() - started;
+
+  // Sample ~10% of calls (always record if slow > 500ms)
+  if (durationMs > 500 || Math.random() < 0.1) {
+    const route = path.startsWith("http")
+      ? new URL(path).pathname
+      : path.split("?")[0];
+    track("api_latency_recorded", {
+      route,
+      method: (rest.method || "GET").toUpperCase(),
+      status_code: response.status,
+      duration_ms: Math.round(durationMs * 10) / 10,
+      cache_status: response.headers.get("X-Cache") || "NA",
+    });
+  }
 
   if (response.status === 401 && !skipAuth) {
+    track("auth_session_expired", {
+      route: typeof window !== "undefined" ? window.location.pathname : path,
+      http_status: 401,
+    });
     clearToken();
     if (typeof window !== "undefined") {
       window.location.href = "/login";

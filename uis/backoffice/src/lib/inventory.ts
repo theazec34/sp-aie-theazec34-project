@@ -141,27 +141,36 @@ export async function getIngredient(id: number): Promise<Ingredient> {
 /** POST /inventory/orders/inbound */
 export async function createInboundOrder(
   payload: IngredientEntryCreate
-): Promise<unknown> {
+): Promise<{ id: number; ingredient_id: number; quantity: number }> {
   const response = await apiFetch("/inventory/orders/inbound", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
   await ensureOk(response);
-  return response.json();
+  return (await response.json()) as {
+    id: number;
+    ingredient_id: number;
+    quantity: number;
+  };
 }
 
 /** POST /inventory/orders/outbound */
 export async function createOutboundOrder(
   payload: IngredientExitCreate
-): Promise<unknown> {
+): Promise<{ id: number; ingredient_id: number; quantity: number; reason: string }> {
   const response = await apiFetch("/inventory/orders/outbound", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
   await ensureOk(response);
-  return response.json();
+  return (await response.json()) as {
+    id: number;
+    ingredient_id: number;
+    quantity: number;
+    reason: string;
+  };
 }
 
 /** GET /inventory/orders */

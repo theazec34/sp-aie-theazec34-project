@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import AuthenticatedShell from "../../../components/AuthenticatedShell";
 import { useAsyncResource } from "../../../hooks/useAsyncResource";
 import {
@@ -13,6 +13,7 @@ import {
   type Ingredient,
   type StockLevel,
 } from "../../../lib/inventory";
+import { track } from "../../../services/telemetry";
 
 const LEVEL_ORDER: Record<StockLevel, number> = {
   empty: 0,
@@ -31,6 +32,14 @@ export default function InventoryProductsPage() {
   const loader = useCallback(() => listIngredients(), []);
   const { data, loading, error, reload } = useAsyncResource(loader);
   const items = data ?? [];
+
+  useEffect(() => {
+    if (loading || error) return;
+    track("inventory_products_viewed", {
+      route: "/inventory/products",
+      result_count: items.length,
+    });
+  }, [loading, error, items.length]);
 
   // Enrich + sort once per items change (filters / badges / severity order).
   const rows = useMemo<StockRow[]>(() => {
@@ -131,6 +140,22 @@ export default function InventoryProductsPage() {
                       >
                         Salida
                       </Link>
+                      <button
+                        type="button"
+                        className="bo-btn bo-btn-small"
+                        title="El stock solo cambia vía órdenes (trazabilidad)"
+                        onClick={() =>
+                          track("direct_stock_edit_rejected", {
+                            product_id: item.id,
+                            country: item.country === "US" ? "US" : "CO",
+                            attempted_field: "current_stock",
+                            http_status: 405,
+                            route: "/inventory/products",
+                          })
+                        }
+                      >
+                        Editar stock ✕
+                      </button>
                     </div>
                   </td>
                 </tr>

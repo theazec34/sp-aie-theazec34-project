@@ -9,9 +9,19 @@ import { getApiBaseUrl } from "../../../../lib/auth";
 import { friendlyCatch } from "../../../../lib/errors";
 import {
   createInboundOrder,
+  getIngredient,
   Ingredient,
   listIngredients,
+  LOW_STOCK_THRESHOLD,
 } from "../../../../lib/inventory";
+import { track } from "../../../../services/telemetry";
+import {
+  baselineKey,
+  inventoryBaseProps,
+  isBelowThreshold,
+  readBaselines,
+  writeBaseline,
+} from "../../../../lib/telemetryInventory";
 
 function InboundForm() {
   const searchParams = useSearchParams();
@@ -22,6 +32,7 @@ function InboundForm() {
   const [quantity, setQuantity] = useState("");
   const [supplierName, setSupplierName] = useState("");
   const [locationId, setLocationId] = useState("1");
+  const [unitCost, setUnitCost] = useState("");
   const [loading, setLoading] = useState(false);
   const [bootLoading, setBootLoading] = useState(true);
   const [error, setError] = useState("");
@@ -53,18 +64,79 @@ function InboundForm() {
     setError("");
     setMessage("");
     setLoading(true);
+    const item = ingredients.find((i) => i.id === Number(ingredientId));
+    const loc = Number(locationId);
+    const qty = Number(quantity);
     try {
-      await createInboundOrder({
+      if (!item) throw new Error("Ingrediente no encontrado");
+      const created = await createInboundOrder({
         ingredient_id: Number(ingredientId),
-        quantity: Number(quantity),
+        quantity: qty,
         supplier_name: supplierName.trim(),
-        location_id: Number(locationId),
+        location_id: loc,
       });
+      const base = inventoryBaseProps(item, loc, qty);
+      track("inbound_order_created", {
+        ...base,
+        supplier_name: supplierName.trim(),
+        order_id: created.id,
+        ...(unitCost ? { unit_cost: Number(unitCost) } : {}),
+      });
+
+      if (unitCost) {
+        const cost = Number(unitCost);
+        const key = baselineKey(item.id, supplierName);
+        const baselines = readBaselines();
+        const baseline = baselines[key];
+        if (baseline && baseline > 0) {
+          const variance = (cost - baseline) / baseline;
+          if (Math.abs(variance) >= 0.1) {
+            track("ingredient_price_variance_detected", {
+              location_id: loc,
+              country: base.country,
+              product_id: item.id,
+              product_category: item.category,
+              unit: item.unit,
+              currency: base.currency,
+              supplier_name: supplierName.trim(),
+              unit_cost: cost,
+              baseline_unit_cost: baseline,
+              variance_pct: Math.round(variance * 1000) / 1000,
+              threshold_pct: 0.1,
+              order_id: created.id,
+            });
+          }
+        }
+        writeBaseline(key, cost);
+      }
+
+      const refreshed = await getIngredient(item.id);
+      if (isBelowThreshold(refreshed.current_stock)) {
+        track("stock_threshold_triggered", {
+          location_id: loc,
+          country: base.country,
+          product_id: item.id,
+          product_category: item.category,
+          unit: item.unit,
+          current_stock: refreshed.current_stock,
+          threshold: LOW_STOCK_THRESHOLD,
+          triggering_order_kind: "inbound",
+          triggering_order_id: created.id,
+        });
+      }
+
       setQuantity("");
       setSupplierName("");
+      setUnitCost("");
       setLocationId("1");
       setMessage("Entrada de ingrediente registrada correctamente.");
     } catch (err) {
+      track("inventory_validation_failed", {
+        route: "/inventory/orders/inbound",
+        field: "form",
+        message_key: "inbound_failed",
+        http_status: 400,
+      });
       setError(friendlyCatch(err, getApiBaseUrl()));
     } finally {
       setLoading(false);
@@ -127,6 +199,19 @@ function InboundForm() {
               onChange={(e) => setSupplierName(e.target.value)}
               disabled={loading}
               placeholder="Carnes del Valle S.A."
+            />
+          </label>
+
+          <label className="bo-field">
+            <span>Costo unitario (opcional · telemetría / moneda del local)</span>
+            <input
+              type="number"
+              min={0.01}
+              step="any"
+              value={unitCost}
+              onChange={(e) => setUnitCost(e.target.value)}
+              disabled={loading}
+              placeholder="Ej. 12500 (COP) o 4.5 (USD)"
             />
           </label>
 
