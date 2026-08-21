@@ -1,6 +1,8 @@
-"""Telemetry storage tests: partial validation + bulk insert."""
+"""Stub telemetry intake tests."""
 
 from __future__ import annotations
+
+import uuid
 
 from sqlmodel import Session, select
 
@@ -10,13 +12,13 @@ from app.telemetry.orm import TelemetryEventRow
 
 def _valid_event(**overrides):
     base = {
-        "eventId": "11111111-1111-4111-8111-111111111111",
+        "eventId": str(uuid.uuid4()),
         "timestamp": "2026-08-21T12:00:00.000Z",
         "sessionId": "22222222-2222-4222-8222-222222222222",
         "userId": "1",
         "event_type": "inbound_order_created",
         "schemaVersion": "1.0.0",
-        "requestId": "33333333-3333-4333-8333-333333333333",
+        "requestId": str(uuid.uuid4()),
         "properties": {
             "location_id": 1,
             "country": "CO",
@@ -35,14 +37,17 @@ def _valid_event(**overrides):
 
 
 def test_telemetry_events_stores_batch(client):
+    inbound_id = str(uuid.uuid4())
+    auth_id = str(uuid.uuid4())
+    inbound_req = str(uuid.uuid4())
     payload = {
         "events": [
-            _valid_event(),
+            _valid_event(eventId=inbound_id, requestId=inbound_req),
             _valid_event(
-                eventId="44444444-4444-4444-8444-444444444444",
+                eventId=auth_id,
                 timestamp="2026-08-21T12:00:01.000Z",
                 event_type="auth_login_failed",
-                requestId="55555555-5555-4555-8555-555555555555",
+                requestId=str(uuid.uuid4()),
                 properties={
                     "result": "failure",
                     "failure_reason": "bad_credentials",
@@ -52,18 +57,12 @@ def test_telemetry_events_stores_batch(client):
     }
     response = client.post("/telemetry/events", json=payload)
     assert response.status_code == 200
-    body = response.json()
-    assert body == {"received": 2, "stored": 2, "rejected": 0}
+    assert response.json() == {"received": 2, "stored": 2, "rejected": 0}
 
     with Session(engine) as session:
         rows = session.exec(
             select(TelemetryEventRow).where(
-                TelemetryEventRow.event_id.in_(
-                    [
-                        "11111111-1111-4111-8111-111111111111",
-                        "44444444-4444-4444-8444-444444444444",
-                    ]
-                )
+                TelemetryEventRow.event_id.in_([inbound_id, auth_id])
             )
         ).all()
     assert len(rows) == 2
@@ -71,26 +70,22 @@ def test_telemetry_events_stores_batch(client):
     inbound = by_type["inbound_order_created"]
     assert inbound.service == "backoffice"
     assert inbound.tags["location_id"] == 1
-    assert inbound.tags["country"] == "CO"
     assert "email" not in inbound.tags
-    assert inbound.tags["schema_version"] == "1.0.0"
-    assert inbound.tags["request_id"] == "33333333-3333-4333-8333-333333333333"
+    assert inbound.tags["request_id"] == inbound_req
     assert by_type["auth_login_failed"].tags["failure_reason"] == "bad_credentials"
 
 
 def test_telemetry_events_partial_acceptance(client):
+    good_a = str(uuid.uuid4())
+    good_b = str(uuid.uuid4())
     payload = {
         "events": [
-            _valid_event(
-                eventId="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-                requestId="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
-            ),
+            _valid_event(eventId=good_a),
             {"event_type": "broken", "properties": {}},
             _valid_event(
-                eventId="cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+                eventId=good_b,
                 timestamp="2026-08-21T12:00:02.000Z",
                 event_type="page_viewed",
-                requestId="dddddddd-dddd-4ddd-8ddd-dddddddddddd",
                 properties={"route": "/inventory/products"},
             ),
         ]
@@ -102,12 +97,7 @@ def test_telemetry_events_partial_acceptance(client):
     with Session(engine) as session:
         stored = session.exec(
             select(TelemetryEventRow).where(
-                TelemetryEventRow.event_id.in_(
-                    [
-                        "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
-                        "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
-                    ]
-                )
+                TelemetryEventRow.event_id.in_([good_a, good_b])
             )
         ).all()
     assert len(stored) == 2

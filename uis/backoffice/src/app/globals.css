@@ -500,3 +500,66 @@ a {
   margin-top: 12px;
   color: #fda4af !important;
 }
+
+.bo-telemetry-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.bo-telemetry-bars {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.bo-telemetry-bars li {
+  display: grid;
+  grid-template-columns: 110px 1fr 48px;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.bo-telemetry-bar-track {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  overflow: hidden;
+}
+
+.bo-telemetry-bar-fill {
+  display: block;
+  height: 100%;
+  background: #0f766e;
+}
+
+.bo-telemetry-bar-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.bo-table-wrap {
+  overflow-x: auto;
+  margin-top: 12px;
+}
+
+.bo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.bo-table th,
+.bo-table td {
+  border-bottom: 1px solid var(--bo-border);
+  padding: 8px 6px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.bo-table code {
+  font-size: 0.8em;
+}

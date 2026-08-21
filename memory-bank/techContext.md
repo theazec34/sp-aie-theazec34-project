@@ -32,10 +32,10 @@
 - Diseño: `docs/telemetry/telemetry-plan.md`, `event-schemas.json`
 - Captura: `uis/backoffice/src/services/telemetry.ts` (`track`)
 - Almacenamiento: `POST /telemetry/events` → `telemetry_events` (bulk); SQL `services/api/sql/telemetry_events.sql`
-- Docs: `docs/telemetry/CAPTURE.md`, `STORAGE.md`
+- Reporte: `services/telemetry/analysis.py` + `GET /telemetry/report` (cache 60s) + UI `/telemetry`
+- Docs: `docs/telemetry/CAPTURE.md`, `STORAGE.md`, `REPORT.md`
 
 ## Rama
-- Diseño telemetría (mergeado): `telemetria` / PR #23
-- Captura telemetría (mergeado): `cursor/telemetry-capture-c620` / PR #24
-- Almacenamiento: `cursor/telemetry-storage-c620`
+- Diseño / captura / almacenamiento: mergeados (#23–#25)
+- Reporte técnico: `cursor/telemetry-report-c620`
 - Producto estable: **`main`**
