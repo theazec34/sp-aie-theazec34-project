@@ -165,3 +165,99 @@ Endpoints previstos (detalle en Fase 5):
 - `GET /reporting/weekly-location-performance`
 - `GET /reporting/pipeline-runs/latest`
 - `POST /reporting/pipeline-runs`
+
+---
+
+## Fase 3 — Resiliencia: idempotencia, observabilidad y recuperabilidad
+
+### 3.1 Idempotencia
+
+#### Duplicados en origen
+- Clave de deduplicación del envelope: **`eventId`** (UUID en captura).
+- Capa de manejo: **almacenamiento** (`POST /telemetry/events` ya hace `ON CONFLICT DO NOTHING` por `event_id`).
+- El pipeline de negocio **agrupa por hecho único**: si el mismo `event_id` no se duplica en origen, no infla KPIs. Defensa en profundidad: en Transform, `drop_duplicates(subset=["event_id"])` antes de agregar.
+
+#### Reintento tras fallo a mitad de Load
+1. Extract/Transform son funciones puras sobre una semana (`week_start`) — no mutan origen.
+2. Load usa **UPSERT** por `(location_id, week_start)`: una segunda corrida sobrescribe la misma fila con el mismo resultado (recomputo completo de la semana).
+3. Si el primer Load insertó 5 de 14 locales y cayó: la re-corrida vuelve a calcular **toda** la semana y upserta los 14; no hay “append parcial” de KPIs.
+4. El `pipeline_run_log` registra `status=failed` con `checkpoint` (ver abajo); la siguiente corrida exitosa escribe `status=completed` sin borrar el historial de fallos (auditoría).
+
+#### Eventos tardíos (late arriving)
+- Política v1: **recomputar la semana ISO afectada** (no solo “append deltas”).
+- Trigger: cron semanal + `POST /reporting/pipeline-runs` con `week_start` explícito cuando ops detecta atrasos.
+- La fila publicada se actualiza (`computed_at` nuevo); el log anterior permanece → no se pierde rastro de auditoría.
+- No se “suma encima” del agregado previo: siempre replace vía upsert.
+
+#### Reintento de transmisión `POST /telemetry/events`
+- Cliente (TelemetryService): backoff ×3; mismo `eventId` en el batch.
+- Servidor: conflicto en `event_id` → **no inserta de nuevo**, cuenta como no-nuevo; respuesta HTTP **200** con `{ received, stored, rejected }` (idempotente a nivel de hecho).
+- Semántica: `stored=0` en un retry no significa “falló; reintenta otra vez con nuevo id” — el hecho ya está. El FE no regenera `eventId` al reenviar el mismo batch en memoria.
+- (Diseño futuro opcional) header `Idempotency-Key` = hash del batch; fuera de v1 del pipeline de negocio.
+
+#### Corridas concurrentes (cron ∩ trigger manual)
+- Lock lógico por `pipeline_name + week_start`:
+  - Antes de Load, insertar fila `pipeline_run_log` con `status=running`.
+  - Si ya existe `running` no expirado (< 30 min) para esa semana → la nueva corrida termina en `status=skipped_locked`.
+- Alternativa Prefectora: concurrency limit / mutex en el deployment (Fase 4).
+
+### 3.2 Observabilidad
+
+#### Silencio vs ausencia real de actividad
+Señales mínimas a registrar **por corrida**:
+
+| Señal | Cómo |
+|-------|------|
+| Pipeline corrió | fila en `pipeline_run_log` con `started_at`/`finished_at`/`status` |
+| Hubo extracción | `rows_extracted` (0 es válido si la semana no tuvo eventos) |
+| Captura sana | métrica técnica existente `events_per_day` (reporte telemetría) en paralelo |
+| Heartbeat de negocio | si `status=completed` y `rows_extracted=0` → “semana sin actividad”, no “pipeline roto” |
+| Fallo de captura | ausencia de corrida (`pipeline-runs/latest` viejo) o `status=failed` |
+
+#### Trazabilidad evento → KPI
+Cadena reconstruible:
+
+`event_id` → `telemetry_events` → (filtro `week_start`, `location_id`) → fila `reporting.weekly_location_performance` → `computed_at` + `run_id` en log.
+
+Para detectar gaps/ráfagas: comparar `rows_extracted` vs conteo SQL directo de la misma ventana; alertar si diverge > umbral.
+
+#### Crecimiento vs pérdida/duplicación
+- Comparar semana N vs N−1 en KPIs **y** en `rows_extracted` / `events_per_day`.
+- Si KPIs suben pero `rows_extracted` cae → sospecha de cambio de filtro o pérdida de tipos de evento.
+- Si `rows_extracted` sube mucho sin cambio de negocio → sospecha de duplicados (validar unicidad `event_id`).
+
+### 3.3 Recuperabilidad
+
+#### Caída de DB a mitad de proceso
+- Checkpoint en `pipeline_run_log.checkpoint` JSONB, mínimo:
+  ```json
+  { "week_start": "2026-08-17", "stage": "load", "locations_done": ["1","2","3"] }
+  ```
+- Política v1 de resume: **recomputar semana completa** (barato a escala Brasaland) en lugar de resume fino por local; el checkpoint sirve para diagnóstico, no para micro-resume obligatorio.
+- Tras reconexión: nueva corrida con mismo `week_start` → upsert limpio.
+
+#### Buffer offline en el navegador
+- Hoy: cola **en memoria** + `sendBeacon` (TelemetryService). No hay persistencia IndexedDB.
+- Riesgos de buffer offline largo: eventos fuera de orden, PII accidental, colas infladas, doble envío.
+- Decisión: el **riesgo de pérdida en cierre abrupto** lo asume la capa de captura (telemetría no crítica para UX). El pipeline de negocio **no** implementa buffer FE; asume hechos ya persistidos en `telemetry_events`.
+- Mejora futura (fuera de este diseño): cola durable con tope y flush — sin cambiar el contrato del pipeline.
+
+### 3.4 Log de ejecución (mínimo ≥5 campos)
+
+Tabla: `reporting.pipeline_run_log` (definida en el SQL de Fase 2).
+
+| Campo | Tipo | Justificación de auditoría |
+|-------|------|----------------------------|
+| `run_id` | `uuid` | Identidad única de la corrida para correlacionar alertas y soporte |
+| `pipeline_name` | `text` | Distinguir este pipeline de futuros (`weekly_location_performance`) |
+| `week_start` | `date` | Semana de negocio procesada (granularidad del entregable) |
+| `status` | `text` | `running` / `completed` / `failed` / `skipped_locked` — estado contractual |
+| `started_at` | `timestamptz` | Inicio real (SLA lunes / detección de silence) |
+| `finished_at` | `timestamptz` | Duración y fin; null si aún corre o crasheó sin cierre |
+| `rows_extracted` | `int` | Volumen leído — separa “cero actividad” de “fallo” |
+| `rows_upserted` | `int` | Locales escritos en reporting — verifica Load |
+| `error_message` | `text` | Causa de fallo sin PII |
+| `triggered_by` | `text` | `scheduler` \| `api_manual` \| `backfill` — concurrencia y accountability |
+| `checkpoint` | `jsonb` | Punto de progreso / semana / stage para recuperación |
+
+*(Más de cinco campos a propósito: el enunciado pide mínimo cinco; producción necesita el set completo anterior.)*
