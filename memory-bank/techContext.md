@@ -28,12 +28,14 @@
 - Contextos: `Brasaland.md`, `CONTEXT-brasaland.es.md`, `CONTEXT-incidents-centralized.es.md`, `05-backend-inventory-orm/`
 - Telemetría (diseño): `docs/telemetry/telemetry-plan.md`, `event-schemas.json`
 
-## Telemetría (captura)
-- Stub: `POST /telemetry/events`
-- FE: `uis/backoffice/src/services/telemetry.ts` (`track`)
-- Docs: `docs/telemetry/`
+## Telemetría
+- Diseño: `docs/telemetry/telemetry-plan.md`, `event-schemas.json`
+- Captura: `uis/backoffice/src/services/telemetry.ts` (`track`)
+- Almacenamiento: `POST /telemetry/events` → `telemetry_events` (bulk); SQL `services/api/sql/telemetry_events.sql`
+- Docs: `docs/telemetry/CAPTURE.md`, `STORAGE.md`
 
 ## Rama
 - Diseño telemetría (mergeado): `telemetria` / PR #23
-- Captura telemetría: `cursor/telemetry-capture-c620`
+- Captura telemetría (mergeado): `cursor/telemetry-capture-c620` / PR #24
+- Almacenamiento: `cursor/telemetry-storage-c620`
 - Producto estable: **`main`**
