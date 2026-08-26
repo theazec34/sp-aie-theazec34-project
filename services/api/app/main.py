@@ -25,6 +25,12 @@ from app.telemetry.router import router as telemetry_router
 from app.users.models import UserInDB
 from app.users.router import router as users_router
 
+# Mount business reporting from sibling package services/reporting
+_SERVICES_DIR = Path(__file__).resolve().parents[2]
+if str(_SERVICES_DIR) not in __import__("sys").path:
+    __import__("sys").path.insert(0, str(_SERVICES_DIR))
+from reporting.router import router as reporting_router  # noqa: E402
+
 logger = logging.getLogger("api.timing")
 if not logging.getLogger().handlers:
     logging.basicConfig(
@@ -91,6 +97,7 @@ app.include_router(suppliers_router)
 app.include_router(incidents_router)
 app.include_router(inventory_router)
 app.include_router(telemetry_router)
+app.include_router(reporting_router)
 
 
 @app.get("/health")

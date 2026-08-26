@@ -37,3 +37,9 @@ services/api/data/
 services/api/.coverage
 **/coverage/
 **/.nyc_output/
+
+# Pipeline staging artifacts
+data/raw/*
+!data/raw/README*
+data/eval/*
+!data/eval/README*

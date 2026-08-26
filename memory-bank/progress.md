@@ -61,3 +61,10 @@ Ver `PROJECT.md` §2 (puertos 3000 / 3001 / 8000) o `DOCKER.md`.
 - Stub módulo: `services/reporting/` (sin ETL)
 - PR título: `docs: business performance pipeline design`
 - Solo diseño (sin orquestación Prefect aún)
+
+## Hito Pipeline resiliente — Implementación (`cursor/resilient-pipeline-c620`)
+- Prefect flow `weekly_location_performance_flow` en `data/pipelines/pipeline.py`
+- Tasks extract/transform/load + eval opcional (`return_state=True`), retries, cache 1h, UPSERT idempotente
+- Endpoints: `GET/POST /reporting/*` en `services/reporting/router.py`
+- CLI: `python data/pipelines/pipeline.py`
+- Commit message exigido: `feat: implement resilient business performance pipeline`
