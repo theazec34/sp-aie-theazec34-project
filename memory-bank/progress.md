@@ -68,3 +68,9 @@ Ver `PROJECT.md` §2 (puertos 3000 / 3001 / 8000) o `DOCKER.md`.
 - Endpoints: `GET/POST /reporting/*` en `services/reporting/router.py`
 - CLI: `python data/pipelines/pipeline.py`
 - Commit message exigido: `feat: implement resilient business performance pipeline`
+
+## Hito Pipeline a producción — Subflows + tests + dashboard (`cursor/pipeline-subflows-dashboard-c620`)
+- Subflows de dominio (extract/transform/load/eval) coordinados por el flow principal
+- Tests unitarios aislados: `tests/pipelines/test_pipeline.py`
+- Dashboard negocio: backoffice `/reporting` (5 KPIs CONTEXT)
+- Commit exigido: `feat: refactor business performance pipeline into subflows, add unit tests, and add reporting dashboard`

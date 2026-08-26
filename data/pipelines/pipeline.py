@@ -7,7 +7,7 @@ CLI (required by hito):
     python data/pipelines/pipeline.py
     python data/pipelines/pipeline.py --week-start 2026-08-17
 
-Flow name and tasks match data/pipelines/PIPELINE_DESIGN.md.
+Part 3: main flow coordinates domain subflows (extract / transform / load / eval).
 """
 
 from __future__ import annotations
@@ -23,7 +23,6 @@ from prefect import flow, task
 from prefect.cache_policies import INPUTS
 from sqlalchemy import bindparam, text
 
-# Monorepo roots on sys.path: repo root (data.*) + services/api (app.*)
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _API_ROOT = _REPO_ROOT / "services" / "api"
 for _p in (_REPO_ROOT, _API_ROOT):
@@ -33,6 +32,11 @@ for _p in (_REPO_ROOT, _API_ROOT):
 from data.process.weekly_kpis import (  # noqa: E402
     KPI_EVENT_TYPES,
     PIPELINE_NAME,
+    compute_price_alert_events_by_location,
+    compute_purchase_cost_by_location,
+    compute_stockout_events_by_location,
+    compute_waste_cost_by_location,
+    compute_waste_ratio,
     iso_week_start,
     refine_and_aggregate,
     week_window,
@@ -49,17 +53,21 @@ _RAW_DIR = _REPO_ROOT / "data" / "raw"
 _EVAL_DIR = _REPO_ROOT / "data" / "eval"
 
 
+# ---------------------------------------------------------------------------
+# Tasks (called from subflows — domain vocabulary from CONTEXT KPIs)
+# ---------------------------------------------------------------------------
+
+
 @task(
-    name="extract_telemetry_week",
+    name="extract_telemetry_events_for_cost_waste_week",
     # Retries=3: absorb transient DB pool / network blips against Supabase (external).
     retries=3,
     retry_delay_seconds=5,
 )
-def extract_telemetry_week(week_start: date) -> dict:
-    """Extract KPI events for the ISO week from telemetry_events (read-only)."""
+def extract_telemetry_events_for_cost_waste_week(week_start: date) -> dict:
+    """Read-only extract of KPI events from telemetry_events for one ISO week."""
     eng = get_engine()
     start, end = week_window(week_start)
-    # Ensure telemetry table exists when running against fresh SQLite.
     from app.database import init_db
     from app.telemetry import orm as _telemetry_orm  # noqa: F401
 
@@ -81,13 +89,8 @@ def extract_telemetry_week(week_start: date) -> dict:
         )
 
     _RAW_DIR.mkdir(parents=True, exist_ok=True)
-    raw_path = _RAW_DIR / f"telemetry_week_{week_start.isoformat()}.parquet"
-    try:
-        df.to_parquet(raw_path, index=False)
-    except Exception:
-        # Parquet optional (pyarrow may be missing); fall back to CSV.
-        raw_path = _RAW_DIR / f"telemetry_week_{week_start.isoformat()}.csv"
-        df.to_csv(raw_path, index=False)
+    raw_path = _RAW_DIR / f"telemetry_week_{week_start.isoformat()}.csv"
+    df.to_csv(raw_path, index=False)
 
     return {
         "week_start": week_start.isoformat(),
@@ -97,18 +100,56 @@ def extract_telemetry_week(week_start: date) -> dict:
     }
 
 
+@task(name="compute_purchase_cost_by_location_task")
+def compute_purchase_cost_by_location_task(rows: list[dict]) -> dict[str, float]:
+    """Transform task: Costo de compra por local."""
+    return compute_purchase_cost_by_location(pd.DataFrame(rows))
+
+
+@task(name="compute_waste_cost_and_ratio_by_location_task")
+def compute_waste_cost_and_ratio_by_location_task(
+    rows: list[dict],
+    purchase_by_location: dict[str, float],
+) -> dict[str, dict[str, float]]:
+    """Transform task: Costo de merma + Ratio de merma por local."""
+    waste = compute_waste_cost_by_location(pd.DataFrame(rows))
+    locations = set(purchase_by_location) | set(waste)
+    out: dict[str, dict[str, float]] = {}
+    for loc in locations:
+        p = float(purchase_by_location.get(loc, 0.0))
+        w = float(waste.get(loc, 0.0))
+        out[loc] = {"total_waste_cost": w, "waste_ratio": compute_waste_ratio(p, w)}
+    return out
+
+
+@task(name="compute_stockout_and_price_alert_counts_task")
+def compute_stockout_and_price_alert_counts_task(
+    rows: list[dict],
+) -> dict[str, dict[str, int]]:
+    """Transform task: Frecuencia de quiebre de stock + alertas de precio."""
+    df = pd.DataFrame(rows)
+    stockouts = compute_stockout_events_by_location(df)
+    alerts = compute_price_alert_events_by_location(df)
+    locations = set(stockouts) | set(alerts)
+    return {
+        loc: {
+            "stockout_events_count": int(stockouts.get(loc, 0)),
+            "price_alert_events_count": int(alerts.get(loc, 0)),
+        }
+        for loc in locations
+    }
+
+
 @task(
-    name="transform_location_kpis",
-    # Cache key = task inputs (week_start + extracted payload hash via INPUTS).
-    # Expiration 1h: skip expensive re-aggregation when re-triggered within the hour.
+    name="assemble_weekly_location_kpi_rows",
+    # Cache key = task inputs. Expiration 1h: skip re-assembly when re-triggered soon.
     cache_policy=INPUTS,
     cache_expiration=timedelta(hours=1),
 )
-def transform_location_kpis(extract_result: dict) -> dict:
-    """Refine tags and aggregate CONTEXT KPIs per location_id × week_start."""
+def assemble_weekly_location_kpi_rows(extract_result: dict) -> dict:
+    """Combine KPI transforms into rows for reporting.weekly_location_performance."""
     week_start = date.fromisoformat(extract_result["week_start"])
-    df = pd.DataFrame(extract_result.get("rows") or [])
-    rows = refine_and_aggregate(df, week_start)
+    rows = refine_and_aggregate(pd.DataFrame(extract_result.get("rows") or []), week_start)
     return {
         "week_start": week_start.isoformat(),
         "kpi_rows": rows,
@@ -117,12 +158,12 @@ def transform_location_kpis(extract_result: dict) -> dict:
 
 
 @task(
-    name="load_weekly_location_performance",
+    name="upsert_weekly_location_performance_rows",
     # Retries=3: Load hits Postgres/SQLite; brief locks/timeouts should not fail the week.
     retries=3,
     retry_delay_seconds=5,
 )
-def load_weekly_location_performance(transform_result: dict, run_id: str) -> dict:
+def upsert_weekly_location_performance_rows(transform_result: dict, run_id: str) -> dict:
     """Idempotent UPSERT into reporting.weekly_location_performance."""
     rows = transform_result.get("kpi_rows") or []
     upserted = upsert_kpi_rows(rows)
@@ -144,9 +185,9 @@ def load_weekly_location_performance(transform_result: dict, run_id: str) -> dic
     }
 
 
-@task(name="write_eval_snapshot")
-def write_eval_snapshot(transform_result: dict, load_result: dict) -> str:
-    """Optional non-critical eval artifact under data/eval/."""
+@task(name="write_weekly_cost_waste_eval_snapshot")
+def write_weekly_cost_waste_eval_snapshot(transform_result: dict, load_result: dict) -> str:
+    """Optional eval artifact for ops validation under data/eval/."""
     _EVAL_DIR.mkdir(parents=True, exist_ok=True)
     path = _EVAL_DIR / f"weekly_kpis_{transform_result['week_start']}.json"
     payload = {
@@ -159,12 +200,54 @@ def write_eval_snapshot(transform_result: dict, load_result: dict) -> str:
     return str(path)
 
 
+# ---------------------------------------------------------------------------
+# Subflows (≥3) — explicit I/O, no shared globals between stages
+# ---------------------------------------------------------------------------
+
+
+@flow(name="extract_telemetry_events_for_weekly_cost_waste")
+def extract_telemetry_events_for_weekly_cost_waste(week_start: date) -> dict:
+    """Subflow: extract inbound/waste/stockout/price-alert events for the week."""
+    return extract_telemetry_events_for_cost_waste_week(week_start)
+
+
+@flow(name="transform_weekly_location_cost_waste_kpis")
+def transform_weekly_location_cost_waste_kpis(extract_result: dict) -> dict:
+    """Subflow: compute CONTEXT KPIs (purchase, waste, ratio, stockouts, price alerts)."""
+    rows = extract_result.get("rows") or []
+    # Independent transform tasks (unit-testable pieces) run inside the subflow.
+    purchase = compute_purchase_cost_by_location_task(rows)
+    compute_waste_cost_and_ratio_by_location_task(rows, purchase)
+    compute_stockout_and_price_alert_counts_task(rows)
+    return assemble_weekly_location_kpi_rows(extract_result)
+
+
+@flow(name="load_weekly_location_performance_kpis")
+def load_weekly_location_performance_kpis(transform_result: dict, run_id: str) -> dict:
+    """Subflow: upsert KPI rows into reporting.weekly_location_performance."""
+    return upsert_weekly_location_performance_rows(transform_result, run_id)
+
+
+@flow(name="write_weekly_cost_waste_eval_snapshot_flow")
+def write_weekly_cost_waste_eval_snapshot_flow(
+    transform_result: dict,
+    load_result: dict,
+) -> str:
+    """Optional subflow: secondary eval export (non-critical)."""
+    return write_weekly_cost_waste_eval_snapshot(transform_result, load_result)
+
+
+# ---------------------------------------------------------------------------
+# Main flow — coordinates subflows only
+# ---------------------------------------------------------------------------
+
+
 @flow(name="weekly_location_performance_flow")
 def weekly_location_performance_flow(
     week_start: date | None = None,
     triggered_by: str = "scheduler",
 ) -> dict:
-    """Main business performance ETL: extract → transform → load (+ optional eval)."""
+    """Main coordinator: extract → transform → load (+ optional eval subflow)."""
     week_start = week_start or iso_week_start()
     ensure_reporting_tables()
     run_id = open_run(
@@ -173,17 +256,18 @@ def weekly_location_performance_flow(
         triggered_by=triggered_by,
     )
     try:
-        extracted = extract_telemetry_week(week_start)
-        transformed = transform_location_kpis(extracted)
-        loaded = load_weekly_location_performance(transformed, run_id)
+        extracted = extract_telemetry_events_for_weekly_cost_waste(week_start)
+        transformed = transform_weekly_location_cost_waste_kpis(extracted)
+        loaded = load_weekly_location_performance_kpis(transformed, run_id)
 
-        # Optional step: failure must not abort the main ETL (return_state=True).
-        eval_state = write_eval_snapshot(transformed, loaded, return_state=True)
+        # Optional subflow: failure must not abort the main ETL.
+        eval_state = write_weekly_cost_waste_eval_snapshot_flow(
+            transformed,
+            loaded,
+            return_state=True,
+        )
         eval_ok = eval_state is not None and eval_state.is_completed()
         eval_path = eval_state.result() if eval_ok else None
-        if not eval_ok:
-            # Logged via Prefect state; flow continues as Completed.
-            pass
 
         return {
             "run_id": run_id,
