@@ -16,7 +16,8 @@ type Props = {
     | "inventory-inbound"
     | "inventory-outbound"
     | "inventory-orders"
-    | "telemetry";
+    | "telemetry"
+    | "reporting";
 };
 
 export default function AppNav({ active }: Props) {
@@ -65,6 +66,12 @@ export default function AppNav({ active }: Props) {
           className={`bo-nav-link${active === "telemetry" ? " bo-nav-link-active" : ""}`}
         >
           Telemetría (ops)
+        </Link>
+        <Link
+          href="/reporting"
+          className={`bo-nav-link${active === "reporting" ? " bo-nav-link-active" : ""}`}
+        >
+          Costo y merma
         </Link>
         <Link
           href="/incidents/nueva"

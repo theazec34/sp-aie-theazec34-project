@@ -433,3 +433,28 @@ Montados en la API FastAPI desde `services/reporting/router.py`:
 - `GET /reporting/weekly-location-performance`
 - `GET /reporting/pipeline-runs/latest`
 - `POST /reporting/pipeline-runs`
+
+---
+
+## Part 3 — Subflows, tests y dashboard
+
+### Subflows (Prefect `@flow`)
+
+| Subflow | Rol |
+|---------|-----|
+| `extract_telemetry_events_for_weekly_cost_waste` | Extrae eventos de compra/merma/quiebre/precio |
+| `transform_weekly_location_cost_waste_kpis` | Calcula los 5 KPIs CONTEXT |
+| `load_weekly_location_performance_kpis` | UPSERT a `reporting.weekly_location_performance` |
+| `write_weekly_cost_waste_eval_snapshot_flow` | Eval opcional (`return_state=True`) |
+
+El flow principal `weekly_location_performance_flow` solo los coordina.
+
+### Tests
+
+```bash
+python -m pytest tests/pipelines/test_pipeline.py
+```
+
+### Dashboard de negocio
+
+Backoffice `/reporting` — tablas por KPI para Mariana/Felipe (consume `GET /reporting/weekly-location-performance`).

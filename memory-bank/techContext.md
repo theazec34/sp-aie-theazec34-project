@@ -37,11 +37,13 @@
 
 ## Pipeline de negocio
 - Diseño: `data/pipelines/PIPELINE_DESIGN.md`
-- Flow: `data/pipelines/pipeline.py` (`weekly_location_performance_flow`)
-- Destino: `reporting.weekly_location_performance` (+ SQLite fallback tables)
+- Flow + subflows: `data/pipelines/pipeline.py`
+- Destino: `reporting.weekly_location_performance`
 - API: `services/reporting/router.py` → `/reporting/*`
+- Dashboard: backoffice `/reporting`
+- Tests: `tests/pipelines/test_pipeline.py`
 
 ## Rama
-- Telemetría + diseño pipeline: mergeados (#23–#27)
-- Pipeline resiliente: `cursor/resilient-pipeline-c620`
+- Pipeline resiliente: mergeado (#28)
+- Subflows + dashboard: `cursor/pipeline-subflows-dashboard-c620`
 - Producto estable: **`main`**
