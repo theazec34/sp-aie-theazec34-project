@@ -1,24 +1,26 @@
-# `services/reporting/` — Business performance API (design stub)
+# `services/reporting/` — Business performance API
 
-This module exposes **business KPIs** for Brasaland leadership. It is intentionally
-separate from `services/telemetry/` (engineering / technical report).
+Exposes **business KPIs** for Brasaland leadership. Separate from
+`services/telemetry/` (engineering report).
 
-## Planned endpoints (see `data/pipelines/PIPELINE_DESIGN.md` Fase 5)
+## Endpoints
 
 | Method | Path | Purpose |
 |--------|------|---------|
 | `GET` | `/reporting/weekly-location-performance` | Weekly cost & waste KPIs per location |
-| `GET` | `/reporting/pipeline-runs/latest` | Latest pipeline run status |
+| `GET` | `/reporting/pipeline-runs/latest` | Latest pipeline run metadata |
 | `POST` | `/reporting/pipeline-runs` | Manual / backfill trigger |
+
+All routes require JWT (`Authorization: Bearer …`), same as other protected API routes.
 
 ## Rules
 
-- **No ETL logic here.** Routers import orchestration helpers from `data/pipelines/`.
+- **No ETL logic here.** Routers import `data/pipelines/pipeline.py` and DB helpers.
 - **Never write** to `telemetry_events`.
-- Destination tables live under schema `reporting` (SQL:
-  `services/api/sql/reporting_weekly_location_performance.sql`).
+- Destination: `reporting.weekly_location_performance` (see SQL under `services/api/sql/`).
 
-## Status
+## Run the pipeline locally
 
-Design-only in the `pipeline-design` hito. Implementation comes in a later
-Prefect + reporting milestone.
+```bash
+python data/pipelines/pipeline.py
+```

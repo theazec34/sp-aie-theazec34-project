@@ -35,13 +35,13 @@
 - Reporte técnico: `services/telemetry/analysis.py` + `GET /telemetry/report` (cache 60s) + UI `/telemetry`
 - Docs: `docs/telemetry/CAPTURE.md`, `STORAGE.md`, `REPORT.md`
 
-## Pipeline de negocio (diseño)
-- CONTEXT: `docs/pipelines/CONTEXT-brasaland.es.pipeline.md`
+## Pipeline de negocio
 - Diseño: `data/pipelines/PIPELINE_DESIGN.md`
-- Destino: `reporting.weekly_location_performance`
-- API futura: `services/reporting/`
+- Flow: `data/pipelines/pipeline.py` (`weekly_location_performance_flow`)
+- Destino: `reporting.weekly_location_performance` (+ SQLite fallback tables)
+- API: `services/reporting/router.py` → `/reporting/*`
 
 ## Rama
-- Telemetría (diseño→reporte): mergeados (#23–#26)
-- Pipeline negocio (diseño): `pipeline-design`
+- Telemetría + diseño pipeline: mergeados (#23–#27)
+- Pipeline resiliente: `cursor/resilient-pipeline-c620`
 - Producto estable: **`main`**

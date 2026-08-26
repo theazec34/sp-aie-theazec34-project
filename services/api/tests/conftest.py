@@ -3,10 +3,18 @@
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+
+# Monorepo roots: data.pipelines + services/reporting
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+_SERVICES = _REPO_ROOT / "services"
+for _p in (_REPO_ROOT, _SERVICES):
+    if str(_p) not in sys.path:
+        sys.path.insert(0, str(_p))
 
 # Ensure settings load with a test secret before app import
 os.environ["SECRET_KEY"] = "pytest-brasaland-secret-key"

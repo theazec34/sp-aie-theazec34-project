@@ -398,3 +398,38 @@ Respuesta 202:
 - Implementación FastAPI completa de reporting + authz
 - Conversión FX COP↔USD
 - Dashboard ejecutivo pulido (este diseño alimenta esa UI después)
+
+---
+
+## Implementación (hito resiliente)
+
+### Ejecución CLI
+
+Cadencia objetivo: **semanal**, dato fresco el **lunes ~05:00 UTC** (deployment Prefect futuro).
+
+Comando local (ETL completo extract → transform → load):
+
+```bash
+# desde la raíz del monorepo
+python data/pipelines/pipeline.py
+python data/pipelines/pipeline.py --week-start 2026-08-17
+```
+
+Entry point: `data/pipelines/pipeline.py` → flow `weekly_location_performance_flow`.
+
+### Tasks Prefect implementadas
+
+| Task | Resiliencia |
+|------|-------------|
+| `extract_telemetry_week` | `retries=3`, `retry_delay_seconds=5` (DB externa) |
+| `transform_location_kpis` | `cache_policy=INPUTS`, `cache_expiration=1h` |
+| `load_weekly_location_performance` | `retries=3` + UPSERT idempotente |
+| `write_eval_snapshot` | opcional vía `return_state=True` (no tumba el flow) |
+
+### Endpoints
+
+Montados en la API FastAPI desde `services/reporting/router.py`:
+
+- `GET /reporting/weekly-location-performance`
+- `GET /reporting/pipeline-runs/latest`
+- `POST /reporting/pipeline-runs`
