@@ -74,3 +74,11 @@ Ver `PROJECT.md` §2 (puertos 3000 / 3001 / 8000) o `DOCKER.md`.
 - Tests unitarios aislados: `tests/pipelines/test_pipeline.py`
 - Dashboard negocio: backoffice `/reporting` (5 KPIs CONTEXT)
 - Commit exigido: `feat: refactor business performance pipeline into subflows, add unit tests, and add reporting dashboard`
+
+## Hito Script nocturno de telemetría — DEV-53 (`cursor/nightly-export-c620`)
+- Tabla `job_runs` (orquestación nocturna, distinta de `pipeline_run_log`); SQL en `services/api/sql/job_runs.sql`
+- Servicio `services/job_runner/` — máquina de estados `pending` → `processing` → `completed` | `failed`
+- Script independiente `scripts/nightly_export.py`: export CSV backup → subprocess pipeline → registro en `job_runs`
+- Lock distribuido vía fila `processing`; idempotencia por `(job_name, target_date)`; override `TARGET_DATE`
+- Cron ejemplo: `scripts/crontab.example` (`0 2 * * *` UTC)
+- Tests: `tests/scripts/test_nightly_export.py`

@@ -43,7 +43,15 @@
 - Dashboard: backoffice `/reporting`
 - Tests: `tests/pipelines/test_pipeline.py`
 
+## Orquestación nocturna (DEV-53)
+- Script: `scripts/nightly_export.py` (proceso independiente, no FastAPI)
+- Estado: `job_runs` (`services/job_runner/`, SQL `services/api/sql/job_runs.sql`)
+- CSV backup: `data/raw/telemetry_YYYY-MM-DD.csv` (auditoría; pipeline lee DB)
+- Cron ejemplo: `scripts/crontab.example` — `0 2 * * *` UTC
+- Tests: `tests/scripts/test_nightly_export.py`
+
 ## Rama
 - Pipeline resiliente: mergeado (#28)
-- Subflows + dashboard: `cursor/pipeline-subflows-dashboard-c620`
+- Subflows + dashboard: mergeado (#29)
+- Script nocturno: `cursor/nightly-export-c620`
 - Producto estable: **`main`**
