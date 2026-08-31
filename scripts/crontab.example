@@ -1,0 +1,14 @@
+# Example crontab for nightly telemetry export (UTC).
+# Install on the host or scheduler container — NOT inside the FastAPI process.
+#
+#   crontab -e
+#   # paste the line below (adjust paths to your deployment root):
+#
+# 0 2 * * * cd /path/to/brasaland && /usr/bin/env TARGET_DATE= python scripts/nightly_export.py >> /var/log/brasaland/nightly_export.log 2>&1
+#
+# Expression: minute=0 hour=2 every day (02:00 UTC).
+# Rationale: runs after midnight UTC so "yesterday" is complete; low-traffic window
+# before the weekly pipeline dashboard refresh on Monday mornings.
+#
+# Override for backfill / testing:
+#   TARGET_DATE=2026-01-15 python scripts/nightly_export.py
