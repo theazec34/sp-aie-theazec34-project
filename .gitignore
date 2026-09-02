@@ -41,5 +41,9 @@ services/api/.coverage
 # Pipeline staging artifacts
 data/raw/*
 !data/raw/README*
+!data/raw/reviews.csv
 data/eval/*
 !data/eval/README*
+data/processed/*
+!data/processed/README*
+!data/processed/reviews_with_sentiment.csv

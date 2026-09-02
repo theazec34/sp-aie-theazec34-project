@@ -82,3 +82,11 @@ Ver `PROJECT.md` §2 (puertos 3000 / 3001 / 8000) o `DOCKER.md`.
 - Lock distribuido vía fila `processing`; idempotencia por `(job_name, target_date)`; override `TARGET_DATE`
 - Cron ejemplo: `scripts/crontab.example` (`0 2 * * *` UTC)
 - Tests: `tests/scripts/test_nightly_export.py`
+
+## Hito WeLoveReviews — Análisis de sentimiento (`cursor/sentiment-reviews-c620`)
+- Notebook narrativo: `src/explore.ipynb` (EDA → modelo → resultados → conclusiones, outputs ejecutados)
+- Producción: `src/app.py` + `src/sentiment_analysis.py`
+- Modelo fijado: `nlptown/bert-base-multilingual-uncased-sentiment` (sin pesos en repo)
+- Datos: `data/raw/reviews.csv` (500 reseñas servicio) → `data/processed/reviews_with_sentiment.csv`
+- Dependencias ML: `requirements.txt` (transformers, torch, pandas, jupyter)
+- Prompt EDA: `PROMPT.es.md`

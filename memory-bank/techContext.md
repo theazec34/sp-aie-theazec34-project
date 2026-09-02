@@ -50,8 +50,15 @@
 - Cron ejemplo: `scripts/crontab.example` — `0 2 * * *` UTC
 - Tests: `tests/scripts/test_nightly_export.py`
 
+## ML — WeLoveReviews (sentimiento)
+- Notebook: `src/explore.ipynb` · Script: `src/app.py` · Helpers: `src/sentiment_analysis.py`
+- Modelo HF: `nlptown/bert-base-multilingual-uncased-sentiment` (carga única, sin pesos en git)
+- Datos: `data/raw/reviews.csv` → `data/processed/reviews_with_sentiment.csv`
+- Deps: `requirements.txt` (raíz, hito ML)
+
 ## Rama
 - Pipeline resiliente: mergeado (#28)
 - Subflows + dashboard: mergeado (#29)
 - Script nocturno: `cursor/nightly-export-c620`
+- Sentimiento WeLoveReviews: `cursor/sentiment-reviews-c620`
 - Producto estable: **`main`**
