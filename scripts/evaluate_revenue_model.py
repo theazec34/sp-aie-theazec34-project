@@ -209,6 +209,10 @@ def write_report(
     lines = [
         "# Evaluation report — Brasaland revenue regressor",
         "",
+        "> **Depends on training milestone** `feature/sales-forecast-model`: artifact from "
+        "`scripts/train_sales_forecast.py` (`models/brasaland_sales_forecast.joblib`). "
+        "This evaluation adds TimeSeriesSplit CV, learning curves, and staging diagnosis.",
+        "",
         "## Business context (Brasaland)",
         "",
         "- **Mariana (CEO):** needs to separate good vs bad months (Gini) and an error "
