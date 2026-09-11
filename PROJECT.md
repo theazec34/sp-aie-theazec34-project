@@ -74,7 +74,7 @@ CSV de prueba: `incidents-brasaland.csv` (raíz).
 
 ## 4. Hitos mergeados en `main` (producto)
 
-Todos estos PRs están **MERGED** en `main` (sin PRs abiertos a 2026-08-12):
+PRs **MERGED** en `main` (actualizado 2026-09-11):
 
 | # | Hito | Aporta |
 |---|------|--------|
@@ -93,6 +93,17 @@ Todos estos PRs están **MERGED** en `main` (sin PRs abiertos a 2026-08-12):
 | 19 | Docker | Compose website+backoffice+API |
 | 20 | Performance Lighthouse | `AUDIT.md`, `REPORT.md`, `audit/*` PNG |
 | 21 | Caching | TTL summary/suppliers, lazy/useMemo, `CACHING_REPORT.md` |
+| 23 | Telemetría diseño | `docs/telemetry/telemetry-plan.md`, schemas |
+| 24 | Telemetría captura | `TelemetryService` + instrumentación backoffice |
+| 25 | Telemetría almacenamiento | `telemetry_events` bulk insert |
+| 26 | Telemetría reporte | `GET /telemetry/report` + UI `/telemetry` |
+| 27 | Pipeline diseño | `data/pipelines/PIPELINE_DESIGN.md` |
+| 28 | Pipeline resiliente | Prefect flow + UPSERT KPIs |
+| 29 | Pipeline subflows + dashboard | Tests + UI `/reporting` |
+| 30 | Script nocturno DEV-53 | `nightly_export.py` + `job_runs` |
+| 31 | WeLoveReviews sentimiento | `src/explore.ipynb` + `src/app.py` |
+| 32 | Eval modelo ventas | TimeSeriesSplit + learning curve (`data/eval/`) |
+| 33 | Forecast ventas (train) | XGBoost 8y/2y (`data/forecast/`, `train_sales_forecast.py`) |
 
 ### Ramas remotas **no** mergeadas (fuera del producto principal)
 
@@ -100,7 +111,6 @@ Todos estos PRs están **MERGED** en `main` (sin PRs abiertos a 2026-08-12):
 |------|-----------|-------------------------|
 | `hito-3-talent-pipeline-tracker` / `3.5` | App Next “Talent Pipeline” en `apps/` | Hito académico paralelo, no es ops Brasaland |
 | `brasaland_agent` | Agente TS + memoria | Experimento; no forma parte del runtime Docker |
-| Varias `cursor/*` solo docs | Notas en `progress.md` | Ya absorbidas o redundantes |
 
 Si quieres fusionar Talent Pipeline o el Agent, hacerlo en PRs dedicados (añaden mucho código ajeno al stack actual).
 

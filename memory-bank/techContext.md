@@ -66,11 +66,11 @@
 - Tests: `tests/pipelines/test_sales_forecast_split.py`, `test_temporal_cv.py`
 - Deps: `uv` (`pyproject.toml`)
 
-## Rama
+## Rama / PRs mergeados (ML & data)
 - Pipeline resiliente: mergeado (#28)
 - Subflows + dashboard: mergeado (#29)
-- Script nocturno: `cursor/nightly-export-c620`
-- Sentimiento WeLoveReviews: `cursor/sentiment-reviews-c620`
-- Forecast ventas: `feature/sales-forecast-model`
-- Eval regresión: `feature/regression-model-eval`
+- Script nocturno: mergeado (#30)
+- Sentimiento WeLoveReviews: mergeado (#31)
+- Eval regresión ventas: mergeado (#32)
+- Forecast ventas (train): mergeado (#33)
 - Producto estable: **`main`**

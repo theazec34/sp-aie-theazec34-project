@@ -30,7 +30,7 @@ from sales_forecast.data import (  # noqa: E402
     temporal_train_test_split,
 )
 from sales_forecast.metrics import regression_report  # noqa: E402
-from train_revenue_model import candidate_models  # noqa: E402
+from train_sales_forecast import candidate_models  # noqa: E402
 
 MODEL_PATH = REPO / "models" / "brasaland_sales_forecast.joblib"
 LEGACY_MODEL_PATH = REPO / "models" / "revenue_regressor.joblib"

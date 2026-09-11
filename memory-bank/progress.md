@@ -1,7 +1,7 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-08-12)
-- **Producto en `main`:** website + backoffice + API + Docker + Lighthouse + caching (PRs #1–#21 relevantes mergeados).
+## Estado (2026-09-11)
+- **Producto en `main`:** website + backoffice + API + Docker + Lighthouse + caching + telemetría + pipeline + nightly + sentimiento + forecast/eval ventas (PRs #1–#21 y #23–#33).
 - **Limpieza** (`cursor/project-cleanup-docs-c620`):
   - Eliminado sitio estático raíz + `Imagenes/` PNG (~19 MB)
   - Eliminados dumps Lighthouse HTML/JSON (~10 MB); se conservan PNG + `AUDIT.md`/`REPORT.md`
@@ -13,9 +13,14 @@
 | Área | Entrega |
 |------|---------|
 | Web Next | `uis/website` |
-| Backoffice | auth, proveedores, incidencias, inventario |
-| API | JWT, TinyDB + SQLModel, cache TTL |
+| Backoffice | auth, proveedores, incidencias, inventario, `/telemetry`, `/reporting` |
+| API | JWT, TinyDB + SQLModel, cache TTL, telemetry, reporting |
 | CSV | `scripts/analyze.py`, `uis/web` en `:8000/` |
+| Telemetría | captura → `telemetry_events` → reporte (#23–#26) |
+| Pipeline negocio | Prefect subflows + KPIs + dashboard (#27–#29) |
+| Nightly DEV-53 | `nightly_export.py` + `job_runs` (#30) |
+| Sentimiento | WeLoveReviews notebook + `src/app.py` (#31) |
+| Ventas ML | train XGBoost 8y/2y (#33) + eval TimeSeriesSplit (#32) |
 | Calidad | TESTING, error-handling, Lighthouse, caching |
 | Infra | `docker-compose.yml`, `DOCKER.md` |
 
