@@ -12,9 +12,11 @@ Restaurante Brasaland: sala, carta/marketing, logística/proveedores, domicilio 
 ## Producto en main
 Plataforma digital con:
 1. Web pública Next (`uis/website`)
-2. Backoffice ops Next (`uis/backoffice`)
-3. API FastAPI (`services/api`) — auth JWT, proveedores, incidencias, inventario
+2. Backoffice ops Next (`uis/backoffice`) — telemetría + reporting
+3. API FastAPI (`services/api`) — auth JWT, proveedores, incidencias, inventario, telemetry, reporting
 4. Docker Compose + informes de performance/caching
+5. Pipeline Prefect + nightly export (`job_runs`)
+6. ML: sentimiento WeLoveReviews + forecast/eval de ventas
 
 ## Fuentes de verdad
 - Mapa operativo: **`PROJECT.md`**

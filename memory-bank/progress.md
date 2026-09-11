@@ -1,113 +1,75 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-09-11)
-- **Producto en `main`:** website + backoffice + API + Docker + Lighthouse + caching + telemetría + pipeline + nightly + sentimiento + forecast/eval ventas (PRs #1–#21 y #23–#33).
-- **Limpieza** (`cursor/project-cleanup-docs-c620`):
-  - Eliminado sitio estático raíz + `Imagenes/` PNG (~19 MB)
-  - Eliminados dumps Lighthouse HTML/JSON (~10 MB); se conservan PNG + `AUDIT.md`/`REPORT.md`
-  - Eliminados tipos Election, `esbuild`/demo-browser, CSV duplicado, SVGs basura, logs/bak
-  - Playwright retarget a `uis/website`
-  - Docs: `PROJECT.md` + README/memory-bank actualizados
+## Estado (2026-09-11) — repaso de `main`
+- **Producto en `main`:** tip `f73c913` (luego docs de este repaso). PRs **#1–#21** y **#23–#33** mergeados; **0 PRs abiertos**.
+- **Verificación smoke (este repaso):**
+  - Artefactos de todos los hitos presentes (web, API, telemetry, pipeline, nightly, sentimiento, forecast/eval).
+  - `uv run pytest tests/pipelines` → **10 passed**
+  - `uv run pytest tests/scripts` → **8 passed** (tras instalar deps API)
+  - `cd services/api && uv run pytest` → **51 passed**
+  - `npm run build` website + backoffice → OK (rutas `/telemetry`, `/reporting` presentes)
+- **Fuera de alcance (consciente, no mergear sin PR dedicado):**
+  - `hito-3-talent-pipeline-tracker` / `3.5`
+  - `brasaland_agent`
+
+## Hallazgos del repaso (no bloquean main)
+| Tema | Detalle | Acción tomada / residual |
+|------|---------|--------------------------|
+| Docs desfasadas | README / mapa de carpetas sin ML·pipeline·telemetry | Actualizado en este PR |
+| CONTEXT ventas duplicado | `CONTEXT-brasaland.es.md` ≡ `CONTEXT-brasaland-sales.es.md` | Alias → canónico |
+| Alias joblib | `revenue_regressor.joblib` = copia de `brasaland_sales_forecast.joblib` | Se mantiene por compat eval legacy |
+| Eval staging | Alto PSI (~5.8) + overfitting en learning curve | Documentado en `data/eval/`; no staging-ready |
+| Tests sentimiento | Cubre notebook/script; poca automatización | Residual opcional |
+| Root `pyproject.toml` | Solo deps ML/forecast; nightly/API necesitan `services/api/requirements.txt` | Documentado en PROJECT §9 |
 
 ## Hitos en main (resumen)
-| Área | Entrega |
-|------|---------|
-| Web Next | `uis/website` |
-| Backoffice | auth, proveedores, incidencias, inventario, `/telemetry`, `/reporting` |
-| API | JWT, TinyDB + SQLModel, cache TTL, telemetry, reporting |
-| CSV | `scripts/analyze.py`, `uis/web` en `:8000/` |
-| Telemetría | captura → `telemetry_events` → reporte (#23–#26) |
-| Pipeline negocio | Prefect subflows + KPIs + dashboard (#27–#29) |
-| Nightly DEV-53 | `nightly_export.py` + `job_runs` (#30) |
-| Sentimiento | WeLoveReviews notebook + `src/app.py` (#31) |
-| Ventas ML | train XGBoost 8y/2y (#33) + eval TimeSeriesSplit (#32) |
-| Calidad | TESTING, error-handling, Lighthouse, caching |
-| Infra | `docker-compose.yml`, `DOCKER.md` |
-
-## No mergeado (consciente)
-- `hito-3-talent-pipeline-tracker` / `3.5`
-- `brasaland_agent`
+| Área | Entrega | PR |
+|------|---------|-----|
+| Web Next | `uis/website` | #1–3 |
+| Backoffice | auth, proveedores, incidencias, inventario, `/telemetry`, `/reporting` | #9–18, #24–26, #29 |
+| API | JWT, TinyDB + SQLModel, cache TTL, telemetry, reporting | #4–21, #24–29 |
+| CSV | `scripts/analyze.py`, `uis/web` en `:8000/` | #5 |
+| Telemetría | captura → `telemetry_events` → reporte | #23–#26 |
+| Pipeline negocio | Prefect subflows + KPIs + dashboard | #27–#29 |
+| Nightly DEV-53 | `nightly_export.py` + `job_runs` | #30 |
+| Sentimiento | WeLoveReviews notebook + `src/app.py` | #31 |
+| Ventas ML | eval TimeSeriesSplit (#32) + train XGBoost 8y/2y (#33) | #32–#33 |
+| Calidad | TESTING, error-handling, Lighthouse, caching | #15–16, #20–21 |
+| Infra | `docker-compose.yml`, `DOCKER.md` | #19 |
+| Limpieza | monorepo ~28MB + PROJECT.md | #22 |
 
 ## Cómo arrancar
 Ver `PROJECT.md` §2 (puertos 3000 / 3001 / 8000) o `DOCKER.md`.
 
-## Hito Telemetría (rama `telemetria`) — diseño
-- CONTEXT: `docs/telemetry/CONTEXT-brasaland.es.telemetria.md`
-- Plan: `docs/telemetry/telemetry-plan.md` (18 eventos: 6 obligatorios + 12 oportunidades)
-- Schemas: `docs/telemetry/event-schemas.json` (draft-07)
-- Solo diseño (sin instrumentación de código en este PR)
-- PR título exigido: `docs: telemetry design plan`
+## Detalle por hito (referencia)
 
-## Hito Telemetría — Captura (rama `cursor/telemetry-capture-c620`)
-- Stub `POST /telemetry/events` + modelo `TelemetryEvent` (sin persistencia).
-- `TelemetryService` en backoffice: cola, batch 10s/20, sendBeacon, retry backoff.
-- Instrumentadas métricas obligatorias CONTEXT + capa técnica (auth, nav, errores, latency, web vitals).
-- Env: `NEXT_PUBLIC_TELEMETRY_ENDPOINT` / `TELEMETRY_ENDPOINT`.
-- Notas: `docs/telemetry/CAPTURE.md`.
+### Telemetría
+- Diseño: `docs/telemetry/telemetry-plan.md`, `event-schemas.json`
+- Captura: `uis/backoffice/src/services/telemetry.ts`
+- Storage: `POST /telemetry/events` → `telemetry_events`
+- Reporte: `services/telemetry/analysis.py` + `GET /telemetry/report` + UI `/telemetry`
 
-## Hito Telemetría — Almacenamiento (rama `cursor/telemetry-storage-c620`)
-- Tabla `telemetry_events` (8 cols + índices timestamp/event_type/GIN tags); SQL en `services/api/sql/telemetry_events.sql`.
-- Endpoint real: validación por evento + bulk INSERT; respuesta `{ received, stored, rejected }`.
-- `TelemetryEvent` y frontend sin cambios; tags con allowlist CONTEXT (sin PII).
-- Notas: `docs/telemetry/STORAGE.md`.
+### Pipeline de negocio
+- Diseño: `data/pipelines/PIPELINE_DESIGN.md`
+- Flow + subflows: `data/pipelines/pipeline.py`
+- API: `services/reporting/router.py` → `/reporting/*`
+- Dashboard: backoffice `/reporting`
+- Tests: `tests/pipelines/test_pipeline.py`
 
-## Hito Telemetría — Reporte técnico (rama `cursor/telemetry-report-c620`)
-- Pipeline Pandas: `services/telemetry/analysis.py` (events_per_day, error_rate_by_type, auth_failure_rate, latency_by_route).
-- `GET /telemetry/report` con ventana de fechas (default 7 días UTC) + cache TTL 60s.
-- Dashboard mínimo backoffice: `/telemetry`.
-- Seed: `services/api/seed_telemetry.py`.
-- PR título exigido: `feat: telemetry report endpoint`.
-- Notas: `docs/telemetry/REPORT.md`.
-
-## Hito Pipeline de negocio — Diseño (rama `pipeline-design`)
-- CONTEXT: `docs/pipelines/CONTEXT-brasaland.es.pipeline.md`
-- Diseño: `data/pipelines/PIPELINE_DESIGN.md` (5 fases: estado, ETL, resiliencia, Prefect, reporting)
-- Destino: `reporting.weekly_location_performance` (SQL en `services/api/sql/`)
-- Stub módulo: `services/reporting/` (sin ETL)
-- PR título: `docs: business performance pipeline design`
-- Solo diseño (sin orquestación Prefect aún)
-
-## Hito Pipeline resiliente — Implementación (`cursor/resilient-pipeline-c620`)
-- Prefect flow `weekly_location_performance_flow` en `data/pipelines/pipeline.py`
-- Tasks extract/transform/load + eval opcional (`return_state=True`), retries, cache 1h, UPSERT idempotente
-- Endpoints: `GET/POST /reporting/*` en `services/reporting/router.py`
-- CLI: `python data/pipelines/pipeline.py`
-- Commit message exigido: `feat: implement resilient business performance pipeline`
-
-## Hito Pipeline a producción — Subflows + tests + dashboard (`cursor/pipeline-subflows-dashboard-c620`)
-- Subflows de dominio (extract/transform/load/eval) coordinados por el flow principal
-- Tests unitarios aislados: `tests/pipelines/test_pipeline.py`
-- Dashboard negocio: backoffice `/reporting` (5 KPIs CONTEXT)
-- Commit exigido: `feat: refactor business performance pipeline into subflows, add unit tests, and add reporting dashboard`
-
-## Hito Script nocturno de telemetría — DEV-53 (`cursor/nightly-export-c620`)
-- Tabla `job_runs` (orquestación nocturna, distinta de `pipeline_run_log`); SQL en `services/api/sql/job_runs.sql`
-- Servicio `services/job_runner/` — máquina de estados `pending` → `processing` → `completed` | `failed`
-- Script independiente `scripts/nightly_export.py`: export CSV backup → subprocess pipeline → registro en `job_runs`
-- Lock distribuido vía fila `processing`; idempotencia por `(job_name, target_date)`; override `TARGET_DATE`
-- Cron ejemplo: `scripts/crontab.example` (`0 2 * * *` UTC)
+### Orquestación nocturna (DEV-53)
+- `scripts/nightly_export.py` + `services/job_runner/` + SQL `job_runs`
+- Cron: `scripts/crontab.example` — `0 2 * * *` UTC
 - Tests: `tests/scripts/test_nightly_export.py`
 
-## Hito WeLoveReviews — Análisis de sentimiento (`cursor/sentiment-reviews-c620`)
-- Notebook narrativo: `src/explore.ipynb` (EDA → modelo → resultados → conclusiones, outputs ejecutados)
-- Producción: `src/app.py` + `src/sentiment_analysis.py`
-- Modelo fijado: `nlptown/bert-base-multilingual-uncased-sentiment` (sin pesos en repo)
-- Datos: `data/raw/reviews.csv` (500 reseñas servicio) → `data/processed/reviews_with_sentiment.csv`
-- Dependencias ML: `requirements.txt` (transformers, torch, pandas, jupyter)
-- Prompt EDA: `PROMPT.es.md`
+### WeLoveReviews (sentimiento)
+- `src/explore.ipynb`, `src/app.py`, `src/sentiment_analysis.py`
+- Datos: `data/raw/reviews.csv` → `data/processed/reviews_with_sentiment.csv`
+- Deps: `requirements.txt` (raíz)
 
-## Hito modelo predicción de ventas (`feature/sales-forecast-model`) — anterior a eval
-- CONTEXT: `CONTEXT-brasaland.es.md` / `CONTEXT-brasaland-sales.es.md`
-- Datos: `data/raw/brasaland_sales.csv` (`month`, `revenue_usd`, `covers_served`, `avg_ticket_usd`, `market`)
-- Train: `scripts/train_sales_forecast.py` — RF vs XGBoost, split **8y/2y**, `random_state=42`
-- Modelo: `models/brasaland_sales_forecast.joblib` (selección por RMSE test; XGBoost)
-- Métricas test: **MSE, PSI, Gini, K2** (+ MAE/MAPE para Finanzas)
-- Viz: `data/forecast/prediction_band.png` (predicción + banda de variabilidad)
-- Informe: `data/forecast/forecast_report.md`
-- Tests: `tests/pipelines/test_sales_forecast_split.py` (+ `test_temporal_cv.py`)
-- Deps: `uv` (`pyproject.toml` / `uv.lock`)
-
-## Hito evaluación modelo regresión ventas (`feature/regression-model-eval`) — posterior
-- Reutiliza el artefacto de `train_sales_forecast.py`
-- TimeSeriesSplit(5), learning curve, MAE/RMSE con justificación Brasaland
-- Informe: `data/eval/evaluation_report.md`
+### Predicción de ventas + evaluación
+- CONTEXT: `CONTEXT-brasaland.es.md` (alias: `CONTEXT-brasaland-sales.es.md`)
+- Datos: `data/raw/brasaland_sales.csv`
+- Train: `scripts/train_sales_forecast.py` → `models/brasaland_sales_forecast.joblib` + `data/forecast/`
+- Eval: `scripts/evaluate_revenue_model.py` → `data/eval/`
+- Tests: `tests/pipelines/test_sales_forecast_split.py`, `test_temporal_cv.py`
+- Deps: `uv` (`pyproject.toml`)

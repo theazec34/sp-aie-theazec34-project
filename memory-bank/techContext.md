@@ -1,4 +1,4 @@
-# Technical Context — Brasaland Digital (actualizado 2026-08-12)
+# Technical Context — Brasaland Digital (actualizado 2026-09-11)
 
 ## Runtime
 - **Website** `uis/website` — Next.js 16, puerto **3000**
