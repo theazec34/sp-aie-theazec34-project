@@ -1,173 +1,65 @@
-# CONTEXT — Utilidad de Análisis de Datos: Procesador de Reportes de Incidentes
+# CONTEXT — Brasaland
 
-## Empresa: Brasaland
-
----
-
-## Tu empresa
-
-**Brasaland** es una cadena de restaurantes de comida a la parrilla con 14 sedes entre Colombia y Florida (EE. UU.). Formas parte del equipo interno **Brasaland Digital**, trabajando bajo la dirección de **Nicolás Park (CTO)** y en coordinación cercana con **Felipe Guerrero (Director de Operaciones)**.
-
-El departamento de Operaciones registra cada incidente operativo que ocurre en la cadena: fallas de equipos, problemas de abastecimiento, quejas de clientes, incidentes de calidad de alimentos y situaciones relacionadas con personal. Hasta ahora, cada gerente de sede registraba incidentes en una hoja de cálculo compartida. Esa hoja se exportó a CSV y tu archivo de prueba tiene **1,000 filas** que representan un mes de historial en las 14 sedes.
-
-El objetivo de tu script es validar y resumir estos datos antes de que se usen como base del dashboard operativo en tiempo real que reemplazará por completo la hoja de cálculo.
+## Modelo de regresión para predicción de ventas
 
 ---
 
-## Estructura del CSV
+### 1. Por qué esto le importa a Brasaland
 
-**Nombre de archivo:** `incidents.csv`  
-**Codificación:** UTF-8  
-**Separador:** coma (`,`)  
-**Fila de encabezado:** sí (fila 1)
-
-| Campo                | Tipo    | Requerido | Valores permitidos / formato                       |
-| -------------------- | ------- | --------- | -------------------------------------------------- |
-| `incident_id`        | string  | ✅        | ID único, formato `BRS-XXXXXX` (ej.: `BRS-000001`) |
-| `date`               | string  | ✅        | `YYYY-MM-DD`                                       |
-| `location_id`        | string  | ✅        | Uno de: `COL-01` a `COL-10`, `FLA-01` a `FLA-04`   |
-| `category`           | string  | ✅        | Ver categorías abajo                               |
-| `description`        | string  | ✅        | Texto libre, mínimo 5 caracteres                   |
-| `status`             | string  | ✅        | `OPEN`, `CLOSED`, `DISCARDED`                      |
-| `customer_id`        | string  | ❌        | Opcional. Formato `CLI-XXXXXX`. Puede estar vacío  |
-| `satisfaction_score` | integer | ❌\*      | Entero 1–5. **Requerido si** `status = CLOSED`     |
-| `reporter_id`        | string  | ✅        | ID de encargado, formato `MGR-XX`                  |
-
-\*`satisfaction_score` es opcional en la estructura, pero un registro `CLOSED` sin este valor se considera **incompleto**.
-
-### Categorías válidas
-
-| Código               | Descripción                                          |
-| -------------------- | ---------------------------------------------------- |
-| `CUSTOMER_COMPLAINT` | Queja de cliente (servicio, tiempo de espera, trato) |
-| `EQUIPMENT`          | Falla o avería de equipamiento                       |
-| `SUPPLY`             | Problema de abastecimiento o falta de stock          |
-| `FOOD_QUALITY`       | Incidente de calidad de alimentos                    |
-| `STAFF`              | Incidente relacionado con personal                   |
+Mariana (CEO) quiere saber si, antes de invertir en un dashboard ejecutivo completo, es posible predecir con un margen razonable cuánto va a vender la cadena en los próximos meses. Felipe (Operaciones) necesita anticipar compras de insumos según la tendencia esperada, y Lucía (Procurement) quiere anticipar variaciones de precio de la carne según el volumen proyectado. Un modelo de regresión sobre las ventas históricas es el primer paso concreto hacia ese dashboard.
 
 ---
 
-## Reglas de registros inválidos
+### 2. Estructura de datos
 
-Un registro debe marcarse como **inválido** si ocurre cualquiera de estos casos:
+El dataset mensual de ventas consolidadas de las 14 ubicaciones ya está incluido en tu monorepo, en `data/raw/brasaland_sales.csv`, con estas columnas exactas:
 
-| Regla                                        | Descripción                                                          |
-| -------------------------------------------- | -------------------------------------------------------------------- |
-| Falta `location_id`                          | El campo está vacío o no corresponde a uno de los 14 códigos válidos |
-| `category` faltante o inválida               | El campo está vacío o no pertenece a las 5 categorías válidas        |
-| `description` vacía                          | El campo está vacío o tiene menos de 5 caracteres                    |
-| Falta `reporter_id`                          | El campo está vacío                                                  |
-| `status = CLOSED` y sin `satisfaction_score` | Caso cerrado sin puntaje registrado                                  |
-| `satisfaction_score` fuera de rango          | Hay valor, pero no está entre 1 y 5 (inclusive)                      |
+| Columna | Tipo | Descripción |
+|---|---|---|
+| `month` | fecha (`YYYY-MM-01`) | Primer día del mes reportado |
+| `revenue_usd` | float | Ventas totales del mes, consolidadas en USD (usa una tasa fija de conversión COP→USD para simplificar, por ejemplo 1 USD = 4.000 COP) |
+| `covers_served` | int | Número total de comensales atendidos en el mes, en las 14 ubicaciones |
+| `avg_ticket_usd` | float | Ticket promedio del mes en USD |
+| `market` | string | `"colombia"`, `"florida"`, o `"consolidated"` — usa `"consolidated"` como la fila principal para el modelo; las filas por mercado son opcionales como features adicionales |
 
-Tu script debe reportar cuántos registros caen en cada tipo de regla.
-
----
-
-## Distribución de datos (archivo de prueba provisto)
-
-El archivo `incidents-brasaland.csv` se envió como adjunto (ver ficheros `incidents-brasaland.csv`). Los siguientes valores describen su contenido y son los que tu script debe producir exactamente.
-
-**Total de filas:** 100
-
-**Registros válidos: 96**
-| Categoría | Cantidad |
-|---|---|
-| `CUSTOMER_COMPLAINT` | 29 |
-| `EQUIPMENT` | 17 |
-| `SUPPLY` | 22 |
-| `FOOD_QUALITY` | 19 |
-| `STAFF` | 9 |
-
-| Estado      | Cantidad |
-| ----------- | -------- |
-| `OPEN`      | 32       |
-| `CLOSED`    | 50       |
-| `DISCARDED` | 14       |
-
-**Registros inválidos: 4**
-| Regla activada | Cantidad |
-|---|---|
-| Falta `location_id` | 1 |
-| `category` faltante o inválida | 1 |
-| `description` vacía o demasiado corta | 1 |
-| `status = CLOSED` sin `satisfaction_score` | 1 |
-
-**Puntajes de satisfacción (50 registros cerrados)**
-| Puntaje | Cantidad |
-|---|---|
-| 1 | 4 |
-| 2 | 6 |
-| 3 | 12 |
-| 4 | 19 |
-| 5 | 9 |
-Promedio: **3.46**
+La variable objetivo (target) del modelo es `revenue_usd` de la fila `consolidated`.
 
 ---
 
-## Salida esperada
+### 3. KPIs y qué significa un buen modelo aquí
 
-Cuando el estudiante ejecute `python analyze.py incidents-brasaland.csv` con el archivo provisto, la salida en consola debe mostrar los siguientes valores:
-
-```
-============================================================
-  BRASALAND — INCIDENT REPORT ANALYSIS
-  Source file: incidents-brasaland.csv
-============================================================
-
-TOTAL RECORDS IN FILE .......... 100
-  ├─ Valid records ................ 96
-  └─ Invalid / incomplete .......... 4
-
-INVALID RECORDS BREAKDOWN
-  ├─ Missing location_id ........... 1
-  ├─ Invalid or missing category ... 1
-  ├─ Empty description ............. 1
-  └─ Closed case, no score ......... 1
-
-BREAKDOWN BY CATEGORY (valid records)
-  ├─ CUSTOMER_COMPLAINT ........... 29  (30.2%)
-  ├─ EQUIPMENT .................... 17  (17.7%)
-  ├─ SUPPLY ....................... 22  (22.9%)
-  ├─ FOOD_QUALITY ................. 19  (19.8%)
-  └─ STAFF ......................... 9   (9.4%)
-
-BREAKDOWN BY STATUS (valid records)
-  ├─ OPEN ......................... 32  (33.3%)
-  ├─ CLOSED ....................... 50  (52.1%)
-  └─ DISCARDED .................... 14  (14.6%)
-
-SATISFACTION INDEX (closed cases)
-  Scored cases: 50 of 50
-  Average score: 3.46 / 5.00
-  ├─ Score 1 (Very dissatisfied) ... 4
-  ├─ Score 2 (Dissatisfied) ........ 6
-  ├─ Score 3 (Neutral) ............ 12
-  ├─ Score 4 (Satisfied) .......... 19
-  └─ Score 5 (Very satisfied) ...... 9
-
-============================================================
-Export results to CSV? [y / n]:
-```
-
-> **Nota:** Se aceptan diferencias menores de formato (espaciado, caracteres de caja), pero todos los valores numéricos deben coincidir exactamente.
+- Un **Gini** bajo indica que el modelo no distingue bien entre meses "buenos" y "malos" — para Mariana esto es tan importante como el error absoluto, porque necesita identificar los meses de bajo desempeño con anticipación.
+- Un **PSI** alto entre el conjunto de entrenamiento y el de prueba sería señal de que el comportamiento de ventas cambió estructuralmente (por ejemplo, apertura de nuevas ubicaciones, cambio de mercado) y el modelo necesitaría reentrenarse — menciónalo explícitamente si lo detectas.
+- El **MSE** repórtalo en USD² pero tradúcelo también a un error porcentual promedio, porque así es como Felipe y Mariana entienden el número.
 
 ---
 
-## Nota de stakeholders
+### 4. Sobre el dataset provisto
 
-> **De Nicolás Park (CTO):**
-> _"El equipo de Felipe va a usar esto todos los días. Mantengan la salida de consola limpia y rápida; la ejecutan desde terminal antes de la reunión de la mañana. La exportación CSV es para Ashley: necesita pegar los resultados en una hoja de cálculo. Asegúrense de que la estructura tenga sentido: una fila por métrica, con columnas_ `metric`, `value` _y opcionalmente_ `percentage`_."_
+El archivo `data/raw/brasaland_sales.csv` contiene **10 años** de datos mensuales (120 filas de `consolidated`), desde `2016-01` hasta `2025-12`. Ya refleja los siguientes patrones — no necesitas generarlos, pero sí entenderlos para interpretar los resultados de tu modelo:
+
+**Patrón de crecimiento:** el crecimiento anual base es `X = 5%`, con una variación `Y = 2%`. Cada año, el crecimiento real `d` alterna entre `X+Y` y `X-Y` (es decir, entre 3% y 7%), nunca fuera de ese rango, y siempre positivo.
+
+**Patrón de estacionalidad (presente cada año del dataset):**
+- **Enero:** caída de ventas del 12–18% respecto al promedio del año anterior, explicable por el período de "vacaciones colectivas" y el bajón post-diciembre típico en Colombia.
+- **Diciembre:** alza de ventas del 20–30% respecto al promedio, por la temporada de fiestas en ambos mercados.
+- El resto de los meses fluctúa de forma moderada (±5%) alrededor de la tendencia de crecimiento anual, sin patrones abruptos.
+
+El dataset se generó con una semilla aleatoria fija (`random_state=42`), por lo que es determinista: si lo regeneraras con el mismo script y semilla, obtendrías exactamente los mismos valores.
 
 ---
 
-## Ruta en el repositorio
+### 5. Restricciones de negocio
 
-```
-incidents-analysis/CONTEXT-brasaland.md
-```
+- Todos los valores de `revenue_usd` deben ser positivos.
+- No debe haber meses faltantes en el rango 2016-01 a 2025-12.
+- El dataset provisto solo incluye la fila `consolidated`; si quieres analizar Colombia y Florida por separado como feature adicional, ten en cuenta que Florida es un mercado más pequeño (aproximadamente 25% del total) — no asumas magnitudes similares entre ambos.
 
 ---
 
-_Documento interno — 4Geeks Academy · AI Engineering Track_  
-_Para uso exclusivo en la generación de proyectos del programa_
+### 6. Entregables esperados
+
+- Script de entrenamiento en `scripts/` que cargue `data/raw/brasaland_sales.csv`, separe los primeros 8 años como entrenamiento y los últimos 2 como prueba.
+- Modelo entrenado (XGBoost o Random Forest) con las 4 métricas (MSE, PSI, Gini, K2 Score) calculadas sobre el conjunto de prueba.
+- Visualización con la predicción y su rango de variabilidad frente a los datos reales de los 2 años de prueba.
+- Prueba unitaria en `tests/pipelines/` que valide el split 8/2 años.

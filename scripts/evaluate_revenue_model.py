@@ -32,7 +32,8 @@ from sales_forecast.data import (  # noqa: E402
 from sales_forecast.metrics import regression_report  # noqa: E402
 from train_revenue_model import candidate_models  # noqa: E402
 
-MODEL_PATH = REPO / "models" / "revenue_regressor.joblib"
+MODEL_PATH = REPO / "models" / "brasaland_sales_forecast.joblib"
+LEGACY_MODEL_PATH = REPO / "models" / "revenue_regressor.joblib"
 EVAL_DIR = REPO / "data" / "eval"
 N_SPLITS = 5
 
@@ -273,12 +274,13 @@ def write_report(
 
 def main() -> int:
     EVAL_DIR.mkdir(parents=True, exist_ok=True)
-    if not MODEL_PATH.exists():
+    model_path = MODEL_PATH if MODEL_PATH.exists() else LEGACY_MODEL_PATH
+    if not model_path.exists():
         raise SystemExit(
-            f"Missing trained model at {MODEL_PATH}; run train_revenue_model.py first"
+            "Missing trained model. Run: uv run python scripts/train_sales_forecast.py"
         )
 
-    bundle = joblib.load(MODEL_PATH)
+    bundle = joblib.load(model_path)
     model = bundle["model"]
     meta = bundle["meta"]
     model_name = meta["model_name"]
