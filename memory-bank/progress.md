@@ -91,13 +91,18 @@ Ver `PROJECT.md` §2 (puertos 3000 / 3001 / 8000) o `DOCKER.md`.
 - Dependencias ML: `requirements.txt` (transformers, torch, pandas, jupyter)
 - Prompt EDA: `PROMPT.es.md`
 
-## Hito evaluación modelo regresión ventas (`feature/regression-model-eval`)
+## Hito modelo predicción de ventas (`feature/sales-forecast-model`) — anterior a eval
+- CONTEXT: `CONTEXT-brasaland.es.md` / `CONTEXT-brasaland-sales.es.md`
+- Datos: `data/raw/brasaland_sales.csv` (`month`, `revenue_usd`, `covers_served`, `avg_ticket_usd`, `market`)
+- Train: `scripts/train_sales_forecast.py` — RF vs XGBoost, split **8y/2y**, `random_state=42`
+- Modelo: `models/brasaland_sales_forecast.joblib` (selección por RMSE test; XGBoost)
+- Métricas test: **MSE, PSI, Gini, K2** (+ MAE/MAPE para Finanzas)
+- Viz: `data/forecast/prediction_band.png` (predicción + banda de variabilidad)
+- Informe: `data/forecast/forecast_report.md`
+- Tests: `tests/pipelines/test_sales_forecast_split.py` (+ `test_temporal_cv.py`)
+- Deps: `uv` (`pyproject.toml` / `uv.lock`)
 
-- Datos: `data/raw/brasaland_sales.csv` (120 meses consolidated, CONTEXT)
-- Entrenamiento: `scripts/train_revenue_model.py` — RF vs XGBoost, split 8y/2y
-- Modelo elegido: **XGBoost** → `models/revenue_regressor.joblib`
-- Evaluación: `scripts/evaluate_revenue_model.py` — TimeSeriesSplit(5), learning curve, MAE/RMSE
-- Informe: `data/eval/evaluation_report.md` (+ `learning_curve.png`, `prediction_vs_actual.png`)
-- Tests: `tests/pipelines/test_temporal_cv.py` (orden cronológico, sin leak)
-- Deps vía `uv` (`pyproject.toml` / `uv.lock`)
-- Diagnóstico actual: overfitting + PSI alto (crecimiento estructural); métrica primaria RMSE
+## Hito evaluación modelo regresión ventas (`feature/regression-model-eval`) — posterior
+- Reutiliza el artefacto de `train_sales_forecast.py`
+- TimeSeriesSplit(5), learning curve, MAE/RMSE con justificación Brasaland
+- Informe: `data/eval/evaluation_report.md`

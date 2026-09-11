@@ -47,10 +47,6 @@ File: `data/eval/learning_curve.png`
 
 Persistent train≪validation gap: model memorizes monthly noise. Concrete action: raise XGBoost regularization (reg_lambda=2–5, min_child_weight=3, max_depth≤3) and use early stopping on the last temporal fold; do not grow n_estimators without that control.
 
-## Note on PSI
-
-PSI train→test is high (~5.8) largely because Brasaland CONTEXT encodes sustained annual growth (3–7%) plus Dec/Jan seasonality: the test window (2024–2025) sits on a higher revenue level than early train years. This is a **distribution shift from growth**, not only model failure. Operational response: retrain on a rolling window before each planning cycle and track PSI month-to-month after new location openings.
-
 ## Staging recommendation
 
 Promote to staging **only if** CV RMSE mean±std stays bounded and train→test PSI remains < 0.25. Current PSI = 5.809.

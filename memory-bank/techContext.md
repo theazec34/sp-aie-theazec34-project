@@ -56,17 +56,21 @@
 - Datos: `data/raw/reviews.csv` → `data/processed/reviews_with_sentiment.csv`
 - Deps: `requirements.txt` (raíz, hito ML)
 
+## ML — predicción de ventas Brasaland
+- CONTEXT: `CONTEXT-brasaland.es.md`
+- Datos: `data/raw/brasaland_sales.csv`
+- Train: `scripts/train_sales_forecast.py` → `models/brasaland_sales_forecast.joblib`
+- Paquete: `scripts/sales_forecast/` (data + metrics)
+- Salidas train: `data/forecast/` (report, metrics, prediction_band)
+- Eval técnica (hito posterior): `scripts/evaluate_revenue_model.py` → `data/eval/`
+- Tests: `tests/pipelines/test_sales_forecast_split.py`, `test_temporal_cv.py`
+- Deps: `uv` (`pyproject.toml`)
+
 ## Rama
 - Pipeline resiliente: mergeado (#28)
 - Subflows + dashboard: mergeado (#29)
 - Script nocturno: `cursor/nightly-export-c620`
 - Sentimiento WeLoveReviews: `cursor/sentiment-reviews-c620`
+- Forecast ventas: `feature/sales-forecast-model`
+- Eval regresión: `feature/regression-model-eval`
 - Producto estable: **`main`**
-
-## ML — predicción de ventas Brasaland
-- Datos: `data/raw/brasaland_sales.csv` (`month`, `revenue_usd`, `covers_served`, `avg_ticket_usd`, `market`)
-- Scripts: `scripts/train_revenue_model.py`, `scripts/evaluate_revenue_model.py`, paquete `scripts/sales_forecast/`
-- Modelo: XGBoost en `models/revenue_regressor.joblib`
-- Eval: `data/eval/` (report, learning curve, prediction vs actual)
-- Tests temporales: `tests/pipelines/test_temporal_cv.py`
-- Gestión deps: `uv` (no pip)
