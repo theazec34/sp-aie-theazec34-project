@@ -1,0 +1,49 @@
+{
+  "model_name": "xgboost",
+  "feature_cols": [
+    "year",
+    "month_num",
+    "month_sin",
+    "month_cos",
+    "lag_1_revenue_usd",
+    "lag_12_revenue_usd",
+    "roll_mean_3_revenue_usd",
+    "roll_mean_12_revenue_usd",
+    "lag_1_covers_served",
+    "lag_12_covers_served"
+  ],
+  "target_col": "revenue_usd",
+  "train_months": [
+    "2017-01-01",
+    "2023-12-01"
+  ],
+  "test_months": [
+    "2024-01-01",
+    "2025-12-01"
+  ],
+  "metrics": {
+    "random_forest": {
+      "mse": 5077006059.4105,
+      "rmse": 71253.11262962832,
+      "mae": 45516.62525037806,
+      "mape_pct": 5.465866991350521,
+      "gini": 0.6859369014254767,
+      "k2": 0.06719102834186386,
+      "psi": 5.809152226494689,
+      "train_rmse": 27253.567411373722,
+      "train_mae": 19897.145776771766
+    },
+    "xgboost": {
+      "mse": 3144689018.3856373,
+      "rmse": 56077.526856893724,
+      "mae": 38439.6846875,
+      "mape_pct": 4.669764627543714,
+      "gini": 0.6514055985703016,
+      "k2": 0.4222196910740852,
+      "psi": 5.809152226494689,
+      "train_rmse": 10950.495351378626,
+      "train_mae": 7881.837351190474
+    }
+  },
+  "selection_rule": "lowest test RMSE (ops cost of large misses)"
+}

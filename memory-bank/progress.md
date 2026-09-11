@@ -90,3 +90,14 @@ Ver `PROJECT.md` §2 (puertos 3000 / 3001 / 8000) o `DOCKER.md`.
 - Datos: `data/raw/reviews.csv` (500 reseñas servicio) → `data/processed/reviews_with_sentiment.csv`
 - Dependencias ML: `requirements.txt` (transformers, torch, pandas, jupyter)
 - Prompt EDA: `PROMPT.es.md`
+
+## Hito evaluación modelo regresión ventas (`feature/regression-model-eval`)
+
+- Datos: `data/raw/brasaland_sales.csv` (120 meses consolidated, CONTEXT)
+- Entrenamiento: `scripts/train_revenue_model.py` — RF vs XGBoost, split 8y/2y
+- Modelo elegido: **XGBoost** → `models/revenue_regressor.joblib`
+- Evaluación: `scripts/evaluate_revenue_model.py` — TimeSeriesSplit(5), learning curve, MAE/RMSE
+- Informe: `data/eval/evaluation_report.md` (+ `learning_curve.png`, `prediction_vs_actual.png`)
+- Tests: `tests/pipelines/test_temporal_cv.py` (orden cronológico, sin leak)
+- Deps vía `uv` (`pyproject.toml` / `uv.lock`)
+- Diagnóstico actual: overfitting + PSI alto (crecimiento estructural); métrica primaria RMSE

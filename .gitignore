@@ -42,8 +42,17 @@ services/api/.coverage
 data/raw/*
 !data/raw/README*
 !data/raw/reviews.csv
+!data/raw/brasaland_sales.csv
 data/eval/*
 !data/eval/README*
+!data/eval/*.md
+!data/eval/*.png
+!data/eval/*.json
 data/processed/*
 !data/processed/README*
 !data/processed/reviews_with_sentiment.csv
+
+# Trained model artifacts (keep joblib for eval reproducibility)
+models/*.pkl
+!models/.gitkeep
+!models/revenue_regressor.joblib
