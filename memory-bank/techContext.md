@@ -4,6 +4,8 @@
 - **Website** `uis/website` — Next.js 16, puerto **3000**
 - **Backoffice** `uis/backoffice` — Next.js 16, puerto **3001**
 - **API** `services/api` — FastAPI/uvicorn, puerto **8000** (`/docs`)
+- **Redis / Celery / Flower** — broker `:6379`, Flower `:5555` (DEV-55)
+- **Qdrant** — `:6333` (RAG)
 - **Docker:** `docker compose up` (ver `DOCKER.md`)
 - **TS Hito 2:** `src/` — `npm run typecheck` / `npm run demo`
 - **E2E:** Playwright → website `:3000` (`npm run test:e2e`)
@@ -66,6 +68,15 @@
 - Tests: `tests/pipelines/test_sales_forecast_split.py`, `test_temporal_cv.py`
 - Deps: `uv` (`pyproject.toml`)
 
+
+## Celery / Redis (DEV-55)
+- App: `services/celery_app.py` · tasks: `services/tasks/`
+- Broker/backend: `REDIS_URL` (Compose: `redis://redis:6379/0`)
+- Analyze async: `POST /api/v1/incidents/analyze` → 202 `{task_id}`
+- Status: `GET /tasks/{task_id}` · DLQ: `celery_dead_letters`
+- Flower: `:5555` · worker proceso independiente
+- Docs: `docs/async-tasks/DEV-55.md`
+
 ## RAG — Base de conocimiento Brasaland
 - CONTEXT: `docs/rag/CONTEXT-brasaland.es.md`
 - Corpus: `docs/company-knowledge-base/`
@@ -84,5 +95,6 @@
 - Sentimiento WeLoveReviews: mergeado (#31)
 - Eval regresión ventas: mergeado (#32)
 - Forecast ventas (train): mergeado (#33)
-- RAG knowledge base: rama `feature/rag-knowledge-base`
+- RAG knowledge base: mergeado (#35)
+- Celery DEV-55: rama `cursor/async-tasks-celery-c620`
 - Producto estable: **`main`**

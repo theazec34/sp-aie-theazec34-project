@@ -24,6 +24,10 @@ docker compose up --build
 | Backoffice (Next.js) | mismo contenedor | http://localhost:3001 |
 | API FastAPI | `brasaland-backend` | http://localhost:8000 |
 | Docs API | | http://localhost:8000/docs |
+| Redis (broker Celery) | `brasaland-redis` | localhost:6379 |
+| Celery worker | `brasaland-worker` | (sin puerto HTTP) |
+| Flower | `brasaland-flower` | http://localhost:5555 |
+| Qdrant | `brasaland-qdrant` | http://localhost:6333 |
 
 ## Red Docker
 
@@ -60,6 +64,32 @@ docker compose restart backend
 - `.env` está en `.gitignore` — no lo subas a GitHub
 - No hay claves en `Dockerfile` ni en `docker-compose.yml`
 - Si un secreto se filtra, rótalo (Supabase / Resend / `SECRET_KEY`)
+
+## Celery worker (DEV-55)
+
+El worker es un proceso **independiente** de FastAPI. Con Compose ya arranca
+`worker` + `redis` + `flower`. En local:
+
+```bash
+# Terminal A — broker
+redis-server --maxmemory-policy noeviction
+
+# Terminal B — API
+cd services/api && uv run uvicorn app.main:app --reload --port 8000
+
+# Terminal C — worker (desde la carpeta services/)
+cd services
+PYTHONPATH=. uv run celery -A celery_app.celery worker --loglevel=INFO
+
+# Terminal D — Flower (opcional)
+cd services
+PYTHONPATH=. uv run celery -A celery_app.celery flower --port=5555
+```
+
+Parar worker: `Ctrl+C` en su terminal (o `docker compose stop worker`).
+
+`POST /api/v1/incidents/analyze` responde **202** + `task_id`; el resultado se
+consulta en `GET /tasks/{task_id}`. Flower: http://localhost:5555
 
 ## Parar
 

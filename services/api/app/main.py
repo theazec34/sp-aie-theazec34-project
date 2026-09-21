@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.analyzer import analyze_text, build_report, export_to_csv_text
+from app.analyzer import analyze_text, export_to_csv_text
 from app.auth.deps import get_current_user
 from app.auth.router import router as auth_router
 from app.cache import incidents_cache, suppliers_cache
@@ -18,10 +18,10 @@ from app.incidents.router import router as incidents_router
 from app.inventory import models as _inventory_models  # noqa: F401 — register metadata
 from app.inventory.router import router as inventory_router
 from app.profiles.router import router as profiles_router
-from app.schemas import AnalysisReport
 from app.suppliers.router import router as suppliers_router
 from app.telemetry import orm as _telemetry_orm  # noqa: F401 — register metadata
 from app.telemetry.router import router as telemetry_router
+from app.tasks_router import router as tasks_router
 from app.users.models import UserInDB
 from app.users.router import router as users_router
 
@@ -102,6 +102,7 @@ app.include_router(inventory_router)
 app.include_router(telemetry_router)
 app.include_router(reporting_router)
 app.include_router(knowledge_router)
+app.include_router(tasks_router)
 
 
 @app.get("/health")
@@ -156,14 +157,30 @@ def api_info() -> dict[str, object]:
             "reindex": "/knowledge/reindex",
             "auth_required": True,
         },
+        "tasks": {
+            "status": "/tasks/{task_id}",
+            "dlq": "/tasks/dlq/recent",
+            "auth_required": True,
+        },
     }
 
 
-@app.post("/api/v1/incidents/analyze", response_model=AnalysisReport)
+@app.post("/api/v1/incidents/analyze", status_code=202)
 async def analyze_incidents(
     file: UploadFile = File(...),
+    force_fail: bool = False,
     _current: UserInDB = Depends(get_current_user),
-) -> AnalysisReport:
+) -> dict[str, str]:
+    """Enqueue CSV analysis on Celery; returns 202 + task_id immediately.
+
+    The worker reads the file from disk by ``upload_id`` (lightweight message).
+    Poll ``GET /tasks/{task_id}`` for status/result. Query param ``force_fail``
+    is for DEV-55 demo of retries/DLQ only.
+    """
+    import sys
+    import uuid
+    from pathlib import Path as _Path
+
     if not file.filename or not file.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="Se requiere un fichero CSV.")
 
@@ -178,9 +195,24 @@ async def analyze_incidents(
     if not content.strip():
         raise HTTPException(status_code=400, detail="El fichero CSV está vacío.")
 
-    result = analyze_text(content, file.filename)
-    report = build_report(result)
-    return AnalysisReport(**report)
+    upload_id = str(uuid.uuid4())
+    upload_dir = _Path(__file__).resolve().parents[1] / "data" / "uploads"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    dest = upload_dir / f"{upload_id}.csv"
+    dest.write_text(content, encoding="utf-8")
+
+    # Import Celery task from services/ package
+    _services = _Path(__file__).resolve().parents[2]
+    if str(_services) not in sys.path:
+        sys.path.insert(0, str(_services))
+    from tasks.incidents import analyze_incidents_csv  # noqa: E402
+
+    async_result = analyze_incidents_csv.delay(
+        upload_id,
+        file.filename,
+        force_fail=force_fail,
+    )
+    return {"task_id": async_result.id}
 
 
 @app.post("/api/v1/incidents/export")
