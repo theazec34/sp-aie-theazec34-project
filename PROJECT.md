@@ -1,6 +1,6 @@
 # PROJECT — Mapa completo Brasaland Digital
 
-Documento canónico del monorepo (actualizado 2026-08-12). Sustituye lecturas antiguas de README/memory-bank que hablaban del sitio estático o del dominio de “elecciones”.
+Documento canónico del monorepo (actualizado 2026-09-11). Sustituye lecturas antiguas de README/memory-bank que hablaban del sitio estático o del dominio de “elecciones”.
 
 ---
 
@@ -22,10 +22,19 @@ Objetivo académico/profesional: construir una plataforma digital operable (auth
 Browser
   ├─ :3000  uis/website     Next.js 16 — público
   ├─ :3001  uis/backoffice  Next.js 16 — ops (JWT en localStorage)
+  │            ├─ /telemetry   reporte técnico
+  │            └─ /reporting   KPIs semanales por local
   └─ :8000  services/api    FastAPI
               ├─ /docs, /health, /auth, /users, /profiles
               ├─ /suppliers, /api/incidents*, /inventory/*
+              ├─ /telemetry/*, /reporting/*
               └─ /  → uis/web (analizador CSV estático)
+
+Jobs / ML (fuera del request path)
+  ├─ scripts/nightly_export.py          → job_runs + pipeline Prefect
+  ├─ scripts/train_sales_forecast.py    → models/*.joblib + data/forecast/
+  ├─ scripts/evaluate_revenue_model.py  → data/eval/
+  └─ src/app.py (WeLoveReviews)         → data/processed/reviews_with_sentiment.csv
 ```
 
 | Puerto | Cómo abrirlo | Notas |
@@ -122,10 +131,12 @@ Si quieres fusionar Talent Pipeline o el Agent, hacerlo en PRs dedicados (añade
 2. **Auth completa** — register/login/JWT, perfil, forgot/reset/change password.  
 3. **Dominios de negocio claros** — proveedores, incidencias (CSV + CRUD), inventario con stock calculado.  
 4. **Dual DB pragmática** — TinyDB para ops ligeras; SQLModel para inventario (Supabase o SQLite).  
-5. **Rendimiento documentado** — Lighthouse before/after + cache TTL con invalidación y informe.  
-6. **Docker one-shot** — `compose up` con fallback si Supabase no responde.  
-7. **Tests** — pytest API, Jest backoffice, Playwright website.  
-8. **Dominio TS Brasaland en `src/`** — EncargoProveedor / PlatoCarta / ReservaMesa / PedidoDomicilio + reportes.
+5. **Observabilidad** — telemetría captura→storage→reporte + pipeline Prefect + nightly `job_runs`.  
+6. **ML aplicado** — sentimiento reseñas + forecast/eval de ventas con split temporal y métricas de negocio.  
+7. **Rendimiento documentado** — Lighthouse before/after + cache TTL con invalidación y informe.  
+8. **Docker one-shot** — `compose up` con fallback si Supabase no responde.  
+9. **Tests** — pytest API/pipelines/nightly/forecast, Jest backoffice, Playwright website.  
+10. **Dominio TS Brasaland en `src/`** — EncargoProveedor / PlatoCarta / ReservaMesa / PedidoDomicilio + reportes.
 
 ---
 
@@ -133,14 +144,23 @@ Si quieres fusionar Talent Pipeline o el Agent, hacerlo en PRs dedicados (añade
 
 ```text
 uis/website/          # CANÓNICO sitio público
-uis/backoffice/       # CANÓNICO panel ops
+uis/backoffice/       # CANÓNICO panel ops (+ /telemetry, /reporting)
 uis/web/              # UI CSV servida por API
-services/api/         # CANÓNICO backend
-src/                  # Hito 2 TypeScript Brasaland
+services/api/         # CANÓNICO backend (+ telemetry SQL, job_runs SQL)
+services/telemetry/   # análisis Pandas del reporte técnico
+services/reporting/   # endpoints KPIs semanales
+services/job_runner/  # máquina de estados job_runs (nightly)
+data/pipelines/       # Prefect flow + PIPELINE_DESIGN
+data/raw/             # reviews.csv, brasaland_sales.csv, exports nightly
+data/forecast/        # informe + métricas train ventas
+data/eval/            # informe evaluación regresión
+models/               # brasaland_sales_forecast.joblib
+src/                  # Hito 2 TS + sentimiento WeLoveReviews
 packages/shared/      # types base + python incidents
-scripts/              # analyze + seeds
-audit/                # solo PNG Lighthouse (resúmenes en AUDIT/REPORT)
-docs/                 # arquitectura
+scripts/              # analyze, nightly, train/eval ventas, seeds
+tests/                # pipelines + nightly + sales forecast
+docs/                 # arquitectura + telemetry + pipelines
+audit/                # PNG Lighthouse (resúmenes en AUDIT/REPORT)
 memory-bank/          # contexto para agentes
 ```
 
@@ -174,6 +194,11 @@ memory-bank/          # contexto para agentes
 # Builds
 npm run build --prefix uis/website
 npm run build --prefix uis/backoffice
+
+# API + data/ML tests (raíz con uv; API deps: services/api/requirements.txt)
+uv sync
+uv pip install -r services/api/requirements.txt
+uv run pytest tests/pipelines tests/scripts -q
 cd services/api && uv run pytest -q
 
 # Demo dominio TS

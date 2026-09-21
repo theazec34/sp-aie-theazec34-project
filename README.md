@@ -36,13 +36,16 @@ docker compose up --build
 | Ruta | Rol |
 |------|-----|
 | `uis/website` | Sitio público Next.js (carta, galería, formulario) |
-| `uis/backoffice` | Panel ops Next.js (auth, proveedores, incidencias, inventario) |
+| `uis/backoffice` | Panel ops (auth, proveedores, incidencias, inventario, `/telemetry`, `/reporting`) |
 | `uis/web` | UI ligera del analizador CSV (servida por la API en `/`) |
-| `services/api` | FastAPI: JWT, proveedores, incidencias, inventario ORM, cache TTL |
-| `src/` | Dominio TypeScript Brasaland (Hito 2: entidades + reportes) |
-| `scripts/` | `analyze.py`, seeds de incidencias |
+| `services/api` | FastAPI: JWT, proveedores, incidencias, inventario, telemetry, reporting |
+| `services/telemetry` / `reporting` / `job_runner` | Análisis reporte, KPIs, orquestación nightly |
+| `data/pipelines` | Prefect flow de performance semanal |
+| `scripts/` | `analyze.py`, `nightly_export.py`, train/eval ventas, seeds |
+| `src/` | Dominio TS Brasaland + pipeline sentimiento WeLoveReviews |
+| `models/` + `data/forecast/` + `data/eval/` | Artefactos ML de ventas |
 | `audit/` | Screenshots Lighthouse before/after |
-| `CACHING_REPORT.md` / `AUDIT.md` / `REPORT.md` | Informes de hitos de rendimiento |
+| `CACHING_REPORT.md` / `AUDIT.md` / `REPORT.md` | Informes de rendimiento |
 
 ## Comandos útiles (raíz)
 
@@ -51,14 +54,16 @@ docker compose up --build
 | `npm run typecheck` / `npm run demo` | Capa TS Brasaland en `src/` |
 | `npm run test:e2e` | Playwright → website `:3000` |
 | `npm run test:api` | pytest FastAPI |
+| `uv run pytest tests/pipelines tests/scripts -q` | Pipeline, forecast split, nightly |
 
 ## Contexto de negocio
 
 - [Brasaland.md](./Brasaland.md) — entidades y reglas del restaurante  
-- [CONTEXT-brasaland.es.md](./CONTEXT-brasaland.es.md) — incidencias postventa (CSV)  
-- [CONTEXT-incidents-centralized.es.md](./CONTEXT-incidents-centralized.es.md) — gestor centralizado  
+- [CONTEXT-brasaland.es.md](./CONTEXT-brasaland.es.md) — predicción de ventas (CSV + métricas)  
+- [CONTEXT-incidents-centralized.es.md](./CONTEXT-incidents-centralized.es.md) — gestor centralizado de incidencias  
 - [05-backend-inventory-orm/CONTEXT-brasaland.es.md](./05-backend-inventory-orm/CONTEXT-brasaland.es.md) — inventario ORM  
+- [docs/telemetry/](./docs/telemetry/) / [docs/pipelines/](./docs/pipelines/) — telemetría y pipeline de negocio  
 
 ## Estado Git
 
-El producto Brasaland Digital (web + backoffice + API + Docker + performance + caching) está en **`main`**. Detalle de hitos y ramas: [PROJECT.md](./PROJECT.md).
+Producto en **`main`** (PRs #1–#21 y #23–#33): web, backoffice, API, Docker, performance, caching, telemetría, pipeline, nightly, sentimiento y forecast/eval de ventas. Detalle: [PROJECT.md](./PROJECT.md).
