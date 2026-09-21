@@ -1,0 +1,109 @@
+{
+  "metric": "Recall@3",
+  "hits": 10,
+  "total": 10,
+  "recall_at_3": 1.0,
+  "pass": true,
+  "cases": [
+    {
+      "id": "loyalty-oro",
+      "ok": true,
+      "expected": "loyalty-program",
+      "top3": [
+        "loyalty-program",
+        "loyalty-program",
+        "loyalty-program"
+      ]
+    },
+    {
+      "id": "loyalty-acumulacion",
+      "ok": true,
+      "expected": "loyalty-program",
+      "top3": [
+        "loyalty-program",
+        "loyalty-program",
+        "waste-protocol"
+      ]
+    },
+    {
+      "id": "loyalty-redencion",
+      "ok": true,
+      "expected": "loyalty-program",
+      "top3": [
+        "loyalty-program",
+        "loyalty-program",
+        "loyalty-program"
+      ]
+    },
+    {
+      "id": "allergens-costilla",
+      "ok": true,
+      "expected": "menu-allergens",
+      "top3": [
+        "menu-allergens",
+        "menu-allergens",
+        "menu-allergens"
+      ]
+    },
+    {
+      "id": "allergens-protocol",
+      "ok": true,
+      "expected": "menu-allergens",
+      "top3": [
+        "menu-allergens",
+        "menu-allergens",
+        "waste-protocol"
+      ]
+    },
+    {
+      "id": "waste-daily",
+      "ok": true,
+      "expected": "waste-protocol",
+      "top3": [
+        "waste-protocol",
+        "waste-protocol",
+        "waste-protocol"
+      ]
+    },
+    {
+      "id": "waste-escalation",
+      "ok": true,
+      "expected": "waste-protocol",
+      "top3": [
+        "supplier-ordering",
+        "supplier-ordering",
+        "waste-protocol"
+      ]
+    },
+    {
+      "id": "supplier-monday",
+      "ok": true,
+      "expected": "supplier-ordering",
+      "top3": [
+        "supplier-ordering",
+        "supplier-ordering",
+        "supplier-ordering"
+      ]
+    },
+    {
+      "id": "supplier-emergency",
+      "ok": true,
+      "expected": "supplier-ordering",
+      "top3": [
+        "loyalty-program",
+        "menu-allergens",
+        "supplier-ordering"
+      ]
+    },
+    {
+      "id": "allergens-ensalada",
+      "ok": true,
+      "expected": "menu-allergens",
+      "top3": [
+        "menu-allergens",
+        "menu-allergens",
+        "waste-protocol"
+      ]
+    }
+  ]
+}
