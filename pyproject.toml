@@ -5,7 +5,9 @@ description = "Brasaland revenue forecasting and model evaluation"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "celery>=5.6.3",
     "fastembed>=0.8.0",
+    "flower>=2.1.0",
     "joblib>=1.6.0",
     "matplotlib>=3.11.1",
     "numpy>=2.5.3",
@@ -14,6 +16,7 @@ dependencies = [
     "pytest>=9.1.1",
     "python-dotenv>=1.2.3",
     "qdrant-client>=1.19.1",
+    "redis>=8.1.0",
     "scikit-learn>=1.9.1",
     "xgboost>=3.4.1",
 ]

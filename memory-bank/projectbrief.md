@@ -18,6 +18,7 @@ Plataforma digital con:
 5. Pipeline Prefect + nightly export (`job_runs`)
 6. ML: sentimiento WeLoveReviews + forecast/eval de ventas
 7. RAG: base de conocimiento Qdrant (`brasaland_knowledge`) + `/knowledge`
+8. Celery/Redis (DEV-55): analyze async + Flower
 2. Backoffice ops Next (`uis/backoffice`) — telemetría + reporting
 3. API FastAPI (`services/api`) — auth JWT, proveedores, incidencias, inventario, telemetry, reporting
 4. Docker Compose + informes de performance/caching

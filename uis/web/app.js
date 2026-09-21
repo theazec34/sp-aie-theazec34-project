@@ -229,12 +229,44 @@ function createRow(cells) {
   return row;
 }
 
+async function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function pollTask(taskId, { timeoutMs = 120000, intervalMs = 500 } = {}) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    const response = await fetch(`${getApiBase()}/tasks/${taskId}`, {
+      headers: authHeaders(),
+    });
+    if (handleUnauthorized(response)) {
+      return null;
+    }
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(
+        formatApiDetail(error, "No se pudo consultar el estado de la tarea.")
+      );
+    }
+    const payload = await response.json();
+    if (payload.status === "success") {
+      return payload.result;
+    }
+    if (payload.status === "failure") {
+      throw new Error(payload.error || "La tarea de análisis falló.");
+    }
+    setStatus(`Analizando… (${payload.status})`, "info");
+    await sleep(intervalMs);
+  }
+  throw new Error("Tiempo de espera agotado al analizar el CSV.");
+}
+
 async function analyzeFile() {
   if (!selectedFile) {
     return;
   }
 
-  setStatus("Analizando fichero...");
+  setStatus("Encolando análisis…");
   analyzeBtn.disabled = true;
   exportBtn.disabled = true;
 
@@ -262,7 +294,15 @@ async function analyzeFile() {
       );
     }
 
-    const report = await response.json();
+    const { task_id: taskId } = await response.json();
+    if (!taskId) {
+      throw new Error("La API no devolvió task_id.");
+    }
+    setStatus(`Tarea ${taskId} en cola…`);
+    const report = await pollTask(taskId);
+    if (!report) {
+      return;
+    }
     renderReport(report);
     setStatus("Análisis completado.", "success");
   } catch (error) {

@@ -23,6 +23,15 @@ playwright-report/
 # TypeScript cache
 **/*.tsbuildinfo
 
+# Python
+**/__pycache__/
+**/*.pyc
+**/.venv/
+.venv/
+services/api/data/
+services/api/data/uploads/
+*.db
+
 # Local Qdrant embedded storage (dev without Docker)
 .qdrant_storage/
 
