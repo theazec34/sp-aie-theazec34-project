@@ -31,6 +31,9 @@ if str(_SERVICES_DIR) not in __import__("sys").path:
     __import__("sys").path.insert(0, str(_SERVICES_DIR))
 from reporting.router import router as reporting_router  # noqa: E402
 
+# Knowledge RAG (sibling package services/knowledge)
+from knowledge.router import router as knowledge_router  # noqa: E402
+
 logger = logging.getLogger("api.timing")
 if not logging.getLogger().handlers:
     logging.basicConfig(
@@ -98,6 +101,7 @@ app.include_router(incidents_router)
 app.include_router(inventory_router)
 app.include_router(telemetry_router)
 app.include_router(reporting_router)
+app.include_router(knowledge_router)
 
 
 @app.get("/health")
@@ -146,6 +150,11 @@ def api_info() -> dict[str, object]:
             "orders": "/inventory/orders",
             "auth_required": True,
             "user_uuid_note": "TinyDB numeric user id as string (e.g. '1')",
+        },
+        "knowledge": {
+            "query": "/knowledge/query",
+            "reindex": "/knowledge/reindex",
+            "auth_required": True,
         },
     }
 

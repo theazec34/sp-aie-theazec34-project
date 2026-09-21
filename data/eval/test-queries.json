@@ -1,0 +1,62 @@
+[
+  {
+    "id": "loyalty-oro",
+    "question": "¿Cuántos puntos necesito para el nivel Oro?",
+    "expected_source_document": "loyalty-program",
+    "expected_answer_notes": "50+ puntos; 15% descuento permanente"
+  },
+  {
+    "id": "loyalty-acumulacion",
+    "question": "¿Cómo se acumulan los Brasa Points?",
+    "expected_source_document": "loyalty-program",
+    "expected_answer_notes": "1 punto por cada 10.000 COP o 10 USD"
+  },
+  {
+    "id": "loyalty-redencion",
+    "question": "¿Desde cuántos puntos puedo redimir y a cuánto equivalen?",
+    "expected_source_document": "loyalty-program",
+    "expected_answer_notes": "desde 15 puntos; cada 5 puntos = 20.000 COP / 20 USD"
+  },
+  {
+    "id": "allergens-costilla",
+    "question": "¿La Costilla BBQ tiene alérgenos?",
+    "expected_source_document": "menu-allergens",
+    "expected_answer_notes": "soya y posibles trazas de maní; no cero riesgo"
+  },
+  {
+    "id": "allergens-protocol",
+    "question": "¿Qué debe hacer el mesero si un cliente reporta alergia severa?",
+    "expected_source_document": "menu-allergens",
+    "expected_answer_notes": "informar cocina; nunca garantizar cero riesgo de contaminación cruzada"
+  },
+  {
+    "id": "waste-daily",
+    "question": "¿Cómo se registra el desperdicio al cierre de turno?",
+    "expected_source_document": "waste-protocol",
+    "expected_answer_notes": "pesar y registrar por categoría en la app de operaciones"
+  },
+  {
+    "id": "waste-escalation",
+    "question": "¿Cuándo debo escalar desperdicio de proteína a Felipe Guerrero?",
+    "expected_source_document": "waste-protocol",
+    "expected_answer_notes": "más de 5 kg premium en una semana en el mismo local"
+  },
+  {
+    "id": "supplier-monday",
+    "question": "¿Hasta qué hora del lunes debo generar el pedido semanal a proveedores?",
+    "expected_source_document": "supplier-ordering",
+    "expected_answer_notes": "antes de las 10:00 a.m. hora local"
+  },
+  {
+    "id": "supplier-emergency",
+    "question": "¿Cuándo un pedido de emergencia necesita aprobación de Lucía Fernández?",
+    "expected_source_document": "supplier-ordering",
+    "expected_answer_notes": "si supera 500 USD o equivalente en COP; recargo 8%"
+  },
+  {
+    "id": "allergens-ensalada",
+    "question": "¿Qué alérgenos tiene la Ensalada Tropical?",
+    "expected_source_document": "menu-allergens",
+    "expected_answer_notes": "frutos secos (anacardo) y lácteos (queso feta)"
+  }
+]

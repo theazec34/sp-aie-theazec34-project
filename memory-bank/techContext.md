@@ -66,6 +66,17 @@
 - Tests: `tests/pipelines/test_sales_forecast_split.py`, `test_temporal_cv.py`
 - Deps: `uv` (`pyproject.toml`)
 
+## RAG — Base de conocimiento Brasaland
+- CONTEXT: `docs/rag/CONTEXT-brasaland.es.md`
+- Corpus: `docs/company-knowledge-base/`
+- Index: `data/process/rag.py` (`setup`, `embed`) → Qdrant `brasaland_knowledge`
+- Pipeline: `data/pipelines/rag.py` (`retrieve`, `generate_answer`, `query`)
+- API: `POST /knowledge/query` (`services/knowledge/`)
+- UI: backoffice `/knowledge`
+- Eval: `data/eval/test-queries.json` + `scripts/eval_rag_recall.py`
+- Diseño: `docs/rag/rag-design.md`
+- Infra: servicio `qdrant` en `docker-compose.yml` (`:6333`)
+
 ## Rama / PRs mergeados (ML & data)
 - Pipeline resiliente: mergeado (#28)
 - Subflows + dashboard: mergeado (#29)
@@ -73,4 +84,5 @@
 - Sentimiento WeLoveReviews: mergeado (#31)
 - Eval regresión ventas: mergeado (#32)
 - Forecast ventas (train): mergeado (#33)
+- RAG knowledge base: rama `feature/rag-knowledge-base`
 - Producto estable: **`main`**

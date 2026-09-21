@@ -14,6 +14,14 @@ COPY --from=ghcr.io/astral-sh/uv:0.6.14 /uv /usr/local/bin/uv
 # (app/analyzer.py resolves parents[3]/packages/shared/python from /app/api/app/...)
 COPY packages/shared/python /packages/shared/python
 
+# Sibling FastAPI modules + RAG package (imported as `knowledge`, `data.*`)
+COPY services/knowledge /app/knowledge
+COPY services/reporting /app/reporting
+COPY services/telemetry /app/telemetry
+COPY services/job_runner /app/job_runner
+COPY data /app/data
+COPY docs/company-knowledge-base /app/docs/company-knowledge-base
+
 WORKDIR /app/api
 COPY services/api/requirements.txt ./requirements.txt
 RUN uv pip install --system -r requirements.txt
@@ -23,7 +31,7 @@ COPY services/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=/app/api
+ENV PYTHONPATH=/app/api:/app
 
 EXPOSE 8000
 
