@@ -1,0 +1,39 @@
+{
+  "run_id": "7c1cc569-86c2-4890-9009-62e13807c10a",
+  "answer": "Según los manuales oficiales (loyalty-program): - Bronce (0-19 puntos): 5% de descuento en bebidas los martes.\n- Plata (20-49 puntos): 10% de descuento en el plato principal, una vez al mes.\n- Oro (50+ puntos): 15% de descuento permanente y acceso a menú de temporada\n  antes que el público general.\n\nLos puntos se pueden redimir desde 15 puntos acumulados, en incrementos de 5.\nCada 5 puntos redimidos equivalen a 20.000 COP (20 USD) de descuento en la\ncuenta. No se pueden combinar con otras promociones activas del mes.\n\nEl programa está disponible tanto en las tarjetas físicas de sello (en proceso\nde descontinuación) como en la app digital. Un cliente puede transferir sus\npuntos de tarjeta física a la app una sola vez, presentando la tarjeta física\ncompleta en cualquier local. Además: Brasa Points es el programa de fidelización de Brasaland. Por cada 10.000 COP\n(o 10 USD en Florida) gastados, el cliente acumula 1 punto. Los puntos no\nvencen mientras la cuenta esté activa (con al menos una compra cada 12 meses).",
+  "error": null,
+  "trace": [
+    {
+      "node": "receive_question",
+      "output": {
+        "empty_question": false,
+        "question_len": 43
+      }
+    },
+    {
+      "node": "retrieve_knowledge",
+      "output": {
+        "n_chunks": 3,
+        "sources": [
+          "loyalty-program"
+        ],
+        "has_context": true
+      }
+    },
+    {
+      "node": "generate_response",
+      "output": {
+        "answer_len": 1024,
+        "used_chunks": 3
+      }
+    }
+  ],
+  "nodes": [
+    "receive_question",
+    "retrieve_knowledge",
+    "generate_response"
+  ],
+  "checkpointed": true,
+  "n_chunks": 3,
+  "persisted_at": "2026-09-23T17:50:56.656987+00:00"
+}

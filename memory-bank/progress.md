@@ -1,19 +1,19 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-09-21)
-- **`main` actualizado:** PRs **#1–#21**, **#23–#35** (RAG #35 + review #34 mergeados).
-- **Hito en curso:** Celery/Redis **DEV-55** — rama `cursor/async-tasks-celery-c620`.
-- **Auditoría rápida:** sin Celery previo; RAG ya en main; docs memory-bank alineadas en este PR.
-- **Fuera de alcance:** `hito-3` / `3.5`, `brasaland_agent`.
+## Estado (2026-09-23)
+- **`main`:** PRs **#1–#21**, **#23–#36** (RAG #35, Celery DEV-55 #36).
+- **Hito en curso:** LangGraph agent base — rama `feature/langgraph-agent-base`.
+- **Fuera de alcance:** `hito-3` / `3.5`.
 
-## DEV-55 (async tasks)
-- Redis en Compose (`noeviction`) + Flower `:5555` + worker independiente
-- Endpoint async: `POST /api/v1/incidents/analyze` → **202** `{task_id}`
-- Status: `GET /tasks/{task_id}` → `pending|started|success|failure`
-- Retries: `max_retries=3` + backoff exponencial `2/4/8s`
-- DLQ: tabla `celery_dead_letters` (task_id, attempt, error, timestamp)
-- UI CSV (`uis/web`) hace poll de `/tasks/{id}`
-- Tests: `services/api/tests/test_celery_tasks.py` (suite API **56 passed**)
+## LangGraph agent (Part 1)
+- Paquete: `services/agent/` (state, nodes, graph, tracing, router)
+- Nodos: `receive_question` → `retrieve_knowledge` → `generate_response` | `refuse_honestly`
+- Condicionales: pregunta vacía / sin contexto → refusal (sin alucinar)
+- Checkpoint: `MemorySaver` por `run_id`
+- Traces: `data/eval/agent_traces/`
+- API: `POST /agent/query`, `GET /agent/traces/{run_id}`
+- Evals: `tests/pipelines/test_agent_graph.py` (≥3) + RAG tests siguen en verde
+- Diseño: `docs/agent/langgraph-agent-base.md`
 
 ## Hitos en main
 | Área | PR |
@@ -26,7 +26,5 @@
 | Ventas ML | #32–#33 |
 | Docs review | #34 |
 | RAG knowledge | #35 |
-| Celery DEV-55 | este PR |
-
-## Arranque RAG / Celery
-Ver `README.md` y `DOCKER.md`.
+| Celery DEV-55 | #36 |
+| LangGraph agent base | este PR |

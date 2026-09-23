@@ -115,7 +115,8 @@ PRs **MERGED** en `main` (actualizado 2026-09-11):
 | 33 | Forecast ventas (train) | XGBoost 8y/2y (`data/forecast/`, `train_sales_forecast.py`) |
 | 34 | Project review docs | Sync mapa hitos + README |
 | 35 | RAG knowledge base | Qdrant `brasaland_knowledge` + `/knowledge` |
-| — | Celery DEV-55 (este PR) | Redis + worker + Flower; analyze → 202/`task_id` |
+| 36 | Celery DEV-55 | Redis + worker + Flower; analyze → 202/`task_id` |
+| — | LangGraph agent base (este PR) | Grafo retrieve/generate + `/agent/query` |
 
 ### Ramas remotas **no** mergeadas (fuera del producto principal)
 

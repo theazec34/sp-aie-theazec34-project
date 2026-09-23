@@ -1,0 +1,1 @@
+{"run_id": "7c1cc569-86c2-4890-9009-62e13807c10a", "nodes": ["receive_question", "retrieve_knowledge", "generate_response"], "error": null, "persisted_at": "2026-09-23T17:50:56.656987+00:00"}
