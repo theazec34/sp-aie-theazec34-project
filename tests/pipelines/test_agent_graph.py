@@ -41,6 +41,9 @@ def test_graph_compiles_with_checkpointing():
     assert "retrieve_knowledge" in node_ids
     assert "generate_response" in node_ids
     assert "refuse_honestly" in node_ids
+    assert "lookup_ticket" in node_ids
+    assert "lookup_inventory" in node_ids
+    assert "tool_fallback" in node_ids
 
 
 def test_eval_empty_question_routes_to_refuse_without_retrieve(

@@ -116,7 +116,8 @@ PRs **MERGED** en `main` (actualizado 2026-09-11):
 | 34 | Project review docs | Sync mapa hitos + README |
 | 35 | RAG knowledge base | Qdrant `brasaland_knowledge` + `/knowledge` |
 | 36 | Celery DEV-55 | Redis + worker + Flower; analyze → 202/`task_id` |
-| — | LangGraph agent base (este PR) | Grafo retrieve/generate + `/agent/query` |
+| 37 | LangGraph agent base | Grafo retrieve/generate + `/agent/query` |
+| — | LangGraph external tools (este PR) | Tools tickets/inventario + routing |
 
 ### Ramas remotas **no** mergeadas (fuera del producto principal)
 

@@ -37,6 +37,8 @@ class AgentQueryResponse(BaseModel):
     nodes: list[str]
     checkpointed: bool = False
     error: str | None = None
+    intent: str | None = None
+    sources_used: list[str] = []
 
 
 class AgentTraceResponse(BaseModel):
@@ -71,6 +73,8 @@ def agent_query(
         nodes=list(result.get("nodes") or []),
         checkpointed=bool(result.get("checkpointed")),
         error=result.get("error"),
+        intent=result.get("intent"),
+        sources_used=list(result.get("sources_used") or []),
     )
 
 

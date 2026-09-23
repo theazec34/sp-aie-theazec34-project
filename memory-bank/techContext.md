@@ -77,6 +77,13 @@
 - Flower: `:5555` · worker proceso independiente
 - Docs: `docs/async-tasks/DEV-55.md`
 
+## LangGraph agent (Part 2 — external tools)
+- Tools: `services/agent/tools/` (tickets + inventario, read-only, timeout)
+- Routing: `classify_intent` → rag | ticket | inventory
+- Fallback: `tool_fallback` (sin alucinar estado/stock)
+- Docs: `docs/agent/langgraph-external-tools.md`
+- Evals: `tests/pipelines/test_agent_tools.py`
+
 ## LangGraph agent (Part 1)
 - Paquete: `services/agent/` (grafo compilado + checkpoint MemorySaver)
 - Nodos separados: receive → retrieve → generate | refuse
