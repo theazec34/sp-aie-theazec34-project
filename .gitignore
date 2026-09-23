@@ -52,6 +52,8 @@ data/eval/*
 !data/eval/*.md
 !data/eval/*.png
 !data/eval/*.json
+!data/eval/agent_traces/
+!data/eval/agent_traces/**
 data/processed/*
 !data/processed/README*
 !data/processed/reviews_with_sentiment.csv
@@ -67,3 +69,6 @@ data/forecast/*
 !data/forecast/*.md
 !data/forecast/*.png
 !data/forecast/*.json
+
+# Redis local dump
+dump.rdb

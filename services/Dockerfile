@@ -19,6 +19,7 @@ COPY services/knowledge /app/knowledge
 COPY services/reporting /app/reporting
 COPY services/telemetry /app/telemetry
 COPY services/job_runner /app/job_runner
+COPY services/agent /app/agent
 COPY services/celery_app.py /app/celery_app.py
 COPY services/tasks /app/tasks
 COPY data /app/data

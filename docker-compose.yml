@@ -24,6 +24,7 @@ services:
       - ./services/api:/app/api
       - ./services/celery_app.py:/app/celery_app.py
       - ./services/tasks:/app/tasks
+      - ./services/agent:/app/agent
       - ./packages:/packages
       - ./docs/company-knowledge-base:/app/docs/company-knowledge-base:ro
       - ./data:/app/data:ro
@@ -52,6 +53,7 @@ services:
       - ./services/api:/app/api
       - ./services/celery_app.py:/app/celery_app.py
       - ./services/tasks:/app/tasks
+      - ./services/agent:/app/agent
       - ./packages:/packages
       - backend_data:/app/api/data
     depends_on:

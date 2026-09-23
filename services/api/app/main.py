@@ -33,6 +33,8 @@ from reporting.router import router as reporting_router  # noqa: E402
 
 # Knowledge RAG (sibling package services/knowledge)
 from knowledge.router import router as knowledge_router  # noqa: E402
+# LangGraph agent (sibling package services/agent)
+from agent.router import router as agent_router  # noqa: E402
 
 logger = logging.getLogger("api.timing")
 if not logging.getLogger().handlers:
@@ -102,6 +104,7 @@ app.include_router(inventory_router)
 app.include_router(telemetry_router)
 app.include_router(reporting_router)
 app.include_router(knowledge_router)
+app.include_router(agent_router)
 app.include_router(tasks_router)
 
 
@@ -155,6 +158,11 @@ def api_info() -> dict[str, object]:
         "knowledge": {
             "query": "/knowledge/query",
             "reindex": "/knowledge/reindex",
+            "auth_required": True,
+        },
+        "agent": {
+            "query": "/agent/query",
+            "traces": "/agent/traces/{run_id}",
             "auth_required": True,
         },
         "tasks": {

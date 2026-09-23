@@ -1,4 +1,4 @@
-# Technical Context — Brasaland Digital (actualizado 2026-09-11)
+# Technical Context — Brasaland Digital (actualizado 2026-09-23)
 
 ## Runtime
 - **Website** `uis/website` — Next.js 16, puerto **3000**
@@ -77,6 +77,14 @@
 - Flower: `:5555` · worker proceso independiente
 - Docs: `docs/async-tasks/DEV-55.md`
 
+## LangGraph agent (Part 1)
+- Paquete: `services/agent/` (grafo compilado + checkpoint MemorySaver)
+- Nodos separados: receive → retrieve → generate | refuse
+- API: `POST /agent/query`, `GET /agent/traces/{run_id}`
+- Traces: `data/eval/agent_traces/`
+- Evals: `tests/pipelines/test_agent_graph.py`
+- Docs: `docs/agent/langgraph-agent-base.md`
+
 ## RAG — Base de conocimiento Brasaland
 - CONTEXT: `docs/rag/CONTEXT-brasaland.es.md`
 - Corpus: `docs/company-knowledge-base/`
@@ -96,5 +104,6 @@
 - Eval regresión ventas: mergeado (#32)
 - Forecast ventas (train): mergeado (#33)
 - RAG knowledge base: mergeado (#35)
-- Celery DEV-55: rama `cursor/async-tasks-celery-c620`
+- Celery DEV-55: mergeado (#36)
+- LangGraph agent base: rama `feature/langgraph-agent-base`
 - Producto estable: **`main`**
