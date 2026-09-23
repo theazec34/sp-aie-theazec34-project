@@ -1,0 +1,45 @@
+{
+  "run_id": "a30ddea5-2e60-4f85-bb21-998907e49f1e",
+  "answer": "Nivel Oro requiere 50+ puntos (Brasa Points).",
+  "error": null,
+  "trace": [
+    {
+      "node": "receive_question",
+      "output": {
+        "empty_question": false,
+        "question_len": 43,
+        "intent": "rag"
+      }
+    },
+    {
+      "node": "retrieve_knowledge",
+      "output": {
+        "n_chunks": 1,
+        "sources": [
+          "loyalty-program"
+        ],
+        "has_context": true
+      }
+    },
+    {
+      "node": "generate_response",
+      "output": {
+        "answer_len": 45,
+        "used_chunks": 1,
+        "source": "rag"
+      }
+    }
+  ],
+  "nodes": [
+    "receive_question",
+    "retrieve_knowledge",
+    "generate_response"
+  ],
+  "checkpointed": true,
+  "n_chunks": 1,
+  "intent": "rag",
+  "sources_used": [
+    "rag"
+  ],
+  "persisted_at": "2026-09-23T18:01:12.171270+00:00"
+}

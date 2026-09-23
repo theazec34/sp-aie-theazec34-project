@@ -1,0 +1,44 @@
+{
+  "run_id": "5ff46ac4-5310-444b-97ec-31f099d01205",
+  "answer": "Incidencia #2: «TPV offline Doral» — estado **open**, categoría pos_system, origen branch, sede miami_doral. Actualizada: 2026-09-23T18:01:12.151959Z.",
+  "error": null,
+  "trace": [
+    {
+      "node": "receive_question",
+      "output": {
+        "empty_question": false,
+        "question_len": 38,
+        "intent": "ticket"
+      }
+    },
+    {
+      "node": "lookup_ticket",
+      "output": {
+        "ticket_id": 2,
+        "ok": true,
+        "timed_out": false,
+        "n_tickets": 1,
+        "error": null
+      }
+    },
+    {
+      "node": "answer_from_ticket",
+      "output": {
+        "n_tickets": 1,
+        "source": "ticket_tool"
+      }
+    }
+  ],
+  "nodes": [
+    "receive_question",
+    "lookup_ticket",
+    "answer_from_ticket"
+  ],
+  "checkpointed": true,
+  "n_chunks": 0,
+  "intent": "ticket",
+  "sources_used": [
+    "ticket_tool"
+  ],
+  "persisted_at": "2026-09-23T18:01:12.163444+00:00"
+}
