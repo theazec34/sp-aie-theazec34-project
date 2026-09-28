@@ -1,8 +1,7 @@
-"""LangGraph nodes — RAG + MCP tools (Parts 1–3).
+"""LangGraph nodes — RAG + MCP tools + episodic memory (Parts 1–3).
 
-Operational data (incidents / inventory) is loaded exclusively through the
-Brasaland MCP Server client (`langchain-mcp-adapters`). Direct
-IncidentRepository / inventory ORM calls from the agent are removed.
+Operational data via MCP. Memory via explicit AgentMemory interface
+(never RAG collections; never silent writes).
 """
 
 from __future__ import annotations
@@ -21,6 +20,8 @@ from data.pipelines.rag import (  # noqa: E402
     retrieve,
 )
 
+from agent.memory.interface import get_agent_memory  # noqa: E402
+from agent.memory.pending import get_pending  # noqa: E402
 from agent.state import AgentState  # noqa: E402
 from agent.tools.mcp_client import (  # noqa: E402
     manage_incidents_via_mcp,
@@ -37,11 +38,22 @@ def _append_trace(state: AgentState, node: str, output: dict[str, Any]) -> list[
     return list(state.get("trace") or []) + [{"node": node, "output": output}]
 
 
+def _session_id(state: AgentState) -> str:
+    return str(state.get("session_id") or state.get("run_id") or "default")
+
+
 def receive_question(state: AgentState) -> dict[str, Any]:
-    """Normalize question and classify intent (rag | ticket | inventory)."""
+    """Normalize question; if a memory proposal is pending, route to confirm."""
     raw = (state.get("question") or "").strip()
     empty = not bool(raw)
-    intent = "rag" if empty else classify_intent(raw)
+    session = _session_id(state)
+    pending = None if empty else get_pending(session)
+
+    if pending is not None and not empty:
+        intent: str = "memory_confirm"
+    else:
+        intent = "rag" if empty else classify_intent(raw)
+
     out: dict[str, Any] = {
         "question": raw,
         "empty_question": empty,
@@ -53,32 +65,96 @@ def receive_question(state: AgentState) -> dict[str, Any]:
         "tool_ok": False,
         "tool_result": None,
         "sources_used": [],
+        "memory_hits": [],
+        "memory_proposal": None,
+        "memory_decision": None,
+        "pending_resolved": False,
+        "session_id": session,
     }
     out["trace"] = _append_trace(state, "receive_question", {
         "empty_question": empty,
         "question_len": len(raw),
         "intent": intent,
+        "pending_proposal": pending is not None,
+    })
+    return out
+
+
+def resolve_memory_confirm(state: AgentState) -> dict[str, Any]:
+    """Classify approve/reject/edit/ambiguous; write only on explicit decision."""
+    mem = get_agent_memory()
+    session = _session_id(state)
+    question = state.get("question") or ""
+    user_id = state.get("user_id")
+
+    ack, outcome, confirm = mem.handle_confirmation(
+        session, question, user_id=user_id
+    )
+
+    # topic_change: pending discarded; re-route by re-classifying as normal intent
+    if outcome and outcome.value == "discarded_topic_change":
+        intent = classify_intent(question)
+        out: dict[str, Any] = {
+            "intent": intent,
+            "pending_resolved": True,
+            "memory_decision": outcome.value,
+            "answer": "",
+            "error": None,
+        }
+        out["trace"] = _append_trace(state, "resolve_memory_confirm", {
+            "outcome": outcome.value,
+            "confirm_label": confirm.label if confirm else None,
+            "continue_intent": intent,
+        })
+        return out
+
+    out = {
+        "answer": ack,
+        "pending_resolved": True,
+        "memory_decision": outcome.value if outcome else None,
+        "error": None,
+        "intent": "memory_confirm",
+        "sources_used": list(state.get("sources_used") or []) + (
+            ["memory"] if "memory" not in (state.get("sources_used") or []) else []
+        ),
+    }
+    out["trace"] = _append_trace(state, "resolve_memory_confirm", {
+        "outcome": outcome.value if outcome else None,
+        "confirm_label": confirm.label if confirm else None,
+        "wrote": outcome.value in {"approved", "edited"} if outcome else False,
     })
     return out
 
 
 def retrieve_knowledge(state: AgentState) -> dict[str, Any]:
-    """RAG retrieve — never calls monolithic query()."""
+    """RAG retrieve — never calls monolithic query(); also loads agent memory hits."""
     question = state.get("question") or ""
     raw_hits = retrieve(question)
     chunks = [{k: v for k, v in h.items() if k != "score"} for h in raw_hits]
     has_context = len(chunks) > 0
+
+    mem = get_agent_memory()
+    memory_hits = [e.model_dump(mode="json") for e in mem.read_relevant(question)]
+    # Memory alone can ground an answer even without RAG chunks
+    if memory_hits:
+        has_context = True
+
     sources = list(state.get("sources_used") or [])
-    if has_context and "rag" not in sources:
+    if chunks and "rag" not in sources:
         sources = sources + ["rag"]
+    if memory_hits and "memory" not in sources:
+        sources = sources + ["memory"]
+
     out: dict[str, Any] = {
         "chunks": chunks,
         "has_context": has_context,
         "error": None if has_context else "insufficient_context",
         "sources_used": sources,
+        "memory_hits": memory_hits,
     }
     out["trace"] = _append_trace(state, "retrieve_knowledge", {
         "n_chunks": len(chunks),
+        "n_memory": len(memory_hits),
         "sources": sorted({
             str(c.get("source_document", "")) for c in chunks if c.get("source_document")
         }),
@@ -88,17 +164,58 @@ def retrieve_knowledge(state: AgentState) -> dict[str, Any]:
 
 
 def generate_response(state: AgentState) -> dict[str, Any]:
-    """RAG generation from retrieved chunks only."""
+    """RAG generation + memory context; then self-eval may propose (no write)."""
     question = state.get("question") or ""
     chunks = list(state.get("chunks") or [])
-    answer = generate_answer(question, chunks)
-    out: dict[str, Any] = {"answer": answer, "error": None}
+    mem = get_agent_memory()
+    memory_entries = mem.read_relevant(question)
+    memory_ctx = mem.format_context(memory_entries)
+
+    if chunks:
+        answer = generate_answer(question, chunks)
+    elif memory_ctx:
+        answer = (
+            "Según lo que acordamos recordar en conversaciones anteriores:\n"
+            + "\n".join(f"- {e.fact}" for e in memory_entries)
+        )
+    else:
+        answer = refusal_message()
+
+    if memory_ctx and chunks:
+        answer = answer + "\n\n" + memory_ctx
+
+    answer, proposal_dump = _maybe_attach_proposal(state, question, answer)
+
+    out: dict[str, Any] = {
+        "answer": answer,
+        "error": None,
+        "memory_proposal": proposal_dump,
+    }
     out["trace"] = _append_trace(state, "generate_response", {
         "answer_len": len(answer or ""),
         "used_chunks": len(chunks),
-        "source": "rag",
+        "used_memory": len(memory_entries),
+        "proposed_memory": proposal_dump is not None,
+        "source": "rag+memory" if memory_entries else "rag",
     })
     return out
+
+
+def _maybe_attach_proposal(
+    state: AgentState, question: str, answer: str
+) -> tuple[str, dict[str, Any] | None]:
+    """Self-eval; propose in-conversation; never write here. Max one pending."""
+    session = _session_id(state)
+    if get_pending(session) is not None:
+        return answer, None
+    mem = get_agent_memory()
+    proposal = mem.self_evaluate(question, answer)
+    if proposal is None:
+        return answer, None
+    suffix = mem.propose(session, proposal)
+    if suffix is None:
+        return answer, None
+    return answer + suffix, proposal.model_dump(mode="json")
 
 
 def lookup_ticket(state: AgentState) -> dict[str, Any]:
@@ -147,7 +264,7 @@ def lookup_ticket(state: AgentState) -> dict[str, Any]:
 
 
 def answer_from_ticket(state: AgentState) -> dict[str, Any]:
-    """Format ticket tool payload into a salesperson-style answer (no invent)."""
+    """Format ticket tool payload; optional memory proposal."""
     payload = state.get("tool_result") or {}
     tickets = payload.get("tickets") or []
     lines: list[str] = []
@@ -161,10 +278,17 @@ def answer_from_ticket(state: AgentState) -> dict[str, Any]:
     answer = " ".join(lines) if lines else (
         "No encontré incidencias que coincidan con tu consulta."
     )
-    out: dict[str, Any] = {"answer": answer, "error": None}
+    question = state.get("question") or ""
+    answer, proposal_dump = _maybe_attach_proposal(state, question, answer)
+    out: dict[str, Any] = {
+        "answer": answer,
+        "error": None,
+        "memory_proposal": proposal_dump,
+    }
     out["trace"] = _append_trace(state, "answer_from_ticket", {
         "n_tickets": len(tickets),
         "source": "mcp:manage_incidents",
+        "proposed_memory": proposal_dump is not None,
     })
     return out
 
@@ -208,7 +332,7 @@ def lookup_inventory(state: AgentState) -> dict[str, Any]:
 
 
 def answer_from_inventory(state: AgentState) -> dict[str, Any]:
-    """Format inventory tool payload (stock figures from MCP / live service)."""
+    """Format inventory payload; optional memory proposal."""
     payload = state.get("tool_result") or {}
     products = payload.get("products") or []
     lines: list[str] = []
@@ -223,10 +347,17 @@ def answer_from_inventory(state: AgentState) -> dict[str, Any]:
         if lines
         else "No encontré productos de inventario para esa consulta."
     )
-    out: dict[str, Any] = {"answer": answer, "error": None}
+    question = state.get("question") or ""
+    answer, proposal_dump = _maybe_attach_proposal(state, question, answer)
+    out: dict[str, Any] = {
+        "answer": answer,
+        "error": None,
+        "memory_proposal": proposal_dump,
+    }
     out["trace"] = _append_trace(state, "answer_from_inventory", {
         "n_products": len(products),
         "source": "mcp:query_inventory",
+        "proposed_memory": proposal_dump is not None,
     })
     return out
 

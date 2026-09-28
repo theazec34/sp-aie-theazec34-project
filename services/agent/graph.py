@@ -1,9 +1,9 @@
-"""Compile the Brasaland agent graph — RAG + external tools (Parts 1–2)."""
+"""Compile the Brasaland agent graph — RAG + MCP tools + memory."""
 
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any
+from typing import Any, Literal
 
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
@@ -16,6 +16,7 @@ from agent.nodes import (
     lookup_ticket,
     receive_question,
     refuse_honestly,
+    resolve_memory_confirm,
     retrieve_knowledge,
     tool_fallback,
 )
@@ -26,11 +27,15 @@ from agent.state import (
     RouteAfterTool,
 )
 
+RouteAfterMemory = Literal["end", "retrieve", "ticket", "inventory", "refuse"]
+
 
 def route_after_receive(state: AgentState) -> RouteAfterReceive:
     if state.get("empty_question"):
         return "refuse"
     intent = state.get("intent") or "rag"
+    if intent == "memory_confirm":
+        return "memory_confirm"
     if intent == "ticket":
         return "ticket"
     if intent == "inventory":
@@ -39,7 +44,9 @@ def route_after_receive(state: AgentState) -> RouteAfterReceive:
 
 
 def route_after_retrieve(state: AgentState) -> RouteAfterRetrieve:
-    if not state.get("has_context") or not (state.get("chunks") or []):
+    if not state.get("has_context") or (
+        not (state.get("chunks") or []) and not (state.get("memory_hits") or [])
+    ):
         return "refuse"
     return "generate"
 
@@ -50,11 +57,27 @@ def route_after_tool(state: AgentState) -> RouteAfterTool:
     return "fallback"
 
 
+def route_after_memory(state: AgentState) -> RouteAfterMemory:
+    """After resolving a pending proposal: end, or continue if topic changed."""
+    decision = state.get("memory_decision")
+    if decision == "discarded_topic_change":
+        intent = state.get("intent") or "rag"
+        if intent == "ticket":
+            return "ticket"
+        if intent == "inventory":
+            return "inventory"
+        if intent == "memory_confirm":
+            return "end"
+        return "retrieve"
+    return "end"
+
+
 def build_agent_graph(*, checkpointer: MemorySaver | None = None):
     """Build and compile the graph (structural errors fail at compile time)."""
     builder = StateGraph(AgentState)
 
     builder.add_node("receive_question", receive_question)
+    builder.add_node("resolve_memory_confirm", resolve_memory_confirm)
     builder.add_node("retrieve_knowledge", retrieve_knowledge)
     builder.add_node("generate_response", generate_response)
     builder.add_node("refuse_honestly", refuse_honestly)
@@ -69,6 +92,18 @@ def build_agent_graph(*, checkpointer: MemorySaver | None = None):
         "receive_question",
         route_after_receive,
         {
+            "retrieve": "retrieve_knowledge",
+            "ticket": "lookup_ticket",
+            "inventory": "lookup_inventory",
+            "refuse": "refuse_honestly",
+            "memory_confirm": "resolve_memory_confirm",
+        },
+    )
+    builder.add_conditional_edges(
+        "resolve_memory_confirm",
+        route_after_memory,
+        {
+            "end": END,
             "retrieve": "retrieve_knowledge",
             "ticket": "lookup_ticket",
             "inventory": "lookup_inventory",
@@ -105,7 +140,13 @@ def get_compiled_graph():
     return build_agent_graph()
 
 
-def initial_state(question: str, *, run_id: str | None = None) -> AgentState:
+def initial_state(
+    question: str,
+    *,
+    run_id: str | None = None,
+    session_id: str | None = None,
+    user_id: str | None = None,
+) -> AgentState:
     state: AgentState = {
         "question": question or "",
         "chunks": [],
@@ -118,22 +159,39 @@ def initial_state(question: str, *, run_id: str | None = None) -> AgentState:
         "tool_result": None,
         "sources_used": [],
         "trace": [],
+        "session_id": session_id or run_id or "default",
+        "user_id": user_id,
+        "memory_hits": [],
+        "memory_proposal": None,
+        "memory_decision": None,
+        "pending_resolved": False,
     }
     if run_id:
         state["run_id"] = run_id
     return state
 
 
-def run_agent(question: str, *, run_id: str | None = None) -> dict[str, Any]:
+def run_agent(
+    question: str,
+    *,
+    run_id: str | None = None,
+    session_id: str | None = None,
+    user_id: str | None = None,
+) -> dict[str, Any]:
     """Invoke compiled graph; persist consultable trace."""
     import uuid
 
     from agent.tracing import persist_trace
 
     rid = run_id or str(uuid.uuid4())
+    sid = session_id or rid
     graph = get_compiled_graph()
-    config = {"configurable": {"thread_id": rid}}
-    final = graph.invoke(initial_state(question, run_id=rid), config=config)
+    # thread_id = session for checkpoint continuity across turns
+    config = {"configurable": {"thread_id": sid}}
+    final = graph.invoke(
+        initial_state(question, run_id=rid, session_id=sid, user_id=user_id),
+        config=config,
+    )
 
     checkpoint_ok = False
     try:
@@ -145,6 +203,7 @@ def run_agent(question: str, *, run_id: str | None = None) -> dict[str, Any]:
     trace = list(final.get("trace") or [])
     payload = {
         "run_id": rid,
+        "session_id": sid,
         "answer": final.get("answer") or "",
         "error": final.get("error"),
         "trace": trace,
@@ -153,6 +212,8 @@ def run_agent(question: str, *, run_id: str | None = None) -> dict[str, Any]:
         "n_chunks": len(final.get("chunks") or []),
         "intent": final.get("intent"),
         "sources_used": list(final.get("sources_used") or []),
+        "memory_proposal": final.get("memory_proposal"),
+        "memory_decision": final.get("memory_decision"),
     }
     persist_trace(payload)
     return payload

@@ -21,6 +21,7 @@ Plataforma digital con:
 8. Celery/Redis (DEV-55): analyze async + Flower
 9. LangGraph agent (Part 1–2): grafo explícito sobre RAG + tools + `/agent/query`
 10. MCP Server OAuth (`mcps/brasaland_tools`): incidents + inventory; agente como cliente MCP
+11. Agent Memory episódica (`brasaland_agent_memory`) con confirmación explícita del usuario
 
 ## Fuentes de verdad
 - Mapa operativo: **`PROJECT.md`**
