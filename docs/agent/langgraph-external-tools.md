@@ -1,20 +1,26 @@
-# Brasaland LangGraph Agent — Part 2 (external tools)
+# Brasaland LangGraph Agent — Part 2/3 (external tools → MCP)
 
 Extends Part 1 with **live operational tools** and automatic routing.
+Part 3 migrates those tools to the **MCP Server** (`mcps/brasaland_tools`) via
+`langchain-mcp-adapters`. The agent must not call Incidents Manager / inventory
+repositories directly.
 
 ## Why tools (not more RAG)
 
 Ticket status and stock change in real time. Indexing them in Qdrant would go
-stale immediately. Tools call the existing incident / inventory services.
+stale immediately. Tools are exposed by the company MCP Server (OAuth) and
+consumed by the agent as an MCP client.
 
-## Tools
+## Tools (via MCP)
 
-| Tool | Contract | Data source | Auth |
-|------|----------|-------------|------|
-| `lookup_support_ticket` | `TicketLookupInput` → `TicketLookupOutput` | `IncidentRepository` (same TinyDB as `GET /api/incidents`) | Incidents GET is **public** (no JWT) |
-| `lookup_inventory_stock` | `InventoryLookupInput` → `InventoryLookupOutput` | SQLModel inventory + `stock_map_for_ids` (same as `GET /inventory/products`) | HTTP inventory requires JWT; tool uses **in-process** service layer |
+| MCP tool | Agent node | Data source | Auth |
+|----------|------------|-------------|------|
+| `manage_incidents` | `lookup_ticket` | Incidents Manager (`/api/incidents`, status via `PATCH .../status`) | OAuth scopes `incidents:read` / `incidents:write` |
+| `query_inventory` | `lookup_inventory` | Inventory ORM / `GET /inventory/products` | OAuth scope `inventory:read` (writes rejected) |
 
-Both are **read-only**, have an explicit timeout (`AGENT_TOOL_TIMEOUT_S`, default **4s**), and never invent status/stock on failure.
+Client: `services/agent/tools/mcp_client.py`. Timeout: `AGENT_TOOL_TIMEOUT_S`
+(default **4s**). Never invent status/stock on failure. See
+[`docs/mcp/mcp-oauth-tools.md`](../mcp/mcp-oauth-tools.md).
 
 ## Routing
 
