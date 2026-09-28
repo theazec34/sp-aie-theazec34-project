@@ -77,8 +77,17 @@
 - Flower: `:5555` · worker proceso independiente
 - Docs: `docs/async-tasks/DEV-55.md`
 
-## LangGraph agent (Part 2 — external tools)
-- Tools: `services/agent/tools/` (tickets + inventario, read-only, timeout)
+## MCP Server — company tools (OAuth)
+- Paquete: `mcps/brasaland_tools/` (no bajo `services/`)
+- Stack: FastMCP + **mcpauth** (resource server) + Streamable HTTP `:8100`
+- Tools: `manage_incidents`, `query_inventory`, `mutate_inventory` (write reject)
+- Scopes: `brasaland:tools`, `incidents:read|write`, `inventory:read`
+- Agente cliente: `services/agent/tools/mcp_client.py` (`langchain-mcp-adapters`)
+- Docs: `docs/mcp/mcp-oauth-tools.md`
+- Evals: `tests/pipelines/test_mcp_server.py`
+
+## LangGraph agent (Part 2/3 — external tools via MCP)
+- Tools vía MCP (ya no IncidentRepository directo desde el agente)
 - Routing: `classify_intent` → rag | ticket | inventory
 - Fallback: `tool_fallback` (sin alucinar estado/stock)
 - Docs: `docs/agent/langgraph-external-tools.md`
@@ -112,5 +121,6 @@
 - Forecast ventas (train): mergeado (#33)
 - RAG knowledge base: mergeado (#35)
 - Celery DEV-55: mergeado (#36)
-- LangGraph agent base: rama `feature/langgraph-agent-base`
+- LangGraph agent base: #37 · external tools: #38
+- MCP OAuth tools: rama `feature/mcp-oauth-tools`
 - Producto estable: **`main`**

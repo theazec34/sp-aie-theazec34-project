@@ -1,4 +1,9 @@
-"""LangGraph nodes — RAG + live tools (Parts 1–2)."""
+"""LangGraph nodes — RAG + MCP tools (Parts 1–3).
+
+Operational data (incidents / inventory) is loaded exclusively through the
+Brasaland MCP Server client (`langchain-mcp-adapters`). Direct
+IncidentRepository / inventory ORM calls from the agent are removed.
+"""
 
 from __future__ import annotations
 
@@ -17,9 +22,10 @@ from data.pipelines.rag import (  # noqa: E402
 )
 
 from agent.state import AgentState  # noqa: E402
-from agent.tools.contracts import InventoryLookupInput, TicketLookupInput  # noqa: E402
-from agent.tools.incidents import lookup_support_ticket  # noqa: E402
-from agent.tools.inventory import lookup_inventory_stock  # noqa: E402
+from agent.tools.mcp_client import (  # noqa: E402
+    manage_incidents_via_mcp,
+    query_inventory_via_mcp,
+)
 from agent.tools.routing import (  # noqa: E402
     classify_intent,
     extract_product_query,
@@ -96,28 +102,46 @@ def generate_response(state: AgentState) -> dict[str, Any]:
 
 
 def lookup_ticket(state: AgentState) -> dict[str, Any]:
-    """Node — call the support-ticket tool (real IncidentRepository)."""
+    """Node — Incidents Manager via MCP client (no direct repository calls)."""
     question = state.get("question") or ""
     ticket_id = extract_ticket_id(question)
-    result = lookup_support_ticket(TicketLookupInput(ticket_id=ticket_id))
-    payload = result.model_dump(mode="json")
+    if ticket_id is not None:
+        payload = manage_incidents_via_mcp(action="get", incident_id=ticket_id)
+        tickets = []
+        if payload.get("ok") and payload.get("incident"):
+            tickets = [payload["incident"]]
+    else:
+        payload = manage_incidents_via_mcp(action="list", limit=5)
+        tickets = list(payload.get("incidents") or []) if payload.get("ok") else []
+
+    timed_out = bool(payload.get("timed_out"))
+    ok = bool(payload.get("ok")) and bool(tickets)
+    tool_result = {
+        "ok": ok,
+        "source": "mcp:manage_incidents",
+        "tickets": tickets,
+        "error": None if ok else (payload.get("error") or payload.get("error_code")),
+        "timed_out": timed_out,
+        "mcp": payload,
+    }
     sources = list(state.get("sources_used") or [])
     if "ticket_tool" not in sources:
         sources = sources + ["ticket_tool"]
+    if "mcp" not in sources:
+        sources = sources + ["mcp"]
     out: dict[str, Any] = {
-        "tool_ok": result.ok and bool(result.tickets),
-        "tool_result": payload,
+        "tool_ok": ok,
+        "tool_result": tool_result,
         "sources_used": sources,
-        "error": None if (result.ok and result.tickets) else (
-            result.error or "ticket_not_found"
-        ),
+        "error": None if ok else (tool_result["error"] or "ticket_not_found"),
     }
     out["trace"] = _append_trace(state, "lookup_ticket", {
         "ticket_id": ticket_id,
-        "ok": result.ok,
-        "timed_out": result.timed_out,
-        "n_tickets": len(result.tickets),
-        "error": result.error,
+        "ok": ok,
+        "timed_out": timed_out,
+        "n_tickets": len(tickets),
+        "error": tool_result["error"],
+        "via": "mcp",
     })
     return out
 
@@ -140,42 +164,51 @@ def answer_from_ticket(state: AgentState) -> dict[str, Any]:
     out: dict[str, Any] = {"answer": answer, "error": None}
     out["trace"] = _append_trace(state, "answer_from_ticket", {
         "n_tickets": len(tickets),
-        "source": "ticket_tool",
+        "source": "mcp:manage_incidents",
     })
     return out
 
 
 def lookup_inventory(state: AgentState) -> dict[str, Any]:
-    """Node — call the inventory stock tool (real SQLModel inventory)."""
+    """Node — inventory stock via MCP client (read-only tool)."""
     question = state.get("question") or ""
     name_query = extract_product_query(question)
-    result = lookup_inventory_stock(
-        InventoryLookupInput(name_query=name_query, limit=10)
-    )
-    payload = result.model_dump(mode="json")
+    payload = query_inventory_via_mcp(name_query=name_query, limit=10)
+    products = list(payload.get("products") or []) if payload.get("ok") else []
+    timed_out = bool(payload.get("timed_out"))
+    ok = bool(payload.get("ok")) and bool(products)
+    tool_result = {
+        "ok": ok,
+        "source": "mcp:query_inventory",
+        "products": products,
+        "error": None if ok else (payload.get("error") or payload.get("error_code")),
+        "timed_out": timed_out,
+        "mcp": payload,
+    }
     sources = list(state.get("sources_used") or [])
     if "inventory_tool" not in sources:
         sources = sources + ["inventory_tool"]
+    if "mcp" not in sources:
+        sources = sources + ["mcp"]
     out: dict[str, Any] = {
-        "tool_ok": result.ok and bool(result.products),
-        "tool_result": payload,
+        "tool_ok": ok,
+        "tool_result": tool_result,
         "sources_used": sources,
-        "error": None if (result.ok and result.products) else (
-            result.error or "product_not_found"
-        ),
+        "error": None if ok else (tool_result["error"] or "product_not_found"),
     }
     out["trace"] = _append_trace(state, "lookup_inventory", {
         "name_query": name_query,
-        "ok": result.ok,
-        "timed_out": result.timed_out,
-        "n_products": len(result.products),
-        "error": result.error,
+        "ok": ok,
+        "timed_out": timed_out,
+        "n_products": len(products),
+        "error": tool_result["error"],
+        "via": "mcp",
     })
     return out
 
 
 def answer_from_inventory(state: AgentState) -> dict[str, Any]:
-    """Format inventory tool payload (stock figures from the live service)."""
+    """Format inventory tool payload (stock figures from MCP / live service)."""
     payload = state.get("tool_result") or {}
     products = payload.get("products") or []
     lines: list[str] = []
@@ -193,7 +226,7 @@ def answer_from_inventory(state: AgentState) -> dict[str, Any]:
     out: dict[str, Any] = {"answer": answer, "error": None}
     out["trace"] = _append_trace(state, "answer_from_inventory", {
         "n_products": len(products),
-        "source": "inventory_tool",
+        "source": "mcp:query_inventory",
     })
     return out
 

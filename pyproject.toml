@@ -7,10 +7,14 @@ requires-python = ">=3.12"
 dependencies = [
     "celery>=5.6.3",
     "fastembed>=0.8.0",
+    "fastmcp>=4.0.10",
     "flower>=2.1.0",
+    "httpx>=0.28.1",
     "joblib>=1.6.0",
+    "langchain-mcp-adapters>=0.3.1",
     "langgraph>=1.2.12",
     "matplotlib>=3.11.1",
+    "mcpauth>=0.1.1",
     "numpy>=2.5.3",
     "openai>=3.16.2",
     "pandas>=3.0.5",
@@ -19,9 +23,14 @@ dependencies = [
     "qdrant-client>=1.19.1",
     "redis>=8.1.0",
     "scikit-learn>=1.9.1",
+    "sqlmodel>=0.0.47",
+    "tinydb>=4.9.0",
     "xgboost>=3.4.1",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = [".", "scripts"]
+pythonpath = [".", "scripts", "services", "services/api"]
+
+[project.scripts]
+brasaland-mcp = "mcps.brasaland_tools.server:main"

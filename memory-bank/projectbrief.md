@@ -19,7 +19,8 @@ Plataforma digital con:
 6. ML: sentimiento WeLoveReviews + forecast/eval de ventas
 7. RAG: base de conocimiento Qdrant (`brasaland_knowledge`) + `/knowledge`
 8. Celery/Redis (DEV-55): analyze async + Flower
-9. LangGraph agent (Part 1): grafo explícito sobre RAG + `/agent/query`
+9. LangGraph agent (Part 1–2): grafo explícito sobre RAG + tools + `/agent/query`
+10. MCP Server OAuth (`mcps/brasaland_tools`): incidents + inventory; agente como cliente MCP
 
 ## Fuentes de verdad
 - Mapa operativo: **`PROJECT.md`**
