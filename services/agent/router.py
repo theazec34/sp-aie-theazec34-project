@@ -29,16 +29,24 @@ router = APIRouter(prefix="/agent", tags=["agent"])
 
 class AgentQueryRequest(BaseModel):
     question: str = Field(..., max_length=2000)
+    session_id: str | None = Field(
+        default=None,
+        max_length=128,
+        description="Stable conversation id for memory proposals / confirmations",
+    )
 
 
 class AgentQueryResponse(BaseModel):
     answer: str
     run_id: str
+    session_id: str | None = None
     nodes: list[str]
     checkpointed: bool = False
     error: str | None = None
     intent: str | None = None
     sources_used: list[str] = []
+    memory_proposal: dict | None = None
+    memory_decision: str | None = None
 
 
 class AgentTraceResponse(BaseModel):
@@ -53,11 +61,15 @@ class AgentTraceResponse(BaseModel):
 @router.post("/query", response_model=AgentQueryResponse)
 def agent_query(
     body: AgentQueryRequest,
-    _user: UserInDB = Depends(get_current_user),
+    user: UserInDB = Depends(get_current_user),
 ) -> AgentQueryResponse:
     """Invoke the compiled LangGraph agent — no business logic in the endpoint."""
     try:
-        result = run_agent(body.question or "")
+        result = run_agent(
+            body.question or "",
+            session_id=body.session_id,
+            user_id=getattr(user, "id", None) or getattr(user, "email", None),
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:  # noqa: BLE001 — never leak stack traces to clients
@@ -70,11 +82,14 @@ def agent_query(
     return AgentQueryResponse(
         answer=str(result.get("answer") or ""),
         run_id=str(result.get("run_id") or ""),
+        session_id=result.get("session_id"),
         nodes=list(result.get("nodes") or []),
         checkpointed=bool(result.get("checkpointed")),
         error=result.get("error"),
         intent=result.get("intent"),
         sources_used=list(result.get("sources_used") or []),
+        memory_proposal=result.get("memory_proposal"),
+        memory_decision=result.get("memory_decision"),
     )
 
 

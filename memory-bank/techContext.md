@@ -77,6 +77,14 @@
 - Flower: `:5555` · worker proceso independiente
 - Docs: `docs/async-tasks/DEV-55.md`
 
+## Agent Memory (Hito 8 · Parte 1)
+- Paquete: `services/agent/memory/` — namespace `brasaland_agent_memory` (file/Redis)
+- Nunca escribe en Qdrant `brasaland_knowledge` / `*_knowledge`
+- Flujo: self-eval → propuesta en chat → confirm (approve/reject/edit) → audit
+- API: `POST /agent/query` con `session_id`
+- Docs: `docs/agent/agent-memory.md`, `CONTEXT-agent-memory.es.md`
+- Evals: `tests/pipelines/test_agent_memory.py`
+
 ## MCP Server — company tools (OAuth)
 - Paquete: `mcps/brasaland_tools/` (no bajo `services/`)
 - Stack: FastMCP + **mcpauth** (resource server) + Streamable HTTP `:8100`
@@ -122,5 +130,6 @@
 - RAG knowledge base: mergeado (#35)
 - Celery DEV-55: mergeado (#36)
 - LangGraph agent base: #37 · external tools: #38
-- MCP OAuth tools: rama `feature/mcp-oauth-tools`
+- MCP OAuth tools: #39
+- Agent Memory: rama `feature/agent-memory`
 - Producto estable: **`main`**
