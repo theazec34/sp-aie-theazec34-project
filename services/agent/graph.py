@@ -11,6 +11,7 @@ from langgraph.graph import END, START, StateGraph
 from agent.nodes import (
     answer_from_inventory,
     answer_from_ticket,
+    emit_guard_response,
     generate_response,
     lookup_inventory,
     lookup_ticket,
@@ -34,6 +35,10 @@ def route_after_receive(state: AgentState) -> RouteAfterReceive:
     if state.get("empty_question"):
         return "refuse"
     intent = state.get("intent") or "rag"
+    if intent == "guard_block":
+        return "guard_block"
+    if intent == "casual":
+        return "casual"
     if intent == "memory_confirm":
         return "memory_confirm"
     if intent == "ticket":
@@ -62,6 +67,8 @@ def route_after_memory(state: AgentState) -> RouteAfterMemory:
     decision = state.get("memory_decision")
     if decision == "discarded_topic_change":
         intent = state.get("intent") or "rag"
+        if intent in {"guard_block", "casual"}:
+            return "end"  # answer already set; emit via dedicated path below
         if intent == "ticket":
             return "ticket"
         if intent == "inventory":
@@ -77,6 +84,7 @@ def build_agent_graph(*, checkpointer: MemorySaver | None = None):
     builder = StateGraph(AgentState)
 
     builder.add_node("receive_question", receive_question)
+    builder.add_node("emit_guard_response", emit_guard_response)
     builder.add_node("resolve_memory_confirm", resolve_memory_confirm)
     builder.add_node("retrieve_knowledge", retrieve_knowledge)
     builder.add_node("generate_response", generate_response)
@@ -97,8 +105,11 @@ def build_agent_graph(*, checkpointer: MemorySaver | None = None):
             "inventory": "lookup_inventory",
             "refuse": "refuse_honestly",
             "memory_confirm": "resolve_memory_confirm",
+            "guard_block": "emit_guard_response",
+            "casual": "emit_guard_response",
         },
     )
+    builder.add_edge("emit_guard_response", END)
     builder.add_conditional_edges(
         "resolve_memory_confirm",
         route_after_memory,
@@ -214,6 +225,9 @@ def run_agent(
         "sources_used": list(final.get("sources_used") or []),
         "memory_proposal": final.get("memory_proposal"),
         "memory_decision": final.get("memory_decision"),
+        "guard_action": final.get("guard_action"),
+        "guard_reason": final.get("guard_reason"),
+        "guard_failure_type": final.get("guard_failure_type"),
     }
     persist_trace(payload)
     return payload
