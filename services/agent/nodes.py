@@ -1,7 +1,7 @@
-"""LangGraph nodes — RAG + MCP tools + episodic memory (Parts 1–3).
+"""LangGraph nodes — RAG + MCP tools + memory + security harness.
 
-Operational data via MCP. Memory via explicit AgentMemory interface
-(never RAG collections; never silent writes).
+Operational data via MCP. Memory via AgentMemory. Guardrails wrap input/output
+and isolate untrusted RAG/tool text.
 """
 
 from __future__ import annotations
@@ -20,6 +20,12 @@ from data.pipelines.rag import (  # noqa: E402
     retrieve,
 )
 
+from agent.guardrails import (  # noqa: E402
+    guard_answer,
+    guard_user_input,
+    prepare_rag_context,
+    prepare_tool_result,
+)
 from agent.memory.interface import get_agent_memory  # noqa: E402
 from agent.memory.pending import get_pending  # noqa: E402
 from agent.state import AgentState  # noqa: E402
@@ -42,40 +48,107 @@ def _session_id(state: AgentState) -> str:
     return str(state.get("session_id") or state.get("run_id") or "default")
 
 
+def _finalize_answer(
+    state: AgentState,
+    answer: str,
+    *,
+    require_redirect: bool = False,
+) -> str:
+    check = guard_answer(
+        answer,
+        session_id=_session_id(state),
+        require_redirect=require_redirect,
+        question=state.get("question"),
+    )
+    return check.sanitized_answer
+
+
 def receive_question(state: AgentState) -> dict[str, Any]:
-    """Normalize question; if a memory proposal is pending, route to confirm."""
+    """Normalize question; apply input guardrails; route memory confirm if pending."""
     raw = (state.get("question") or "").strip()
     empty = not bool(raw)
     session = _session_id(state)
     pending = None if empty else get_pending(session)
 
+    guard_action = None
+    guard_reason = None
+    guard_failure = None
+    answer = ""
+    intent: str
+
     if pending is not None and not empty:
-        intent: str = "memory_confirm"
+        intent = "memory_confirm"
+    elif empty:
+        intent = "rag"
     else:
-        intent = "rag" if empty else classify_intent(raw)
+        decision = guard_user_input(raw, session_id=session)
+        guard_action = decision.action
+        guard_reason = decision.reason_code
+        guard_failure = (
+            decision.failure_type.value if decision.failure_type else None
+        )
+        if decision.action == "block":
+            intent = "guard_block"
+            answer = decision.message
+        elif decision.action == "redirect":
+            intent = "casual"
+            answer = decision.message
+        else:
+            intent = classify_intent(raw)
 
     out: dict[str, Any] = {
         "question": raw,
         "empty_question": empty,
         "chunks": [],
-        "answer": "",
-        "error": "empty_question" if empty else None,
+        "answer": answer,
+        "error": "empty_question" if empty else (
+            guard_reason if intent in {"guard_block", "casual"} else None
+        ),
         "has_context": False,
         "intent": intent,
         "tool_ok": False,
         "tool_result": None,
-        "sources_used": [],
+        "sources_used": (["guardrails"] if intent in {"guard_block", "casual"} else []),
         "memory_hits": [],
         "memory_proposal": None,
         "memory_decision": None,
         "pending_resolved": False,
         "session_id": session,
+        "guard_action": guard_action,
+        "guard_reason": guard_reason,
+        "guard_failure_type": guard_failure,
     }
     out["trace"] = _append_trace(state, "receive_question", {
         "empty_question": empty,
         "question_len": len(raw),
         "intent": intent,
         "pending_proposal": pending is not None,
+        "guard_action": guard_action,
+        "guard_reason": guard_reason,
+        "guard_failure_type": guard_failure,
+    })
+    return out
+
+
+def emit_guard_response(state: AgentState) -> dict[str, Any]:
+    """Terminal node for blocked / casual-redirect answers (already set)."""
+    answer = _finalize_answer(
+        state,
+        state.get("answer") or "",
+        require_redirect=state.get("intent") == "casual",
+    )
+    out: dict[str, Any] = {
+        "answer": answer,
+        "error": state.get("guard_reason") or state.get("error"),
+        "sources_used": list(state.get("sources_used") or [])
+        if "guardrails" in (state.get("sources_used") or [])
+        else list(state.get("sources_used") or []) + ["guardrails"],
+    }
+    out["trace"] = _append_trace(state, "emit_guard_response", {
+        "guard_action": state.get("guard_action"),
+        "guard_reason": state.get("guard_reason"),
+        "guard_failure_type": state.get("guard_failure_type"),
+        "answer_len": len(answer),
     })
     return out
 
@@ -91,20 +164,37 @@ def resolve_memory_confirm(state: AgentState) -> dict[str, Any]:
         session, question, user_id=user_id
     )
 
-    # topic_change: pending discarded; re-route by re-classifying as normal intent
+    # topic_change: pending discarded; re-run input guards then continue
     if outcome and outcome.value == "discarded_topic_change":
-        intent = classify_intent(question)
+        decision = guard_user_input(question, session_id=session)
+        if decision.action == "block":
+            intent = "guard_block"
+            answer = _finalize_answer(state, decision.message)
+        elif decision.action == "redirect":
+            intent = "casual"
+            answer = _finalize_answer(
+                state, decision.message, require_redirect=True
+            )
+        else:
+            intent = classify_intent(question)
+            answer = ""
         out: dict[str, Any] = {
             "intent": intent,
             "pending_resolved": True,
             "memory_decision": outcome.value,
-            "answer": "",
-            "error": None,
+            "answer": answer,
+            "error": decision.reason_code if decision.action != "allow" else None,
+            "guard_action": decision.action,
+            "guard_reason": decision.reason_code,
+            "guard_failure_type": (
+                decision.failure_type.value if decision.failure_type else None
+            ),
         }
         out["trace"] = _append_trace(state, "resolve_memory_confirm", {
             "outcome": outcome.value,
             "confirm_label": confirm.label if confirm else None,
             "continue_intent": intent,
+            "guard_action": decision.action,
         })
         return out
 
@@ -127,15 +217,16 @@ def resolve_memory_confirm(state: AgentState) -> dict[str, Any]:
 
 
 def retrieve_knowledge(state: AgentState) -> dict[str, Any]:
-    """RAG retrieve — never calls monolithic query(); also loads agent memory hits."""
+    """RAG retrieve — isolate untrusted chunks; also loads agent memory hits."""
     question = state.get("question") or ""
+    session = _session_id(state)
     raw_hits = retrieve(question)
-    chunks = [{k: v for k, v in h.items() if k != "score"} for h in raw_hits]
+    raw_chunks = [{k: v for k, v in h.items() if k != "score"} for h in raw_hits]
+    chunks = prepare_rag_context(raw_chunks, session_id=session)
     has_context = len(chunks) > 0
 
     mem = get_agent_memory()
     memory_hits = [e.model_dump(mode="json") for e in mem.read_relevant(question)]
-    # Memory alone can ground an answer even without RAG chunks
     if memory_hits:
         has_context = True
 
@@ -155,6 +246,7 @@ def retrieve_knowledge(state: AgentState) -> dict[str, Any]:
     out["trace"] = _append_trace(state, "retrieve_knowledge", {
         "n_chunks": len(chunks),
         "n_memory": len(memory_hits),
+        "isolated": True,
         "sources": sorted({
             str(c.get("source_document", "")) for c in chunks if c.get("source_document")
         }),
@@ -164,7 +256,7 @@ def retrieve_knowledge(state: AgentState) -> dict[str, Any]:
 
 
 def generate_response(state: AgentState) -> dict[str, Any]:
-    """RAG generation + memory context; then self-eval may propose (no write)."""
+    """RAG generation + memory context; output guard; optional memory proposal."""
     question = state.get("question") or ""
     chunks = list(state.get("chunks") or [])
     mem = get_agent_memory()
@@ -185,6 +277,7 @@ def generate_response(state: AgentState) -> dict[str, Any]:
         answer = answer + "\n\n" + memory_ctx
 
     answer, proposal_dump = _maybe_attach_proposal(state, question, answer)
+    answer = _finalize_answer(state, answer)
 
     out: dict[str, Any] = {
         "answer": answer,
@@ -197,6 +290,7 @@ def generate_response(state: AgentState) -> dict[str, Any]:
         "used_memory": len(memory_entries),
         "proposed_memory": proposal_dump is not None,
         "source": "rag+memory" if memory_entries else "rag",
+        "output_guarded": True,
     })
     return out
 
@@ -233,14 +327,17 @@ def lookup_ticket(state: AgentState) -> dict[str, Any]:
 
     timed_out = bool(payload.get("timed_out"))
     ok = bool(payload.get("ok")) and bool(tickets)
-    tool_result = {
-        "ok": ok,
-        "source": "mcp:manage_incidents",
-        "tickets": tickets,
-        "error": None if ok else (payload.get("error") or payload.get("error_code")),
-        "timed_out": timed_out,
-        "mcp": payload,
-    }
+    tool_result = prepare_tool_result(
+        {
+            "ok": ok,
+            "source": "mcp:manage_incidents",
+            "tickets": tickets,
+            "error": None if ok else (payload.get("error") or payload.get("error_code")),
+            "timed_out": timed_out,
+            "mcp": payload,
+        },
+        session_id=_session_id(state),
+    )
     sources = list(state.get("sources_used") or [])
     if "ticket_tool" not in sources:
         sources = sources + ["ticket_tool"]
@@ -250,21 +347,22 @@ def lookup_ticket(state: AgentState) -> dict[str, Any]:
         "tool_ok": ok,
         "tool_result": tool_result,
         "sources_used": sources,
-        "error": None if ok else (tool_result["error"] or "ticket_not_found"),
+        "error": None if ok else (tool_result.get("error") or "ticket_not_found"),
     }
     out["trace"] = _append_trace(state, "lookup_ticket", {
         "ticket_id": ticket_id,
         "ok": ok,
         "timed_out": timed_out,
         "n_tickets": len(tickets),
-        "error": tool_result["error"],
+        "error": tool_result.get("error"),
         "via": "mcp",
+        "isolated": True,
     })
     return out
 
 
 def answer_from_ticket(state: AgentState) -> dict[str, Any]:
-    """Format ticket tool payload; optional memory proposal."""
+    """Format ticket tool payload; optional memory proposal; output guard."""
     payload = state.get("tool_result") or {}
     tickets = payload.get("tickets") or []
     lines: list[str] = []
@@ -280,6 +378,7 @@ def answer_from_ticket(state: AgentState) -> dict[str, Any]:
     )
     question = state.get("question") or ""
     answer, proposal_dump = _maybe_attach_proposal(state, question, answer)
+    answer = _finalize_answer(state, answer)
     out: dict[str, Any] = {
         "answer": answer,
         "error": None,
@@ -289,6 +388,7 @@ def answer_from_ticket(state: AgentState) -> dict[str, Any]:
         "n_tickets": len(tickets),
         "source": "mcp:manage_incidents",
         "proposed_memory": proposal_dump is not None,
+        "output_guarded": True,
     })
     return out
 
@@ -301,14 +401,17 @@ def lookup_inventory(state: AgentState) -> dict[str, Any]:
     products = list(payload.get("products") or []) if payload.get("ok") else []
     timed_out = bool(payload.get("timed_out"))
     ok = bool(payload.get("ok")) and bool(products)
-    tool_result = {
-        "ok": ok,
-        "source": "mcp:query_inventory",
-        "products": products,
-        "error": None if ok else (payload.get("error") or payload.get("error_code")),
-        "timed_out": timed_out,
-        "mcp": payload,
-    }
+    tool_result = prepare_tool_result(
+        {
+            "ok": ok,
+            "source": "mcp:query_inventory",
+            "products": products,
+            "error": None if ok else (payload.get("error") or payload.get("error_code")),
+            "timed_out": timed_out,
+            "mcp": payload,
+        },
+        session_id=_session_id(state),
+    )
     sources = list(state.get("sources_used") or [])
     if "inventory_tool" not in sources:
         sources = sources + ["inventory_tool"]
@@ -318,21 +421,22 @@ def lookup_inventory(state: AgentState) -> dict[str, Any]:
         "tool_ok": ok,
         "tool_result": tool_result,
         "sources_used": sources,
-        "error": None if ok else (tool_result["error"] or "product_not_found"),
+        "error": None if ok else (tool_result.get("error") or "product_not_found"),
     }
     out["trace"] = _append_trace(state, "lookup_inventory", {
         "name_query": name_query,
         "ok": ok,
         "timed_out": timed_out,
         "n_products": len(products),
-        "error": tool_result["error"],
+        "error": tool_result.get("error"),
         "via": "mcp",
+        "isolated": True,
     })
     return out
 
 
 def answer_from_inventory(state: AgentState) -> dict[str, Any]:
-    """Format inventory payload; optional memory proposal."""
+    """Format inventory payload; optional memory proposal; output guard."""
     payload = state.get("tool_result") or {}
     products = payload.get("products") or []
     lines: list[str] = []
@@ -349,6 +453,7 @@ def answer_from_inventory(state: AgentState) -> dict[str, Any]:
     )
     question = state.get("question") or ""
     answer, proposal_dump = _maybe_attach_proposal(state, question, answer)
+    answer = _finalize_answer(state, answer)
     out: dict[str, Any] = {
         "answer": answer,
         "error": None,
@@ -358,6 +463,7 @@ def answer_from_inventory(state: AgentState) -> dict[str, Any]:
         "n_products": len(products),
         "source": "mcp:query_inventory",
         "proposed_memory": proposal_dump is not None,
+        "output_guarded": True,
     })
     return out
 
