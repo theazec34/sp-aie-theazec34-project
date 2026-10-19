@@ -25,6 +25,7 @@ Plataforma digital con:
 12. Agent Guardrails / harness de seguridad (anti-jailbreak, alcance, aislamiento RAG)
 13. RFP intake Parte 1: tickets PDF → LangGraph `rfp_intake` → key_aspects por departamento (SQLModel)
 14. Idioma de producto: español en UI y mensajes al operador (`AGENTS.md` ley 9)
+15. RFP Parte 2: generadores + evaluadores paralelos + ciclo con `needs_human_review`
 
 ## Fuentes de verdad
 - Mapa operativo: **`PROJECT.md`**

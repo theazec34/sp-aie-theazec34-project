@@ -1,4 +1,4 @@
-"""Pydantic API schemas for RFP intake (never return raw ORM blindly)."""
+"""Esquemas Pydantic API RFP (nunca devolver ORM crudo)."""
 
 from __future__ import annotations
 
@@ -8,11 +8,37 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 
+class EvaluationAxisOut(BaseModel):
+    pass_: bool = Field(alias="pass", default=False)
+    score: float | None = None
+    details: str | None = None
+    missing_aspects: list[str] = Field(default_factory=list)
+    rule_ids: list[str] = Field(default_factory=list)
+    violations: list[str] = Field(default_factory=list)
+
+    model_config = {"populate_by_name": True}
+
+
+class EvaluationResultOut(BaseModel):
+    section_id: str | None = None
+    department_id: str
+    readability: dict[str, Any] = Field(default_factory=dict)
+    relevance: dict[str, Any] = Field(default_factory=dict)
+    compliance: dict[str, Any] = Field(default_factory=dict)
+    overall_pass: bool = False
+    feedback_for_generator: str = ""
+
+
 class DepartmentSectionOut(BaseModel):
     department_id: str
     contact_name: str | None = None
     key_aspects: list[str] = Field(default_factory=list)
     open_questions: list[str] = Field(default_factory=list)
+    draft_content: str | None = None
+    evaluation_results: EvaluationResultOut | dict[str, Any] | None = None
+    generation_iteration: int = 0
+    needs_human_review: bool = False
+    section_status: str = "pendiente"
     approval_status: str = "pendiente"
 
 
@@ -53,3 +79,12 @@ class RfpUploadAccepted(BaseModel):
     ticket_id: int
     status: str = "analizando"
     message: str = "Ticket creado; el análisis corre en segundo plano."
+
+
+class RfpGenerateAccepted(BaseModel):
+    ticket_id: int
+    status: str = "generando_borrador"
+    message: str = (
+        "Generación de borradores encolada; el ticket pasará por "
+        "generando_borrador → en_evaluacion → borrador_listo o needs_human_review."
+    )

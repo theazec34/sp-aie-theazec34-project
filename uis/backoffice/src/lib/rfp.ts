@@ -1,5 +1,15 @@
 import { apiFetch } from "./api";
 
+export type EvaluationResult = {
+  section_id?: string;
+  department_id?: string;
+  readability?: { pass?: boolean; score?: number | null; details?: string };
+  relevance?: { pass?: boolean; missing_aspects?: string[] };
+  compliance?: { pass?: boolean; rule_ids?: string[]; violations?: string[] };
+  overall_pass?: boolean;
+  feedback_for_generator?: string;
+};
+
 export type RfpTicket = {
   ticket_id: number;
   status: string;
@@ -30,6 +40,12 @@ export type RfpTicket = {
     contact_name?: string | null;
     key_aspects: string[];
     open_questions: string[];
+    draft_content?: string | null;
+    evaluation_results?: EvaluationResult | null;
+    generation_iteration?: number;
+    needs_human_review?: boolean;
+    section_status?: string;
+    approval_status?: string;
   }>;
   synthesizer_summary?: {
     sales_brief?: string;
@@ -42,6 +58,8 @@ export type RfpTicket = {
       open_questions?: string[];
     }>;
     open_questions?: string[];
+    part2?: Record<string, unknown>;
+    part2_status?: string;
   } | null;
 };
 
@@ -64,6 +82,17 @@ export async function uploadRfpPdf(file: File): Promise<{ ticket_id: number; sta
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`La subida falló (${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
+export async function startRfpGeneration(
+  ticketId: number,
+): Promise<{ ticket_id: number; status: string }> {
+  const res = await apiFetch(`/rfp/tickets/${ticketId}/generate`, { method: "POST" });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`No se pudo iniciar la generación (${res.status}): ${text}`);
   }
   return res.json();
 }

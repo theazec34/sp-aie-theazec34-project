@@ -74,3 +74,102 @@ def process_ticket(ticket_id: int) -> None:
                 session, ticket_id, list(result.get("worker_results") or [])
             )
     logger.info("ticket %s -> %s", ticket_id, status)
+
+
+def process_generation(ticket_id: int) -> None:
+    """
+    Parte 2: consume handoff Parte 1 y corre generador↔evaluador.
+
+    Estados: generando_borrador → en_evaluacion → borrador_listo | needs_human_review.
+    No re-parsea el PDF.
+    """
+    from sqlmodel import Session
+
+    from app.database import engine
+    from app.rfp import repository as repo
+    from data.pipelines.rfp_intake.generation_graph import run_response_generation
+
+    with Session(engine) as session:
+        handoff = repo.load_part1_handoff(session, ticket_id)
+        if handoff is None:
+            logger.error("ticket %s no encontrado (generación)", ticket_id)
+            return
+        if handoff["status"] not in {
+            "analisis_completo",
+            "generando_borrador",
+            "en_evaluacion",
+            "borrador_listo",
+            "needs_human_review",
+        }:
+            repo.update_ticket_status(
+                session,
+                ticket_id,
+                handoff["status"],
+                error_message=(
+                    "La generación requiere un ticket en analisis_completo "
+                    f"(estado actual: {handoff['status']})."
+                ),
+            )
+            return
+        if not handoff["sections"]:
+            repo.update_ticket_status(
+                session,
+                ticket_id,
+                "fallido",
+                error_message="Sin secciones de departamento en el handoff de Parte 1.",
+            )
+            return
+        repo.update_ticket_status(session, ticket_id, "generando_borrador", error_message=None)
+        metadata = handoff["metadata"]
+        sections = handoff["sections"]
+
+    try:
+        # Marca en_evaluacion justo antes del ciclo (las secciones corren en paralelo)
+        with Session(engine) as session:
+            repo.update_ticket_status(session, ticket_id, "en_evaluacion")
+        result = run_response_generation(
+            ticket_id=ticket_id,
+            metadata=metadata,
+            sections=sections,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("fallo generación RFP ticket=%s", ticket_id)
+        with Session(engine) as session:
+            repo.update_ticket_status(
+                session,
+                ticket_id,
+                "fallido",
+                error_message=(
+                    f"Error en la generación ({type(exc).__name__}): {exc}. "
+                    "Puedes reintentar desde analisis_completo."
+                ),
+            )
+        logger.debug("traceback gen ticket=%s\n%s", ticket_id, traceback.format_exc()[-1200:])
+        return
+
+    status = result.get("status") or "needs_human_review"
+    with Session(engine) as session:
+        repo.apply_section_generation_results(
+            session, ticket_id, list(result.get("sections") or [])
+        )
+        # Amplía synthesizer con handoff Parte 3 sin borrar Parte 1
+        ticket = repo.get_ticket(session, ticket_id)
+        synth: dict = {}
+        if ticket and ticket.synthesizer_payload_json:
+            try:
+                import json
+
+                synth = json.loads(ticket.synthesizer_payload_json)
+            except Exception:  # noqa: BLE001
+                synth = {}
+        synth["part2"] = result.get("part3_handoff") or {}
+        synth["part2_status"] = status
+        repo.update_ticket_status(
+            session,
+            ticket_id,
+            status,
+            error_message=None,
+            handoff_ready=True,
+            synthesizer_payload=synth,
+        )
+    logger.info("ticket %s generación -> %s", ticket_id, status)

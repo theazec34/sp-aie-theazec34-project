@@ -81,12 +81,22 @@
 - Grafo: `data/pipelines/rfp_intake/` (MarkItDown → classifier → orchestrator-worker-synthesizer)
 - Persistencia: SQLModel `rfp_ticket` / `rfp_metadata` / `rfp_department_section` (Postgres/Supabase)
 - API: `POST /rfp/tickets` (202 async), `GET /rfp/tickets`, `GET /rfp/tickets/{id}`
-- Runner: `services/rfp/runner.py` (BackgroundTasks + ThreadPoolExecutor)
+- Runner: `services/rfp/runner.py` (ThreadPoolExecutor)
 - UI: backoffice `/rfp`
 - Semillas: `rfp-requests/brasaland/` · CLI: `scripts/run_rfp_intake.py`
 - Docs: `docs/rfp/rfp-intake-part1.md`, `docs/rfp/brasaland-BRIEFING.es.md`
 - Tests: `tests/pipelines/test_rfp_intake.py`
 - Deps: `markitdown`, `py-readability-metrics`, `reportlab` (fixtures)
+
+## RFP Response Generation (Hito 9 · Parte 2)
+- Grafo/ciclo: `generation_graph.py` + `generators.py` + `evaluators.py` + `guidelines.py`
+- Entrada: handoff Parte 1 (no re-parsea PDF)
+- API: `POST /rfp/tickets/{id}/generate` → 202
+- Estados: `generando_borrador` → `en_evaluacion` → `borrador_listo` | `needs_human_review`
+- EvaluationResult: legibilidad / pertinencia / cumplimiento (BRIEFING §5)
+- Docs: `docs/rfp/rfp-response-generation-part2.md`
+- Tests: `tests/pipelines/test_rfp_generation.py`
+- CLI: `scripts/run_rfp_generation.py`
 ## Agent Guardrails (Hito 8 · Parte 2)
 - Paquete: `services/agent/guardrails/`
 - Capas: system prompt seguro, input/output guards, aislamiento RAG/tool, observabilidad
