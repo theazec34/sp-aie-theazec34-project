@@ -177,7 +177,12 @@ def api_info() -> dict[str, object]:
                 "descartado",
                 "analisis_completo",
                 "fallido",
+                "generando_borrador",
+                "en_evaluacion",
+                "borrador_listo",
+                "needs_human_review",
             ],
+            "generate": "POST /rfp/tickets/{id}/generate",
             "auth_required": True,
         },
         "tasks": {

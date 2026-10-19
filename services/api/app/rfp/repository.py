@@ -151,6 +151,99 @@ def replace_department_sections(
     return created
 
 
+def load_part1_handoff(session: Session, ticket_id: int) -> dict[str, Any] | None:
+    """Contrato Parte 1 → Parte 2: ticket + metadata + key_aspects (sin re-parsear PDF)."""
+    ticket = session.get(RfpTicket, ticket_id)
+    if ticket is None:
+        return None
+    meta = session.exec(
+        select(RfpMetadata).where(RfpMetadata.ticket_id == ticket_id)
+    ).first()
+    sections = session.exec(
+        select(DepartmentSection).where(DepartmentSection.ticket_id == ticket_id)
+    ).all()
+    synth: dict[str, Any] = {}
+    if ticket.synthesizer_payload_json:
+        try:
+            synth = json.loads(ticket.synthesizer_payload_json)
+        except json.JSONDecodeError:
+            synth = {}
+    metadata = {
+        "client_name": meta.client_name if meta else None,
+        "location": meta.location if meta else None,
+        "service_type": meta.service_type if meta else None,
+        "scope": meta.scope if meta else None,
+        "deadline": meta.deadline if meta else None,
+        "budget_range": meta.budget_range if meta else None,
+        "departments_needed": (
+            json.loads(meta.departments_needed_json or "[]") if meta else []
+        ),
+        "open_questions": json.loads(meta.open_questions_json or "[]") if meta else [],
+    }
+    return {
+        "ticket_id": ticket_id,
+        "status": ticket.status,
+        "handoff_ready": ticket.handoff_ready,
+        "metadata": metadata,
+        "synthesizer": synth,
+        "sections": [
+            {
+                "department_id": s.department_id,
+                "contact_name": s.contact_name,
+                "key_aspects": json.loads(s.key_aspects_json or "[]"),
+                "open_questions": json.loads(s.open_questions_json or "[]"),
+            }
+            for s in sections
+        ],
+    }
+
+
+def apply_section_generation_results(
+    session: Session,
+    ticket_id: int,
+    sections: list[dict[str, Any]],
+) -> list[DepartmentSection]:
+    """Persiste borradores + EvaluationResult sin borrar key_aspects de Parte 1."""
+    updated: list[DepartmentSection] = []
+    for sec in sections:
+        dept = sec["department_id"]
+        row = session.exec(
+            select(DepartmentSection).where(
+                DepartmentSection.ticket_id == ticket_id,
+                DepartmentSection.department_id == dept,
+            )
+        ).first()
+        if row is None:
+            info = DEPARTMENTS.get(dept, {})
+            row = DepartmentSection(
+                ticket_id=ticket_id,
+                department_id=dept,
+                contact_name=sec.get("contact_name") or info.get("owner"),
+                key_aspects_json=json.dumps(
+                    sec.get("key_aspects") or [], ensure_ascii=False
+                ),
+                open_questions_json=json.dumps(
+                    sec.get("open_questions") or [], ensure_ascii=False
+                ),
+            )
+            session.add(row)
+        row.draft_content = sec.get("draft_content")
+        eval_payload = sec.get("evaluation_results") or {}
+        row.evaluation_results_json = json.dumps(eval_payload, ensure_ascii=False)
+        row.generation_iteration = int(sec.get("iteration") or 0)
+        row.needs_human_review = bool(sec.get("needs_human_review"))
+        row.section_status = sec.get("section_status") or (
+            "needs_human_review" if row.needs_human_review else "aprobado_auto"
+        )
+        row.updated_at = _now()
+        session.add(row)
+        updated.append(row)
+    session.commit()
+    for row in updated:
+        session.refresh(row)
+    return updated
+
+
 def ticket_to_out(session: Session, ticket: RfpTicket) -> RfpTicketOut:
     meta = session.exec(
         select(RfpMetadata).where(RfpMetadata.ticket_id == ticket.id)
@@ -182,6 +275,28 @@ def ticket_to_out(session: Session, ticket: RfpTicket) -> RfpTicketOut:
             synth = json.loads(ticket.synthesizer_payload_json)
         except json.JSONDecodeError:
             synth = {"raw": ticket.synthesizer_payload_json}
+    section_outs: list[DepartmentSectionOut] = []
+    for s in sections:
+        eval_out = None
+        if s.evaluation_results_json:
+            try:
+                eval_out = json.loads(s.evaluation_results_json)
+            except json.JSONDecodeError:
+                eval_out = {"raw": s.evaluation_results_json}
+        section_outs.append(
+            DepartmentSectionOut(
+                department_id=s.department_id,
+                contact_name=s.contact_name,
+                key_aspects=json.loads(s.key_aspects_json or "[]"),
+                open_questions=json.loads(s.open_questions_json or "[]"),
+                draft_content=s.draft_content,
+                evaluation_results=eval_out,
+                generation_iteration=s.generation_iteration,
+                needs_human_review=s.needs_human_review,
+                section_status=s.section_status,
+                approval_status=s.approval_status,
+            )
+        )
     return RfpTicketOut(
         ticket_id=ticket.id or 0,
         status=ticket.status,
@@ -194,15 +309,6 @@ def ticket_to_out(session: Session, ticket: RfpTicket) -> RfpTicketOut:
         created_at=ticket.created_at,
         updated_at=ticket.updated_at,
         metadata=meta_out,
-        department_sections=[
-            DepartmentSectionOut(
-                department_id=s.department_id,
-                contact_name=s.contact_name,
-                key_aspects=json.loads(s.key_aspects_json or "[]"),
-                open_questions=json.loads(s.open_questions_json or "[]"),
-                approval_status=s.approval_status,
-            )
-            for s in sections
-        ],
+        department_sections=section_outs,
         synthesizer_summary=synth,
     )

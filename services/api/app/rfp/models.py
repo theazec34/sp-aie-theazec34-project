@@ -21,7 +21,9 @@ class RfpTicket(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     status: str = Field(default="analizando", index=True)
-    # analizando | descartado | analisis_completo | fallido | (+ partes 2–3)
+    # Parte 1: analizando | descartado | analisis_completo | fallido
+    # Parte 2: generando_borrador | en_evaluacion | borrador_listo | needs_human_review
+    # Parte 3: esperando_aprobacion | terminado
     raw_pdf_path: str
     original_filename: str = ""
     markdown_path: str | None = None
@@ -75,8 +77,14 @@ class DepartmentSection(SQLModel, table=True):
     key_aspects_json: str = Field(default="[]", sa_column=Column(Text))
     open_questions_json: str = Field(default="[]", sa_column=Column(Text))
     contact_name: str | None = None
-    # Part 2+ placeholders
+    # Parte 2: borrador + EvaluationResult estructurado
     draft_content: str | None = Field(default=None, sa_column=Column(Text))
+    evaluation_results_json: str | None = Field(default=None, sa_column=Column(Text))
+    generation_iteration: int = Field(default=0)
+    needs_human_review: bool = Field(default=False)
+    section_status: str = Field(default="pendiente")
+    # pendiente | generando | en_evaluacion | aprobado_auto | needs_human_review
+    # Parte 3 placeholders
     approval_status: str = Field(default="pendiente")
     approver: str | None = None
     approved_at: datetime | None = None
