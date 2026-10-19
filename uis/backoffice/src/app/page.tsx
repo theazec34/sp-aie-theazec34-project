@@ -5,6 +5,31 @@ import AuthenticatedShell from "../components/AuthenticatedShell";
 
 const moduleCards = [
   {
+    id: "rfp",
+    title: "Recepción de RFP",
+    description:
+      "Sube solicitudes PDF: el flujo agéntico clasifica, reparte por departamento y resume qué pedir a quién.",
+    href: "/rfp",
+  },
+  {
+    id: "knowledge",
+    title: "Base de conocimiento",
+    description: "Consulta la documentación interna Brasaland (RAG sobre Qdrant).",
+    href: "/knowledge",
+  },
+  {
+    id: "reporting",
+    title: "Costo y merma",
+    description: "KPIs de reporting semanal para dirección y operaciones.",
+    href: "/reporting",
+  },
+  {
+    id: "telemetry",
+    title: "Telemetría",
+    description: "Eventos de uso del backoffice y reporte técnico de captura.",
+    href: "/telemetry",
+  },
+  {
     id: "incidents-new",
     title: "Registrar incidencia",
     description:
@@ -27,33 +52,32 @@ const moduleCards = [
     id: "proveedores",
     title: "Directorio de proveedores",
     description:
-      "Fuente única de compras: tarifas, país, categorías y estado active/suspended.",
+      "Fuente única de compras: tarifas, país, categorías y estado (activo / suspendido).",
     href: "/proveedores",
   },
   {
     id: "inventory-products",
-    title: "Stock de ingredientes",
+    title: "Existencias de ingredientes",
     description:
-      "Inventario en tiempo real con current_stock calculado y alertas de stock bajo.",
+      "Inventario en tiempo real con stock calculado y alertas de stock bajo.",
     href: "/inventory/products",
   },
   {
     id: "inventory-inbound",
     title: "Entrada de ingredientes",
-    description: "Registrar entregas de proveedor (IngredientEntry) por local 1–14.",
+    description: "Registrar entregas de proveedor por local (1–14).",
     href: "/inventory/orders/inbound",
   },
   {
     id: "inventory-outbound",
     title: "Salida / merma",
-    description:
-      "Consumo o merma (IngredientExit) con stock visible antes de enviar.",
+    description: "Consumo o merma con existencias visibles antes de enviar.",
     href: "/inventory/orders/outbound",
   },
   {
     id: "inventory-orders",
     title: "Historial de inventario",
-    description: "Órdenes de entrada y salida con ingrediente y user_uuid del autor.",
+    description: "Órdenes de entrada y salida con ingrediente y autor.",
     href: "/inventory/orders",
   },
   {
@@ -69,8 +93,8 @@ export default function BackofficeHome() {
     <AuthenticatedShell active="dashboard">
       <header id="overview" className="bo-topbar">
         <div>
-          <p className="bo-kicker">Backoffice interno</p>
-          <h1>Brasaland Digital OPS</h1>
+          <p className="bo-kicker">Panel interno</p>
+          <h1>Brasaland Digital — Operaciones</h1>
         </div>
         <span className="bo-status">Sesión autenticada</span>
       </header>

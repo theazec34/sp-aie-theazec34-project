@@ -170,7 +170,7 @@ def classify_rfp(markdown: str) -> dict[str, Any]:
 
     open_q: list[str] = []
     if is_rfp and not has_budget:
-        open_q.append("Presupuesto / budget_range no explícito en el documento.")
+        open_q.append("Presupuesto no explícito en el documento.")
     if is_rfp and not has_deadline:
         open_q.append("Fecha límite de respuesta no explícita.")
 
@@ -178,7 +178,7 @@ def classify_rfp(markdown: str) -> dict[str, Any]:
         "is_rfp": is_rfp,
         "confidence": round(min(score, 0.99), 2),
         "notes": (
-            "RFP/LOI aceptada."
+            "Solicitud de propuesta / carta de intención aceptada."
             if is_rfp
             else "Documento sin señales suficientes de RFP B2B (cliente/servicio/alcance)."
         ),

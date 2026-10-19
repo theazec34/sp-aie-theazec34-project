@@ -172,7 +172,12 @@ def api_info() -> dict[str, object]:
             "upload": "POST /rfp/tickets",
             "list": "GET /rfp/tickets",
             "detail": "GET /rfp/tickets/{ticket_id}",
-            "statuses": ["analizando", "descartado", "analisis_completo"],
+            "statuses": [
+                "analizando",
+                "descartado",
+                "analisis_completo",
+                "fallido",
+            ],
             "auth_required": True,
         },
         "tasks": {

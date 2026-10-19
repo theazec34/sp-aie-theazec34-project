@@ -1,4 +1,4 @@
-"""HTTP surface for RFP intake — routers only trigger/query the pipeline."""
+"""Capa HTTP de recepción RFP — solo dispara y consulta el pipeline."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlmodel import Session
 
 from app.auth.deps import get_current_user
@@ -37,7 +37,7 @@ def _safe_name(name: str) -> str:
 
 
 def _enqueue(ticket_id: int) -> None:
-    """Background job — FastAPI BackgroundTasks + thread pool (ticket SoT)."""
+    """Encola el pipeline en el pool (respuesta HTTP ya enviada)."""
     _SERVICES = Path(__file__).resolve().parents[3]
     if str(_SERVICES) not in sys.path:
         sys.path.insert(0, str(_SERVICES.parent))
@@ -49,17 +49,19 @@ def _enqueue(ticket_id: int) -> None:
 
 @router.post("/tickets", response_model=RfpUploadAccepted, status_code=202)
 async def upload_rfp(
-    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     session: Session = Depends(get_db),
     _user: UserInDB = Depends(get_current_user),
 ) -> RfpUploadAccepted:
-    """Accept PDF, persist ticket as `analizando`, return 202; pipeline async."""
+    """Acepta PDF, crea ticket `analizando`, responde 202; el pipeline corre async."""
     if not file.filename:
-        raise HTTPException(status_code=400, detail="filename required")
+        raise HTTPException(status_code=400, detail="Se requiere un nombre de archivo")
     suffix = Path(file.filename).suffix.lower()
     if suffix not in {".pdf", ".md", ".txt"}:
-        raise HTTPException(status_code=400, detail="Only PDF (or md fixtures) accepted")
+        raise HTTPException(
+            status_code=400,
+            detail="Solo se aceptan PDF (o fixtures .md/.txt para pruebas)",
+        )
 
     _RAW_DIR.mkdir(parents=True, exist_ok=True)
     upload_id = uuid.uuid4().hex[:12]
@@ -67,7 +69,7 @@ async def upload_rfp(
     dest = _RAW_DIR / f"rfp_{upload_id}_{safe}"
     content = await file.read()
     if not content:
-        raise HTTPException(status_code=400, detail="empty file")
+        raise HTTPException(status_code=400, detail="El archivo está vacío")
     dest.write_bytes(content)
 
     ticket = repo.create_ticket(
@@ -76,9 +78,8 @@ async def upload_rfp(
         original_filename=file.filename,
     )
     assert ticket.id is not None
-    # Fast response: schedule background pipeline (does not run synchronously)
-    background_tasks.add_task(_enqueue, ticket.id)
-    logger.info("rfp ticket=%s accepted path=%s", ticket.id, dest)
+    _enqueue(ticket.id)
+    logger.info("rfp ticket=%s aceptado path=%s", ticket.id, dest)
     return RfpUploadAccepted(ticket_id=ticket.id, status="analizando")
 
 
@@ -99,5 +100,5 @@ def get_rfp_ticket(
 ) -> RfpTicketOut:
     ticket = repo.get_ticket(session, ticket_id)
     if ticket is None:
-        raise HTTPException(status_code=404, detail="Ticket not found")
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
     return repo.ticket_to_out(session, ticket)

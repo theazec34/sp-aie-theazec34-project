@@ -1,8 +1,13 @@
-# `apps` Folder
+# Carpeta `apps`
 
-This folder contains **all the applications of the monorepo** related to the company for the cross-functional AI Engineering project (for example: web applications, APIs, internal dashboards, customer portals, etc.).
+> Ver también [README.es.md](./README.es.md).
 
-Each subfolder inside `apps/` must correspond to **one specific application** (for example: `web-portal`, `admin-api`, `backoffice-dashboard`) and include its own technical and functional documentation.
+Las aplicaciones canónicas del monorepo **no** viven aquí:
 
-- **Main purpose**: to centralize in a single monorepo all the applications that support the company's use cases.
-- **Recommendation**: document in this file (or in sub-READMEs) the applications you add, their objective, the technology used, and how to run them in development, testing, and production environments.
+| Ruta | Rol |
+|------|-----|
+| `uis/website` | Sitio público |
+| `uis/backoffice` | Panel interno |
+| `services/api` | API FastAPI |
+
+Esta carpeta es un marcador del currículo. No dupliques apps aquí; extiende `uis/` y `services/`.

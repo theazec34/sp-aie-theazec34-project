@@ -83,7 +83,7 @@ CSV de prueba: `incidents-brasaland.csv` (raíz).
 
 ## 4. Hitos mergeados en `main` (producto)
 
-PRs **MERGED** en `main` (actualizado 2026-09-11):
+PRs **MERGED** en `main` (actualizado 2026-10-19):
 
 | # | Hito | Aporta |
 |---|------|--------|
@@ -117,7 +117,11 @@ PRs **MERGED** en `main` (actualizado 2026-09-11):
 | 35 | RAG knowledge base | Qdrant `brasaland_knowledge` + `/knowledge` |
 | 36 | Celery DEV-55 | Redis + worker + Flower; analyze → 202/`task_id` |
 | 37 | LangGraph agent base | Grafo retrieve/generate + `/agent/query` |
-| — | LangGraph external tools (este PR) | Tools tickets/inventario + routing |
+| 38 | LangGraph external tools | Tools vía MCP + routing |
+| 39 | MCP OAuth tools | `mcps/brasaland_tools` |
+| 40 | Agent Memory | `brasaland_agent_memory` + confirmación |
+| 41 | Agent Guardrails | harness anti-jailbreak / alcance |
+| 42 | RFP intake Parte 1 | tickets PDF + grafo `rfp_intake` + `/rfp` |
 
 ### Ramas remotas **no** mergeadas (fuera del producto principal)
 
@@ -149,22 +153,27 @@ Si quieres fusionar Talent Pipeline o el Agent, hacerlo en PRs dedicados (añade
 
 ```text
 uis/website/          # CANÓNICO sitio público
-uis/backoffice/       # CANÓNICO panel ops (+ /telemetry, /reporting)
+uis/backoffice/       # CANÓNICO panel ops (+ telemetry, reporting, knowledge, rfp)
 uis/web/              # UI CSV servida por API
-services/api/         # CANÓNICO backend (+ telemetry SQL, job_runs SQL)
+services/api/         # CANÓNICO backend (+ telemetry SQL, job_runs SQL, rfp)
+services/agent/       # LangGraph + memoria + guardrails
+services/rfp/         # runner async RFP intake
 services/telemetry/   # análisis Pandas del reporte técnico
 services/reporting/   # endpoints KPIs semanales
 services/job_runner/  # máquina de estados job_runs (nightly)
-data/pipelines/       # Prefect flow + PIPELINE_DESIGN
-data/raw/             # reviews.csv, brasaland_sales.csv, exports nightly
+services/knowledge/   # API RAG
+mcps/brasaland_tools/ # MCP OAuth (incidencias + inventario)
+data/pipelines/       # Prefect + RAG + rfp_intake
+data/raw/             # reviews.csv, brasaland_sales.csv, exports nightly, PDFs RFP
+rfp-requests/         # semillas PDF de prueba (BRIEFING)
 data/forecast/        # informe + métricas train ventas
 data/eval/            # informe evaluación regresión
 models/               # brasaland_sales_forecast.joblib
 src/                  # Hito 2 TS + sentimiento WeLoveReviews
 packages/shared/      # types base + python incidents
-scripts/              # analyze, nightly, train/eval ventas, seeds
-tests/                # pipelines + nightly + sales forecast
-docs/                 # arquitectura + telemetry + pipelines
+scripts/              # analyze, nightly, train/eval, eval RAG, run_rfp_intake
+tests/                # pipelines + nightly + sales forecast + agent/rfp
+docs/                 # arquitectura + telemetry + pipelines + rag + rfp + agent
 audit/                # PNG Lighthouse (resúmenes en AUDIT/REPORT)
 memory-bank/          # contexto para agentes
 ```
@@ -176,9 +185,11 @@ memory-bank/          # contexto para agentes
 ## 7. Flujos típicos
 
 **Ver carta pública:** abrir `:3000`.  
-**Operar inventario:** login `:3001` → Stock / Entradas / Salidas (API `:8000` + JWT).  
+**Operar inventario:** login `:3001` → Existencias / Entradas / Salidas (API `:8000` + JWT).  
 **Resumen incidencias:** backoffice `/incidents/resumen` → `GET /api/incidents/summary` (cache 30 s).  
-**Analizar CSV:** UI en `http://localhost:8000/` o `POST /api/v1/incidents/analyze` con Bearer.
+**Recepción RFP:** backoffice `/rfp` → `POST /rfp/tickets` (202) + poll estado.  
+**Analizar CSV:** UI en `http://localhost:8000/` o `POST /api/v1/incidents/analyze` con Bearer.  
+**Idioma:** UI y mensajes al operador en español (`AGENTS.md` ley 9).
 
 ---
 

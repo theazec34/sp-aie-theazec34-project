@@ -160,8 +160,8 @@ export default function SupplierCreateForm({ onCreated, onError, onMessage }: Pr
               }))
             }
           >
-            <option value="active">active</option>
-            <option value="suspended">suspended</option>
+            <option value="active">activo</option>
+            <option value="suspended">suspendido</option>
           </select>
         </label>
         <label className="bo-field">

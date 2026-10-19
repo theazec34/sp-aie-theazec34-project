@@ -24,8 +24,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Brasaland Backoffice",
-  description: "Panel interno Brasaland OPS: proveedores, incidencias e inventario.",
+  title: "Brasaland — Panel interno",
+  description:
+    "Panel interno Brasaland: proveedores, incidencias, inventario, conocimiento y RFP.",
   icons: {
     icon: "/favicon.png",
   },

@@ -9,6 +9,17 @@ import {
   type RfpTicket,
 } from "../../lib/rfp";
 
+const STATUS_LABEL: Record<string, string> = {
+  analizando: "Analizando",
+  analisis_completo: "Análisis completo",
+  descartado: "Descartado",
+  fallido: "Fallido",
+};
+
+function statusLabel(status: string): string {
+  return STATUS_LABEL[status] ?? status;
+}
+
 export default function RfpIntakePage() {
   const [tickets, setTickets] = useState<RfpTicket[]>([]);
   const [selected, setSelected] = useState<RfpTicket | null>(null);
@@ -30,7 +41,7 @@ export default function RfpIntakePage() {
     void reload();
   }, [reload]);
 
-  // Poll while any ticket is analyzing
+  // Poll mientras haya tickets en análisis
   useEffect(() => {
     const pending = tickets.some((t) => t.status === "analizando");
     if (!pending) return;
@@ -55,7 +66,7 @@ export default function RfpIntakePage() {
       setSelected(detail);
       setFile(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload falló");
+      setError(err instanceof Error ? err.message : "La subida falló");
     } finally {
       setBusy(false);
     }
@@ -71,16 +82,17 @@ export default function RfpIntakePage() {
 
   return (
     <AuthenticatedShell active="rfp">
-      <h1>RFP intake (Marketing / Camila)</h1>
+      <h1>Recepción de RFP (Marketing / Camila)</h1>
       <p className="bo-muted">
-        Sube un PDF de RFP. El ticket pasa por{" "}
-        <code>analizando</code> → <code>analisis_completo</code> o{" "}
-        <code>descartado</code>. El pipeline corre en segundo plano.
+        Sube un PDF de solicitud de propuesta. El ticket pasa por{" "}
+        <code>analizando</code> → <code>analisis_completo</code>,{" "}
+        <code>descartado</code> o <code>fallido</code>. El análisis corre en
+        segundo plano.
       </p>
 
       <form onSubmit={onUpload} className="bo-card" style={{ marginBottom: "1.5rem" }}>
         <label>
-          PDF RFP
+          PDF de RFP
           <input
             type="file"
             accept=".pdf,.md,.txt"
@@ -101,7 +113,7 @@ export default function RfpIntakePage() {
             {tickets.map((t) => (
               <li key={t.ticket_id}>
                 <button type="button" onClick={() => void openTicket(t.ticket_id)}>
-                  #{t.ticket_id} · {t.status} · {t.original_filename}
+                  #{t.ticket_id} · {statusLabel(t.status)} · {t.original_filename}
                 </button>
               </li>
             ))}
@@ -116,13 +128,13 @@ export default function RfpIntakePage() {
           ) : (
             <article className="bo-card">
               <p>
-                <strong>#{selected.ticket_id}</strong> — {selected.status}
+                <strong>#{selected.ticket_id}</strong> — {statusLabel(selected.status)}
               </p>
               {selected.discard_reason ? (
                 <p role="status">Descartado: {selected.discard_reason}</p>
               ) : null}
               {selected.error_message ? (
-                <p role="alert">Error: {selected.error_message.slice(0, 240)}</p>
+                <p role="alert">Fallo: {selected.error_message.slice(0, 240)}</p>
               ) : null}
               {selected.metadata ? (
                 <div>
@@ -132,23 +144,27 @@ export default function RfpIntakePage() {
                     <li>Ubicación: {selected.metadata.location || "—"}</li>
                     <li>Servicio: {selected.metadata.service_type || "—"}</li>
                     <li>Alcance: {selected.metadata.scope || "—"}</li>
-                    <li>Deadline: {selected.metadata.deadline || "—"}</li>
+                    <li>Fecha límite: {selected.metadata.deadline || "—"}</li>
                     <li>Presupuesto: {selected.metadata.budget_range || "—"}</li>
                     <li>
-                      Deptos: {(selected.metadata.departments_needed || []).join(", ") || "—"}
+                      Departamentos:{" "}
+                      {(selected.metadata.departments_needed || []).join(", ") || "—"}
                     </li>
                     <li>
                       Legibilidad FK/Fog: {selected.metadata.flesch_kincaid ?? "—"} /{" "}
-                      {selected.metadata.gunning_fog ?? "—"} (words{" "}
+                      {selected.metadata.gunning_fog ?? "—"} (palabras{" "}
                       {selected.metadata.word_count ?? "—"})
                     </li>
+                    {selected.metadata.classifier_notes ? (
+                      <li>Clasificador: {selected.metadata.classifier_notes}</li>
+                    ) : null}
                   </ul>
                 </div>
               ) : null}
 
               {selected.synthesizer_summary ? (
                 <div>
-                  <h3>Qué pedir a quién (Sales)</h3>
+                  <h3>Qué pedir a quién (Marketing / Ventas)</h3>
                   <p>{selected.synthesizer_summary.sales_brief}</p>
                   <ul>
                     {(selected.synthesizer_summary.summary_lines || []).map((line) => (
@@ -172,7 +188,7 @@ export default function RfpIntakePage() {
 
               {(selected.department_sections || []).length > 0 ? (
                 <div>
-                  <h3>Key aspects por departamento</h3>
+                  <h3>Aspectos clave por departamento</h3>
                   {selected.department_sections!.map((s) => (
                     <div key={s.department_id}>
                       <strong>

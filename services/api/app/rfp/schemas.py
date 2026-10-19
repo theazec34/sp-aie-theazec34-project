@@ -52,4 +52,4 @@ class RfpTicketOut(BaseModel):
 class RfpUploadAccepted(BaseModel):
     ticket_id: int
     status: str = "analizando"
-    message: str = "Ticket creado; el pipeline corre en segundo plano."
+    message: str = "Ticket creado; el análisis corre en segundo plano."

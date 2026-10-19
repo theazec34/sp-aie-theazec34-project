@@ -20,10 +20,14 @@ COPY services/reporting /app/reporting
 COPY services/telemetry /app/telemetry
 COPY services/job_runner /app/job_runner
 COPY services/agent /app/agent
+COPY services/rfp /app/rfp
+COPY mcps /app/mcps
 COPY services/celery_app.py /app/celery_app.py
 COPY services/tasks /app/tasks
 COPY data /app/data
 COPY docs/company-knowledge-base /app/docs/company-knowledge-base
+COPY docs/rfp /app/docs/rfp
+COPY rfp-requests /app/rfp-requests
 
 WORKDIR /app/api
 COPY services/api/requirements.txt ./requirements.txt

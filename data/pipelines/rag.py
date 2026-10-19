@@ -266,7 +266,7 @@ def generate_answer(question: str, context: list[dict[str, Any]]) -> str:
 def query(question: str) -> str:
     """Pipeline entry: retrieve → generate_answer. Returns answer string only."""
     if not question or not question.strip():
-        raise ValueError("query() requires a non-empty question")
+        raise ValueError("query() requiere una pregunta no vacía")
     chunks = retrieve(question.strip())
     # Strip scores before generation prompt / agent reuse surface
     clean = [

@@ -47,13 +47,13 @@ export type RfpTicket = {
 
 export async function listRfpTickets(): Promise<RfpTicket[]> {
   const res = await apiFetch("/rfp/tickets");
-  if (!res.ok) throw new Error(`List RFP failed (${res.status})`);
+  if (!res.ok) throw new Error(`No se pudo listar las RFP (${res.status})`);
   return res.json();
 }
 
 export async function getRfpTicket(id: number): Promise<RfpTicket> {
   const res = await apiFetch(`/rfp/tickets/${id}`);
-  if (!res.ok) throw new Error(`Get RFP failed (${res.status})`);
+  if (!res.ok) throw new Error(`No se pudo obtener la RFP (${res.status})`);
   return res.json();
 }
 
@@ -63,7 +63,7 @@ export async function uploadRfpPdf(file: File): Promise<{ ticket_id: number; sta
   const res = await apiFetch("/rfp/tickets", { method: "POST", body });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Upload failed (${res.status}): ${text}`);
+    throw new Error(`La subida falló (${res.status}): ${text}`);
   }
   return res.json();
 }

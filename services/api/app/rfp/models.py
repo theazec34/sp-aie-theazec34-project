@@ -21,7 +21,7 @@ class RfpTicket(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     status: str = Field(default="analizando", index=True)
-    # analizando | descartado | analisis_completo | (+ later parts)
+    # analizando | descartado | analisis_completo | fallido | (+ partes 2–3)
     raw_pdf_path: str
     original_filename: str = ""
     markdown_path: str | None = None

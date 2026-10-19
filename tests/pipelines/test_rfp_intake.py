@@ -98,6 +98,24 @@ def test_graph_accepts_formal_md_fixture(tmp_path: Path):
     depts = {r["department_id"] for r in final["worker_results"]}
     assert "training" in depts
     assert "marketing" in depts
+    # Claves normalizadas para persistencia SQLModel / UI
+    meta = final["metadata"]
+    assert meta.get("classifier_confidence") is not None
+    assert meta.get("classifier_notes")
+    assert any(
+        line.startswith("Fecha límite:")
+        for line in (final["synthesizer"].get("summary_lines") or [])
+    )
+
+
+def test_normalize_departments_aliases():
+    from data.pipelines.rfp_intake.departments_ref import normalize_departments
+
+    assert normalize_departments(["ops", "compras", "legal-desconocido"]) == [
+        "marketing",
+        "operaciones",
+        "procurement",
+    ]
 
 
 def test_graph_discards_invalid_md_fixture(tmp_path: Path):
