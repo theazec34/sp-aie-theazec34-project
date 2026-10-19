@@ -23,6 +23,7 @@ Plataforma digital con:
 10. MCP Server OAuth (`mcps/brasaland_tools`): incidents + inventory; agente como cliente MCP
 11. Agent Memory episódica (`brasaland_agent_memory`) con confirmación explícita del usuario
 12. RFP intake Parte 1: tickets PDF → LangGraph `rfp_intake` → key_aspects por departamento (SQLModel)
+12. Agent Guardrails / harness de seguridad (anti-jailbreak, alcance, aislamiento RAG)
 
 ## Fuentes de verdad
 - Mapa operativo: **`PROJECT.md`**

@@ -87,6 +87,12 @@
 - Docs: `docs/rfp/rfp-intake-part1.md`, `docs/rfp/brasaland-BRIEFING.es.md`
 - Tests: `tests/pipelines/test_rfp_intake.py`
 - Deps: `markitdown`, `py-readability-metrics`, `reportlab` (fixtures)
+## Agent Guardrails (Hito 8 · Parte 2)
+- Paquete: `services/agent/guardrails/`
+- Capas: system prompt seguro, input/output guards, aislamiento RAG/tool, observabilidad
+- API: `GET /agent/guardrails/summary`
+- Docs: `docs/agent/agent-guardrails.md`
+- Evals: `tests/pipelines/test_agent_guardrails.py`
 
 ## Agent Memory (Hito 8 · Parte 1)
 - Paquete: `services/agent/memory/` — namespace `brasaland_agent_memory` (file/Redis)
@@ -142,5 +148,6 @@
 - Celery DEV-55: mergeado (#36)
 - LangGraph agent base: #37 · external tools: #38
 - MCP OAuth tools: #39
-- Agent Memory: rama `feature/agent-memory`
+- Agent Memory: #40
+- Agent Guardrails: rama `feature/agent-guardrails`
 - Producto estable: **`main`**
