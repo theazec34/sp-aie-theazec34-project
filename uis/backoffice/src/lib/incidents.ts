@@ -20,7 +20,7 @@ export const INCIDENT_CATEGORIES = [
   { value: "staff_issue", label: "Incidencia de personal" },
   { value: "facility_issue", label: "Instalaciones" },
   { value: "pos_system", label: "Sistema de caja / TPV" },
-  { value: "delivery_issue", label: "Delivery" },
+  { value: "delivery_issue", label: "Entrega / domicilio" },
   { value: "other", label: "Otra" },
 ] as const;
 
