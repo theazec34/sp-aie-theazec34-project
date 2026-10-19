@@ -77,6 +77,17 @@
 - Flower: `:5555` · worker proceso independiente
 - Docs: `docs/async-tasks/DEV-55.md`
 
+## RFP Intake (Hito 9 · Parte 1)
+- Grafo: `data/pipelines/rfp_intake/` (MarkItDown → classifier → orchestrator-worker-synthesizer)
+- Persistencia: SQLModel `rfp_ticket` / `rfp_metadata` / `rfp_department_section` (Postgres/Supabase)
+- API: `POST /rfp/tickets` (202 async), `GET /rfp/tickets`, `GET /rfp/tickets/{id}`
+- Runner: `services/rfp/runner.py` (BackgroundTasks + ThreadPoolExecutor)
+- UI: backoffice `/rfp`
+- Semillas: `rfp-requests/brasaland/` · CLI: `scripts/run_rfp_intake.py`
+- Docs: `docs/rfp/rfp-intake-part1.md`, `docs/rfp/brasaland-BRIEFING.es.md`
+- Tests: `tests/pipelines/test_rfp_intake.py`
+- Deps: `markitdown`, `py-readability-metrics`, `reportlab` (fixtures)
+
 ## Agent Memory (Hito 8 · Parte 1)
 - Paquete: `services/agent/memory/` — namespace `brasaland_agent_memory` (file/Redis)
 - Nunca escribe en Qdrant `brasaland_knowledge` / `*_knowledge`

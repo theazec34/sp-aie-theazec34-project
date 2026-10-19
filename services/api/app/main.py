@@ -18,6 +18,8 @@ from app.incidents.router import router as incidents_router
 from app.inventory import models as _inventory_models  # noqa: F401 — register metadata
 from app.inventory.router import router as inventory_router
 from app.profiles.router import router as profiles_router
+from app.rfp import models as _rfp_models  # noqa: F401 — register metadata
+from app.rfp.router import router as rfp_router
 from app.suppliers.router import router as suppliers_router
 from app.telemetry import orm as _telemetry_orm  # noqa: F401 — register metadata
 from app.telemetry.router import router as telemetry_router
@@ -105,6 +107,7 @@ app.include_router(telemetry_router)
 app.include_router(reporting_router)
 app.include_router(knowledge_router)
 app.include_router(agent_router)
+app.include_router(rfp_router)
 app.include_router(tasks_router)
 
 
@@ -163,6 +166,13 @@ def api_info() -> dict[str, object]:
         "agent": {
             "query": "/agent/query",
             "traces": "/agent/traces/{run_id}",
+            "auth_required": True,
+        },
+        "rfp_intake": {
+            "upload": "POST /rfp/tickets",
+            "list": "GET /rfp/tickets",
+            "detail": "GET /rfp/tickets/{ticket_id}",
+            "statuses": ["analizando", "descartado", "analisis_completo"],
             "auth_required": True,
         },
         "tasks": {
