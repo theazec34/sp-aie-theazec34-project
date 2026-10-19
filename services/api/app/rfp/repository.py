@@ -99,8 +99,9 @@ def upsert_metadata(session: Session, ticket_id: int, data: dict[str, Any]) -> R
         "gunning_fog": data.get("gunning_fog"),
         "word_count": data.get("word_count"),
         "is_rfp": bool(data.get("is_rfp")),
-        "classifier_confidence": data.get("classifier_confidence"),
-        "classifier_notes": data.get("classifier_notes"),
+        # Acepta claves del clasificador o las ya normalizadas
+        "classifier_confidence": data.get("classifier_confidence", data.get("confidence")),
+        "classifier_notes": data.get("classifier_notes", data.get("notes")),
         "open_questions_json": json.dumps(
             data.get("open_questions") or [], ensure_ascii=False
         ),

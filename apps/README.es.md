@@ -1,8 +1,14 @@
 # Carpeta `apps`
 
-Esta carpeta contiene **todas las aplicaciones del monorepo** relacionadas con la compañía para el proyecto transversal de AI Engineering (por ejemplo: aplicaciones web, APIs, dashboards internos, portales de clientes, etc.).
+> **Nota (layout canónico):** las aplicaciones reales del monorepo viven en:
+>
+> - `uis/website` — sitio público Next.js  
+> - `uis/backoffice` — panel interno  
+> - `services/api` — API FastAPI  
+>
+> Esta carpeta `apps/` es un marcador histórico del currículo. **No** añadas
+> aquí una segunda web/API: extiende las rutas anteriores.
 
-Cada subcarpeta dentro de `apps/` debe corresponder a **una aplicación concreta** (por ejemplo `web-portal`, `admin-api`, `backoffice-dashboard`) e incluir su propia documentación técnica y funcional.
-
-- **Propósito principal**: centralizar en un único monorepo todas las aplicaciones que dan soporte a los casos de uso de la compañía.
-- **Recomendación**: documenta en este archivo (o en sub-READMEs) las aplicaciones que vayas añadiendo, su objetivo, tecnología usada y cómo ejecutarlas en desarrollo, pruebas y producción.
+Si en el futuro se añade una app nueva, documenta aquí su objetivo, stack y
+cómo arrancarla — pero preferimos no duplicar lo que ya está en `uis/` y
+`services/`.

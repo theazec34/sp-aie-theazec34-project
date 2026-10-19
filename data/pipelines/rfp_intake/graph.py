@@ -39,8 +39,11 @@ def node_convert(state: RfpIntakeState) -> dict[str, Any]:
 def node_classify(state: RfpIntakeState) -> dict[str, Any]:
     classification = classify_rfp(state.get("markdown") or "")
     readability = state.get("readability") or {}
+    # Normaliza claves al esquema de persistencia (repository / UI)
     metadata = {
         **classification,
+        "classifier_confidence": classification.get("confidence"),
+        "classifier_notes": classification.get("notes"),
         "flesch_kincaid": readability.get("flesch_kincaid"),
         "gunning_fog": readability.get("gunning_fog"),
         "word_count": readability.get("word_count"),
@@ -73,13 +76,10 @@ def route_after_classify(state: RfpIntakeState) -> RouteAfterClassify:
 
 
 def node_orchestrate(state: RfpIntakeState) -> dict[str, Any]:
-    """Orchestrator: decide workstreams (departments) — already from classifier."""
-    departments = list(state.get("departments") or [])
-    # Guard: only BRIEFING departments
-    allowed = {"marketing", "operaciones", "procurement", "training"}
-    departments = [d for d in departments if d in allowed]
-    if "marketing" not in departments:
-        departments.insert(0, "marketing")  # ticket owner always in the loop
+    """Orquestador: workstreams por departamento (ids del BRIEFING)."""
+    from data.pipelines.rfp_intake.departments_ref import normalize_departments
+
+    departments = normalize_departments(list(state.get("departments") or []))
     return {
         "departments": departments,
         "trace": _trace(state, "orchestrate", {"departments": departments}),

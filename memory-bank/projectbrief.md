@@ -22,8 +22,9 @@ Plataforma digital con:
 9. LangGraph agent (Part 1–2): grafo explícito sobre RAG + tools + `/agent/query`
 10. MCP Server OAuth (`mcps/brasaland_tools`): incidents + inventory; agente como cliente MCP
 11. Agent Memory episódica (`brasaland_agent_memory`) con confirmación explícita del usuario
-12. RFP intake Parte 1: tickets PDF → LangGraph `rfp_intake` → key_aspects por departamento (SQLModel)
 12. Agent Guardrails / harness de seguridad (anti-jailbreak, alcance, aislamiento RAG)
+13. RFP intake Parte 1: tickets PDF → LangGraph `rfp_intake` → key_aspects por departamento (SQLModel)
+14. Idioma de producto: español en UI y mensajes al operador (`AGENTS.md` ley 9)
 
 ## Fuentes de verdad
 - Mapa operativo: **`PROJECT.md`**

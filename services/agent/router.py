@@ -116,7 +116,7 @@ def agent_trace(
     """Fetch a persisted run trace (consultable after execution)."""
     record = load_trace(run_id)
     if record is None:
-        raise HTTPException(status_code=404, detail="Trace not found")
+        raise HTTPException(status_code=404, detail="Traza no encontrada")
     return AgentTraceResponse(
         run_id=str(record.get("run_id") or run_id),
         nodes=list(record.get("nodes") or []),

@@ -1,4 +1,4 @@
-# Technical Context — Brasaland Digital (actualizado 2026-09-23)
+# Technical Context — Brasaland Digital (actualizado 2026-10-19)
 
 ## Runtime
 - **Website** `uis/website` — Next.js 16, puerto **3000**
@@ -149,5 +149,6 @@
 - LangGraph agent base: #37 · external tools: #38
 - MCP OAuth tools: #39
 - Agent Memory: #40
-- Agent Guardrails: rama `feature/agent-guardrails`
+- Agent Guardrails / Memory / RFP Parte 1: en **`main`** (#40–#42)
 - Producto estable: **`main`**
+- Idioma UI: español (`AGENTS.md` ley 9)

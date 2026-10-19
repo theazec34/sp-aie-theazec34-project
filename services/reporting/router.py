@@ -63,7 +63,9 @@ def pipeline_runs_latest(
     """Metadata of the most recent pipeline run."""
     latest = get_latest_run(pipeline_name=pipeline_name)
     if latest is None:
-        raise HTTPException(status_code=404, detail="No pipeline runs recorded yet")
+        raise HTTPException(
+            status_code=404, detail="Aún no hay ejecuciones de pipeline registradas"
+        )
     return latest
 
 
@@ -77,7 +79,7 @@ def pipeline_runs_trigger(
     if body.pipeline_name != PIPELINE_NAME:
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported pipeline_name; expected {PIPELINE_NAME}",
+            detail=f"Nombre de pipeline no soportado; se esperaba {PIPELINE_NAME}",
         )
     result = trigger_weekly_location_performance_flow(
         week_start=body.week_start,

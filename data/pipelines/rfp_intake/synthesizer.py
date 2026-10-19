@@ -45,7 +45,7 @@ def synthesize(
         f"Ubicación: {metadata.get('location') or 'N/D'}",
         f"Servicio: {metadata.get('service_type') or 'N/D'}",
         f"Alcance: {metadata.get('scope') or 'N/D'}",
-        f"Deadline: {metadata.get('deadline') or 'N/D'}",
+        f"Fecha límite: {metadata.get('deadline') or 'N/D'}",
         f"Presupuesto: {metadata.get('budget_range') or 'por confirmar'}",
         f"Departamentos: {', '.join(metadata.get('departments_needed') or [])}",
     ]

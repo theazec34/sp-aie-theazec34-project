@@ -42,12 +42,15 @@ docker compose up --build
 | Ruta | Rol |
 |------|-----|
 | `uis/website` | Sitio público Next.js (carta, galería, formulario) |
-| `uis/backoffice` | Panel ops (+ `/telemetry`, `/reporting`, `/knowledge`) |
+| `uis/backoffice` | Panel ops (+ `/telemetry`, `/reporting`, `/knowledge`, `/rfp`) |
 | `uis/web` | UI CSV en `:8000/` (analyze async → poll `/tasks/{id}`) |
 | `services/api` | FastAPI monolito modular |
+| `services/rfp` | Runner async del grafo RFP intake |
+| `services/agent` | LangGraph agente + memoria + guardrails |
+| `mcps/brasaland_tools` | MCP OAuth (incidencias + inventario) |
 | `services/celery_app.py` + `tasks/` | Celery worker (Redis broker) |
 | `services/telemetry` / `reporting` / `job_runner` / `knowledge` | Módulos de dominio |
-| `data/pipelines` | Prefect + RAG query pipeline |
+| `data/pipelines` | Prefect + RAG + `rfp_intake` |
 | `docs/company-knowledge-base` | Corpus RAG |
 | `scripts/` | analyze, nightly, train/eval ventas, eval RAG |
 | `src/` | Dominio TS + sentimiento WeLoveReviews |
@@ -72,4 +75,6 @@ docker compose up --build
 
 ## Estado Git
 
-Producto en **`main`** (PRs #1–#21, #23–#35): web, backoffice, API, Docker, telemetría, pipeline, nightly, sentimiento, forecast/eval, RAG. Hito Celery/Redis (DEV-55) en PR `async-tasks`. Detalle: [PROJECT.md](./PROJECT.md).
+Producto en **`main`** (PRs **#1–#42**): web, backoffice, API, Docker, telemetría, pipeline, nightly, ML, RAG, Celery, LangGraph, MCP, memoria, guardrails, RFP intake Parte 1. Detalle: [PROJECT.md](./PROJECT.md) y `memory-bank/progress.md`.
+
+**Idioma:** la UI y los mensajes al operador van en español (`AGENTS.md` ley 9).

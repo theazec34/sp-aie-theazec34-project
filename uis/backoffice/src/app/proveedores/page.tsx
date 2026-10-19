@@ -252,7 +252,7 @@ export default function ProveedoresPage() {
                             : "bo-badge bo-badge-suspended"
                         }
                       >
-                        {supplier.status}
+                        {supplier.status === "active" ? "activo" : "suspendido"}
                       </span>
                     </td>
                     <td>

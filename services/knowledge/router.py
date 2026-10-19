@@ -56,7 +56,7 @@ def knowledge_query(
         logger.exception("knowledge query failed")
         raise HTTPException(
             status_code=503,
-            detail=f"Knowledge service unavailable: {exc}",
+            detail=f"Servicio de conocimiento no disponible: {exc}",
         ) from exc
     return KnowledgeQueryResponse(answer=answer)
 

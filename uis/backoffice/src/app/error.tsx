@@ -12,7 +12,7 @@ export default function Error({
   return (
     <main className="auth-shell">
       <section className="auth-card">
-        <p className="bo-kicker">Brasaland OPS</p>
+        <p className="bo-kicker">Brasaland Operaciones</p>
         <h1>Algo ha fallado</h1>
         <p className="bo-soft">
           No hemos podido mostrar esta página. Puedes reintentar o volver al

@@ -24,14 +24,14 @@ type Props = {
 
 export default function AppNav({ active }: Props) {
   return (
-    <aside className="bo-sidebar" aria-label="Menu interno backoffice">
-      <p className="bo-brand">Brasaland OPS</p>
+    <aside className="bo-sidebar" aria-label="Menú interno del backoffice">
+      <p className="bo-brand">Brasaland Operaciones</p>
       <nav>
         <Link
           href="/"
           className={`bo-nav-link${active === "dashboard" ? " bo-nav-link-active" : ""}`}
         >
-          Dashboard
+          Panel
         </Link>
         <Link
           href="/proveedores"
@@ -43,7 +43,7 @@ export default function AppNav({ active }: Props) {
           href="/inventory/products"
           className={`bo-nav-link${active === "inventory-products" ? " bo-nav-link-active" : ""}`}
         >
-          Stock ingredientes
+          Existencias
         </Link>
         <Link
           href="/inventory/orders/inbound"
@@ -85,7 +85,7 @@ export default function AppNav({ active }: Props) {
           href="/rfp"
           className={`bo-nav-link${active === "rfp" ? " bo-nav-link-active" : ""}`}
         >
-          RFP intake
+          Recepción RFP
         </Link>
         <Link
           href="/incidents/nueva"

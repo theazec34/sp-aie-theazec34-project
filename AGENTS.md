@@ -4,6 +4,17 @@ Luego se leera el projectbrief.md
 Terminara leeyendo el progress.md
 Quiero que a medida que se vaya trabajando se vaya actualizando el progress.md
 
+## Idioma del producto (ley)
+
+9. **Español primero:** toda la interfaz de usuario (backoffice, website),
+   mensajes HTTP visibles al cliente (`detail`, errores de formularios) y
+   textos de handoff/resúmenes para operadores deben estar en **español**.
+   Los identificadores de código (`department_id`, rutas `/rfp`, estados
+   canónicos del BRIEFING como `analizando`) pueden permanecer en inglés o
+   snake_case técnico; las **etiquetas** que ve una persona, no.
+   Docs de producto y memory bank en español; nombres de librerías/APIs
+   externas se dejan en su forma original.
+
 ## Reglas de estabilidad del monorepo (mantener main sano)
 
 1. **Base siempre actualizada:** cada hito nuevo parte de `main` recién

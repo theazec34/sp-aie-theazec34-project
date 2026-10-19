@@ -19,9 +19,14 @@ Flujo agéntico de recepción y enrutamiento de RFPs para Marketing (Camila Ospi
 
 ## Estados (Parte 1)
 
-`analizando` → `analisis_completo` | `descartado`
+`analizando` → `analisis_completo` | `descartado` | `fallido`
 
-(`esperando_aprobacion` no se usa en Parte 1.)
+- `fallido`: excepción a mitad de pipeline (mensaje en español en `error_message`; detalle técnico solo en logs).
+- `esperando_aprobacion` no se usa en Parte 1.
+
+## Idioma
+
+UI, `detail` HTTP y resúmenes del synthesizer en **español** (`AGENTS.md` ley 9). Los `department_id` y códigos de estado se mantienen como en el BRIEFING.
 
 ## Pipeline
 
@@ -62,7 +67,9 @@ Semillas BRIEFING:
 
 ### Departamento no listado en el BRIEFING
 
-No se inventa un quinto departamento. Se registra `open_question` y se escala a Marketing (dueña del ticket). Aliases (`ops`→`operaciones`, etc.) en `resolve_unknown_department`.
+No se inventa un quinto departamento. `normalize_departments` / `resolve_unknown_department`
+(en `data/pipelines/rfp_intake/departments_ref.py`, reexportado por el API) mapean aliases
+(`ops`→`operaciones`, etc.) o descartan ids desconocidos; marketing siempre entra en el loop.
 
 ### Qué reciben los workers
 
@@ -78,4 +85,6 @@ Parte 1 no auto-resuelve: `merge_worker_conflicts` añade notas a `open_question
 
 ### Dónde corre el job async
 
-`BackgroundTasks` + `ThreadPoolExecutor` en el API. Si falla a mitad, el ticket permanece `analizando` con `error_message` (SoT = fila `rfp_ticket`). Celery/Prefect quedan disponibles para Parte 2+ si el volumen lo exige.
+`ThreadPoolExecutor` en el API (`POST` responde 202 y encola). Si falla a mitad →
+estado `fallido` + `error_message` legible (SoT = fila `rfp_ticket`). Celery/Prefect
+quedan disponibles para Parte 2+ si el volumen lo exige.

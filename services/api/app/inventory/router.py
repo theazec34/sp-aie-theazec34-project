@@ -73,7 +73,7 @@ def create_product(
     if existing is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Ingredient with sku '{payload.sku}' already exists.",
+            detail=f"Ya existe un ingrediente con SKU '{payload.sku}'.",
         )
     ingredient = Ingredient(**payload.model_dump())
     session.add(ingredient)
@@ -90,7 +90,7 @@ def get_product(
 ) -> IngredientRead:
     ingredient = session.get(Ingredient, product_id)
     if ingredient is None:
-        raise HTTPException(status_code=404, detail="Ingredient not found.")
+        raise HTTPException(status_code=404, detail="Ingrediente no encontrado.")
     return to_ingredient_read(session, ingredient)
 
 
@@ -106,7 +106,7 @@ def create_inbound(
 ) -> IngredientEntryRead:
     ingredient = session.get(Ingredient, payload.ingredient_id)
     if ingredient is None:
-        raise HTTPException(status_code=404, detail="Ingredient not found.")
+        raise HTTPException(status_code=404, detail="Ingrediente no encontrado.")
 
     entry = IngredientEntry(
         **payload.model_dump(),
@@ -130,15 +130,15 @@ def create_outbound(
 ) -> IngredientExitRead:
     ingredient = session.get(Ingredient, payload.ingredient_id)
     if ingredient is None:
-        raise HTTPException(status_code=404, detail="Ingredient not found.")
+        raise HTTPException(status_code=404, detail="Ingrediente no encontrado.")
 
     available = current_stock(session, payload.ingredient_id)
     if payload.quantity > available:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=(
-                f"Insufficient stock for ingredient '{ingredient.name}'. "
-                f"Available: {available}, requested: {payload.quantity}."
+                f"Stock insuficiente para '{ingredient.name}'. "
+                f"Disponible: {available}, solicitado: {payload.quantity}."
             ),
         )
 

@@ -1,4 +1,4 @@
-"""Department workers — extract key_aspects only from document (never invent figures)."""
+"""Workers por departamento — extraen key_aspects del documento (sin inventar cifras)."""
 
 from __future__ import annotations
 
@@ -6,9 +6,6 @@ import re
 from typing import Any
 
 from data.pipelines.rfp_intake.departments_ref import DEPARTMENTS
-
-# Re-export path: workers import DEPARTMENTS from API layer via thin ref
-# to keep pipeline importable without FastAPI. See departments_ref.py.
 
 
 def run_worker(
@@ -47,7 +44,7 @@ def run_worker(
         if metadata.get("client_name"):
             aspects.insert(0, f"Cliente: {metadata['client_name']}")
         if metadata.get("deadline"):
-            aspects.append(f"Deadline mencionado: {metadata['deadline']}")
+            aspects.append(f"Fecha límite mencionada: {metadata['deadline']}")
         if not any("validez" in a.lower() for a in aspects):
             open_q.append("Confirmar período de validez de la oferta (lineamiento: 30 días).")
 
@@ -92,7 +89,7 @@ def run_worker(
         ))
         if not aspects:
             open_q.append(
-                "No hay señal clara de menú/estándar nuevo; confirmar si training aplica."
+                "No hay señal clara de menú/estándar nuevo; confirmar si Formación aplica."
             )
 
     # Dedup / trim

@@ -19,10 +19,10 @@ logger = logging.getLogger("rfp.runner")
 
 def process_ticket(ticket_id: int) -> None:
     """
-    Run rfp_intake graph and persist results.
+    Ejecuta el grafo rfp_intake y persiste resultados.
 
-    If the job fails mid-pipeline, the ticket stays `analizando` or moves to
-    an error note — never silent discard. Source of truth = rfp_ticket row.
+    Si el job falla a mitad, el ticket pasa a `fallido` con mensaje legible
+    (nunca descarte silencioso). Fuente de verdad = fila rfp_ticket.
     """
     from sqlmodel import Session
 
@@ -33,21 +33,26 @@ def process_ticket(ticket_id: int) -> None:
     with Session(engine) as session:
         ticket = repo.get_ticket(session, ticket_id)
         if ticket is None:
-            logger.error("ticket %s not found", ticket_id)
+            logger.error("ticket %s no encontrado", ticket_id)
             return
         pdf_path = ticket.raw_pdf_path
 
     try:
         result = run_rfp_intake(ticket_id=ticket_id, pdf_path=pdf_path)
     except Exception as exc:  # noqa: BLE001
-        logger.exception("rfp pipeline failed ticket=%s", ticket_id)
+        logger.exception("fallo pipeline rfp ticket=%s", ticket_id)
         with Session(engine) as session:
             repo.update_ticket_status(
                 session,
                 ticket_id,
-                "analizando",
-                error_message=f"pipeline_error: {type(exc).__name__}: {exc}\n{traceback.format_exc()[-800:]}",
+                "fallido",
+                error_message=(
+                    f"Error en el análisis ({type(exc).__name__}): {exc}. "
+                    "Revisa logs del servidor; puedes volver a subir el PDF."
+                ),
             )
+        # Detalle técnico solo en logs, no en la UI
+        logger.debug("traceback ticket=%s\n%s", ticket_id, traceback.format_exc()[-1200:])
         return
 
     status = result.get("status") or "analizando"
