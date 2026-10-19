@@ -38,4 +38,4 @@
 | Agent Memory | #40 |
 | Agent Guardrails | #41 (si aplica) / main |
 | RFP intake Parte 1 | **#42** |
-| Limpieza ES + cohesión | este PR |
+| Limpieza ES + cohesión | **#43** |
