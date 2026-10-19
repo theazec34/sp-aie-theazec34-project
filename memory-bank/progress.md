@@ -31,4 +31,4 @@
 | LangGraph external tools | #38 |
 | MCP OAuth tools | #39 |
 | Agent Memory / Guardrails | ramas previas |
-| RFP intake Parte 1 | este PR (`feature/rfp-intake`) |
+| RFP intake Parte 1 | **#42** (`feature/rfp-intake`) |
