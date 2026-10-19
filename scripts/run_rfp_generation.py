@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-"""CLI Parte 2: genera/evalúa secciones desde un handoff sintético (sin HTTP).
-
-Uso:
-  uv run python scripts/run_rfp_generation.py
-"""
+"""CLI Parte 2: genera/evalúa secciones (moneda €)."""
 
 from __future__ import annotations
 
@@ -16,19 +12,19 @@ for _p in (_REPO, _REPO / "services", _REPO / "services" / "api"):
     if str(_p) not in sys.path:
         sys.path.insert(0, str(_p))
 
+from data.pipelines.rfp_intake.evaluators import evaluate_compliance  # noqa: E402
 from data.pipelines.rfp_intake.generation_graph import run_response_generation  # noqa: E402
 from data.pipelines.rfp_intake.generators import generate_section  # noqa: E402
-from data.pipelines.rfp_intake.evaluators import evaluate_compliance  # noqa: E402
 
 
 def main() -> int:
     meta = {
         "client_name": "Sunset Bay Resorts",
         "location": "Florida",
-        "service_type": "Co-branded concession",
+        "service_type": "Concesión co-branded",
         "scope": "3 resorts",
-        "deadline": "15 November 2026",
-        "budget_range": "USD 60,000 – 75,000 / año · COP 250M",
+        "deadline": "15 noviembre 2026",
+        "budget_range": "55.000 – 70.000 €/año",
     }
     aspects = ["exclusividad", "menú de autor", "co-branding"]
     ok = run_response_generation(
@@ -55,7 +51,7 @@ def main() -> int:
         force_violate="setup-min-10-days",
     )
     comp = evaluate_compliance(bad, metadata=meta)
-    print("\n=== Ejemplo que falla cumplimiento (setup < 10 días) ===")
+    print("\n=== Ejemplo que falla cumplimiento (montaje < 10 días) ===")
     print(json.dumps(comp, ensure_ascii=False, indent=2))
     return 0
 

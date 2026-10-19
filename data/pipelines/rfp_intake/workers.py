@@ -70,12 +70,13 @@ def run_worker(
             text,
             [
                 r"(insumo|proveedor|supplier|volumen|costo|budget|presupuesto)[^\n.]{0,90}",
-                r"(USD|COP)\s*[\d,.]+\s*(?:/?\s*a[nñ]o)?[^\n.]{0,40}",
+                r"(€|EUR)\s*[\d,.]+\s*(?:/?\s*a[nñ]o)?[^\n.]{0,40}",
+                r"[\d,.]+\s*€\s*(?:/?\s*a[nñ]o)?[^\n.]{0,40}",
                 r"(lead\s*time|entrega|delivery)[^\n.]{0,60}",
             ],
         ))
-        if not metadata.get("budget_range") and not re.search(r"USD|COP|\$", text):
-            open_q.append("Sin cifra de presupuesto en la RFP — no inventar costo.")
+        if not metadata.get("budget_range") and not re.search(r"€|EUR", text, re.I):
+            open_q.append("Sin cifra de presupuesto en € en la RFP — no inventar costo.")
         if metadata.get("budget_range"):
             aspects.append(f"Rango presupuesto detectado: {metadata['budget_range']}")
 

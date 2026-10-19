@@ -40,6 +40,10 @@ class DepartmentSectionOut(BaseModel):
     needs_human_review: bool = False
     section_status: str = "pendiente"
     approval_status: str = "pendiente"
+    approver: str | None = None
+    approved_at: datetime | None = None
+    approval_comment: str | None = None
+    approval_iteration: int = 0
 
 
 class RfpMetadataOut(BaseModel):
@@ -59,6 +63,17 @@ class RfpMetadataOut(BaseModel):
     open_questions: list[str] = Field(default_factory=list)
 
 
+class FinalDocumentOut(BaseModel):
+    ticket_id: int
+    title: str
+    content: str
+    total_estimated_value: str | None = None
+    currency: str = "EUR"
+    currency_symbol: str = "€"
+    sections_included: list[str] = Field(default_factory=list)
+    generated_at: datetime | None = None
+
+
 class RfpTicketOut(BaseModel):
     ticket_id: int
     status: str
@@ -73,6 +88,11 @@ class RfpTicketOut(BaseModel):
     metadata: RfpMetadataOut | None = None
     department_sections: list[DepartmentSectionOut] = Field(default_factory=list)
     synthesizer_summary: dict[str, Any] | None = None
+    ceo_approval_status: str | None = None
+    ceo_approver: str | None = None
+    ceo_comment: str | None = None
+    pending_approvals: list[dict[str, Any]] = Field(default_factory=list)
+    final_document: FinalDocumentOut | None = None
 
 
 class RfpUploadAccepted(BaseModel):
@@ -88,3 +108,27 @@ class RfpGenerateAccepted(BaseModel):
         "Generación de borradores encolada; el ticket pasará por "
         "generando_borrador → en_evaluacion → borrador_listo o needs_human_review."
     )
+
+
+class RfpApprovalStartAccepted(BaseModel):
+    ticket_id: int
+    status: str = "esperando_aprobacion"
+    message: str = (
+        "Aprobación humana iniciada; cada departamento puede aprobar en paralelo "
+        "sin bloquear a los demás."
+    )
+    pending: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class RfpApprovalDecisionIn(BaseModel):
+    action: str  # approve | reject | request_changes
+    comment: str = ""
+
+
+class RfpApprovalDecisionOut(BaseModel):
+    ticket_id: int
+    department_id: str
+    approval_status: str
+    ticket_status: str
+    pending_interrupt: dict[str, Any] | None = None
+    final_document: FinalDocumentOut | None = None

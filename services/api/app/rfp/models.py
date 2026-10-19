@@ -32,11 +32,33 @@ class RfpTicket(SQLModel, table=True):
     handoff_ready: bool = Field(default=False)
     synthesizer_payload_json: str | None = Field(default=None, sa_column=Column(Text))
     error_message: str | None = None
+    # Parte 3
+    approval_trace_json: str | None = Field(default=None, sa_column=Column(Text))
+    ceo_approval_status: str | None = Field(default=None)  # pendiente|aprobado|rechazado
+    ceo_approver: str | None = None
+    ceo_approved_at: datetime | None = None
+    ceo_comment: str | None = None
     created_at: datetime = Field(
         default_factory=_utc_now,
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
     updated_at: datetime = Field(
+        default_factory=_utc_now,
+        sa_column=Column(DateTime(timezone=True), nullable=False),
+    )
+
+
+class RfpFinalDocument(SQLModel, table=True):
+    __tablename__ = "rfp_final_document"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    ticket_id: int = Field(foreign_key="rfp_ticket.id", index=True, unique=True)
+    title: str = ""
+    content: str = Field(default="", sa_column=Column(Text))
+    total_estimated_value: str | None = None
+    currency: str = Field(default="EUR")
+    sections_json: str = Field(default="[]", sa_column=Column(Text))
+    generated_at: datetime = Field(
         default_factory=_utc_now,
         sa_column=Column(DateTime(timezone=True), nullable=False),
     )
@@ -86,8 +108,11 @@ class DepartmentSection(SQLModel, table=True):
     # pendiente | generando | en_evaluacion | aprobado_auto | needs_human_review
     # Parte 3 placeholders
     approval_status: str = Field(default="pendiente")
+    # pendiente | aprobado | rechazado | cambios_solicitados | needs_human_review
     approver: str | None = None
     approved_at: datetime | None = None
+    approval_comment: str | None = Field(default=None, sa_column=Column(Text))
+    approval_iteration: int = Field(default=0)
     created_at: datetime = Field(
         default_factory=_utc_now,
         sa_column=Column(DateTime(timezone=True), nullable=False),

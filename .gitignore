@@ -72,3 +72,4 @@ data/forecast/*
 
 # Redis local dump
 dump.rdb
+data/rfp_checkpoints/

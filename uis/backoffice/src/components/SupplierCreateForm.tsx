@@ -23,7 +23,7 @@ type FormState = {
   country: "Colombia" | "USA";
   categories: string[];
   rate_per_unit: string;
-  currency: "COP" | "USD";
+  currency: "EUR";
   status: SupplierStatus;
   contact_email: string;
   notes: string;
@@ -34,7 +34,7 @@ const emptyForm: FormState = {
   country: "Colombia",
   categories: ["carne"],
   rate_per_unit: "",
-  currency: "COP",
+  currency: "EUR",
   status: "active",
   contact_email: "",
   notes: "",
@@ -57,7 +57,7 @@ export default function SupplierCreateForm({ onCreated, onError, onMessage }: Pr
     setForm((prev) => ({
       ...prev,
       country,
-      currency: country === "Colombia" ? "COP" : "USD",
+      currency: "EUR",
     }));
   }
 
@@ -80,7 +80,7 @@ export default function SupplierCreateForm({ onCreated, onError, onMessage }: Pr
       country: form.country,
       categories: form.categories,
       rate_per_unit: Number(form.rate_per_unit),
-      currency: form.country === "Colombia" ? "COP" : "USD",
+      currency: "EUR",
       status: form.status,
       contact_email: form.contact_email.trim() || null,
       notes: form.notes.trim() || null,
@@ -99,7 +99,7 @@ export default function SupplierCreateForm({ onCreated, onError, onMessage }: Pr
       setForm({
         ...emptyForm,
         country: form.country,
-        currency: form.country === "Colombia" ? "COP" : "USD",
+        currency: "EUR",
       });
       onMessage("Proveedor registrado correctamente.");
       await onCreated();

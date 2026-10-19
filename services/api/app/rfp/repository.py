@@ -9,9 +9,10 @@ from typing import Any
 from sqlmodel import Session, select
 
 from app.rfp.departments import DEPARTMENTS
-from app.rfp.models import DepartmentSection, RfpMetadata, RfpTicket
+from app.rfp.models import DepartmentSection, RfpFinalDocument, RfpMetadata, RfpTicket
 from app.rfp.schemas import (
     DepartmentSectionOut,
+    FinalDocumentOut,
     RfpMetadataOut,
     RfpTicketOut,
 )
@@ -295,8 +296,34 @@ def ticket_to_out(session: Session, ticket: RfpTicket) -> RfpTicketOut:
                 needs_human_review=s.needs_human_review,
                 section_status=s.section_status,
                 approval_status=s.approval_status,
+                approver=s.approver,
+                approved_at=s.approved_at,
+                approval_comment=s.approval_comment,
+                approval_iteration=s.approval_iteration,
             )
         )
+    final_out = None
+    final = session.exec(
+        select(RfpFinalDocument).where(RfpFinalDocument.ticket_id == ticket.id)
+    ).first()
+    if final:
+        final_out = FinalDocumentOut(
+            ticket_id=ticket.id or 0,
+            title=final.title,
+            content=final.content,
+            total_estimated_value=final.total_estimated_value,
+            currency=final.currency or "EUR",
+            currency_symbol="€",
+            sections_included=json.loads(final.sections_json or "[]"),
+            generated_at=final.generated_at,
+        )
+    pending: list[dict] = []
+    if ticket.approval_trace_json:
+        try:
+            trace = json.loads(ticket.approval_trace_json)
+            pending = list(trace.get("pending") or [])
+        except json.JSONDecodeError:
+            pending = []
     return RfpTicketOut(
         ticket_id=ticket.id or 0,
         status=ticket.status,
@@ -311,4 +338,121 @@ def ticket_to_out(session: Session, ticket: RfpTicket) -> RfpTicketOut:
         metadata=meta_out,
         department_sections=section_outs,
         synthesizer_summary=synth,
+        ceo_approval_status=ticket.ceo_approval_status,
+        ceo_approver=ticket.ceo_approver,
+        ceo_comment=ticket.ceo_comment,
+        pending_approvals=pending,
+        final_document=final_out,
     )
+
+
+def load_sections_for_approval(session: Session, ticket_id: int) -> list[dict[str, Any]]:
+    rows = session.exec(
+        select(DepartmentSection).where(DepartmentSection.ticket_id == ticket_id)
+    ).all()
+    return [
+        {
+            "department_id": s.department_id,
+            "contact_name": s.contact_name,
+            "key_aspects": json.loads(s.key_aspects_json or "[]"),
+            "draft_content": s.draft_content or "",
+            "approval_status": s.approval_status,
+            "approver": s.approver,
+            "approved_at": s.approved_at.isoformat() if s.approved_at else None,
+        }
+        for s in rows
+    ]
+
+
+def set_approval_trace(
+    session: Session, ticket_id: int, trace: dict[str, Any]
+) -> None:
+    ticket = session.get(RfpTicket, ticket_id)
+    if ticket is None:
+        return
+    ticket.approval_trace_json = json.dumps(trace, ensure_ascii=False)
+    ticket.updated_at = _now()
+    session.add(ticket)
+    session.commit()
+
+
+def update_section_approval(
+    session: Session,
+    ticket_id: int,
+    department_id: str,
+    *,
+    approval_status: str,
+    approver: str | None = None,
+    comment: str | None = None,
+    iteration: int = 0,
+) -> DepartmentSection | None:
+    row = session.exec(
+        select(DepartmentSection).where(
+            DepartmentSection.ticket_id == ticket_id,
+            DepartmentSection.department_id == department_id,
+        )
+    ).first()
+    if row is None:
+        return None
+    row.approval_status = approval_status
+    row.approver = approver or row.contact_name
+    row.approval_comment = comment
+    row.approval_iteration = iteration
+    if approval_status == "aprobado":
+        row.approved_at = _now()
+    row.updated_at = _now()
+    session.add(row)
+    session.commit()
+    session.refresh(row)
+    return row
+
+
+def save_ceo_approval(
+    session: Session,
+    ticket_id: int,
+    *,
+    action: str,
+    comment: str = "",
+) -> RfpTicket | None:
+    ticket = session.get(RfpTicket, ticket_id)
+    if ticket is None:
+        return None
+    ticket.ceo_approver = "Mariana Restrepo"
+    ticket.ceo_comment = comment
+    ticket.ceo_approved_at = _now()
+    ticket.ceo_approval_status = (
+        "aprobado" if action == "approve" else "rechazado"
+    )
+    ticket.updated_at = _now()
+    session.add(ticket)
+    session.commit()
+    session.refresh(ticket)
+    return ticket
+
+
+def upsert_final_document(
+    session: Session, ticket_id: int, doc: dict[str, Any]
+) -> RfpFinalDocument:
+    existing = session.exec(
+        select(RfpFinalDocument).where(RfpFinalDocument.ticket_id == ticket_id)
+    ).first()
+    payload = {
+        "title": doc.get("title") or "",
+        "content": doc.get("content") or "",
+        "total_estimated_value": doc.get("total_estimated_value"),
+        "currency": doc.get("currency") or "EUR",
+        "sections_json": json.dumps(
+            doc.get("sections_included") or [], ensure_ascii=False
+        ),
+    }
+    if existing:
+        for k, v in payload.items():
+            setattr(existing, k, v)
+        existing.generated_at = _now()
+        row = existing
+    else:
+        row = RfpFinalDocument(ticket_id=ticket_id, **payload)
+    session.add(row)
+    session.commit()
+    session.refresh(row)
+    return row

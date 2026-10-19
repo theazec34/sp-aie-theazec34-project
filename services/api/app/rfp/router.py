@@ -15,7 +15,15 @@ from sqlmodel import Session
 from app.auth.deps import get_current_user
 from app.database import get_db
 from app.rfp import repository as repo
-from app.rfp.schemas import RfpGenerateAccepted, RfpTicketOut, RfpUploadAccepted
+from app.rfp.schemas import (
+    FinalDocumentOut,
+    RfpApprovalDecisionIn,
+    RfpApprovalDecisionOut,
+    RfpApprovalStartAccepted,
+    RfpGenerateAccepted,
+    RfpTicketOut,
+    RfpUploadAccepted,
+)
 from app.users.models import UserInDB
 
 logger = logging.getLogger("api.rfp")
@@ -168,3 +176,125 @@ def start_response_generation(
     _enqueue_generation(ticket_id)
     logger.info("rfp ticket=%s generación encolada", ticket_id)
     return RfpGenerateAccepted(ticket_id=ticket_id, status="generando_borrador")
+
+
+_PART3_ALLOWED = frozenset({"borrador_listo", "needs_human_review", "esperando_aprobacion"})
+
+
+@router.post(
+    "/tickets/{ticket_id}/approvals/start",
+    response_model=RfpApprovalStartAccepted,
+    status_code=202,
+)
+def start_approvals_endpoint(
+    ticket_id: int,
+    session: Session = Depends(get_db),
+    _user: UserInDB = Depends(get_current_user),
+) -> RfpApprovalStartAccepted:
+    """Inicia Parte 3: interrupts HITL por departamento (paralelos)."""
+    ticket = repo.get_ticket(session, ticket_id)
+    if ticket is None:
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+    if ticket.status not in _PART3_ALLOWED:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "La aprobación requiere borrador_listo o needs_human_review "
+                f"(estado actual: {ticket.status})."
+            ),
+        )
+    sections = repo.load_sections_for_approval(session, ticket_id)
+    if not any(s.get("draft_content") for s in sections):
+        raise HTTPException(
+            status_code=400,
+            detail="No hay borradores de sección para aprobar (ejecuta Parte 2 primero).",
+        )
+    _ensure_rfp_path()
+    from rfp.runner import start_approvals
+
+    try:
+        out = start_approvals(ticket_id)
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("fallo start approvals ticket=%s", ticket_id)
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return RfpApprovalStartAccepted(
+        ticket_id=ticket_id,
+        status="esperando_aprobacion",
+        pending=list(out.get("pending") or []),
+    )
+
+
+@router.post(
+    "/tickets/{ticket_id}/approvals/{department_id}",
+    response_model=RfpApprovalDecisionOut,
+)
+def decide_approval(
+    ticket_id: int,
+    department_id: str,
+    body: RfpApprovalDecisionIn,
+    session: Session = Depends(get_db),
+    _user: UserInDB = Depends(get_current_user),
+) -> RfpApprovalDecisionOut:
+    """Resume HITL: approve | reject | request_changes (departamento o ceo)."""
+    ticket = repo.get_ticket(session, ticket_id)
+    if ticket is None:
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+    if ticket.status not in {"esperando_aprobacion", "needs_human_review"}:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Ticket no está en aprobación (estado: {ticket.status}).",
+        )
+    _ensure_rfp_path()
+    from rfp.runner import apply_approval_decision
+
+    try:
+        out = apply_approval_decision(
+            ticket_id,
+            department_id,
+            action=body.action,
+            comment=body.comment or "",
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("fallo approval ticket=%s dept=%s", ticket_id, department_id)
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    final = None
+    if out.get("final_document"):
+        fd = out["final_document"]
+        final = FinalDocumentOut(
+            ticket_id=ticket_id,
+            title=fd.get("title") or "",
+            content=fd.get("content") or "",
+            total_estimated_value=fd.get("total_estimated_value"),
+            currency="EUR",
+            currency_symbol="€",
+            sections_included=list(fd.get("sections_included") or []),
+        )
+    return RfpApprovalDecisionOut(
+        ticket_id=ticket_id,
+        department_id=department_id,
+        approval_status=out.get("approval_status") or "pendiente",
+        ticket_status=out.get("ticket_status") or "esperando_aprobacion",
+        pending_interrupt=out.get("pending_interrupt"),
+        final_document=final,
+    )
+
+
+@router.get(
+    "/tickets/{ticket_id}/final-document",
+    response_model=FinalDocumentOut,
+)
+def get_final_document(
+    ticket_id: int,
+    session: Session = Depends(get_db),
+    _user: UserInDB = Depends(get_current_user),
+) -> FinalDocumentOut:
+    ticket = repo.get_ticket(session, ticket_id)
+    if ticket is None:
+        raise HTTPException(status_code=404, detail="Ticket no encontrado")
+    detail = repo.ticket_to_out(session, ticket)
+    if not detail.final_document:
+        raise HTTPException(status_code=404, detail="Documento final aún no disponible")
+    return detail.final_document
