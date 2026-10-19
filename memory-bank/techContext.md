@@ -77,6 +77,13 @@
 - Flower: `:5555` · worker proceso independiente
 - Docs: `docs/async-tasks/DEV-55.md`
 
+## Agent Guardrails (Hito 8 · Parte 2)
+- Paquete: `services/agent/guardrails/`
+- Capas: system prompt seguro, input/output guards, aislamiento RAG/tool, observabilidad
+- API: `GET /agent/guardrails/summary`
+- Docs: `docs/agent/agent-guardrails.md`
+- Evals: `tests/pipelines/test_agent_guardrails.py`
+
 ## Agent Memory (Hito 8 · Parte 1)
 - Paquete: `services/agent/memory/` — namespace `brasaland_agent_memory` (file/Redis)
 - Nunca escribe en Qdrant `brasaland_knowledge` / `*_knowledge`
@@ -131,5 +138,6 @@
 - Celery DEV-55: mergeado (#36)
 - LangGraph agent base: #37 · external tools: #38
 - MCP OAuth tools: #39
-- Agent Memory: rama `feature/agent-memory`
+- Agent Memory: #40
+- Agent Guardrails: rama `feature/agent-guardrails`
 - Producto estable: **`main`**

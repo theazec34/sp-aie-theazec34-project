@@ -20,6 +20,7 @@ for _p in (_REPO, _SERVICES, _API):
 from app.auth.deps import get_current_user  # noqa: E402
 from app.users.models import UserInDB  # noqa: E402
 from agent.graph import run_agent  # noqa: E402
+from agent.guardrails import guardrail_summary  # noqa: E402
 from agent.tracing import load_trace  # noqa: E402
 
 logger = logging.getLogger(__name__)
@@ -47,6 +48,9 @@ class AgentQueryResponse(BaseModel):
     sources_used: list[str] = []
     memory_proposal: dict | None = None
     memory_decision: str | None = None
+    guard_action: str | None = None
+    guard_reason: str | None = None
+    guard_failure_type: str | None = None
 
 
 class AgentTraceResponse(BaseModel):
@@ -90,7 +94,18 @@ def agent_query(
         sources_used=list(result.get("sources_used") or []),
         memory_proposal=result.get("memory_proposal"),
         memory_decision=result.get("memory_decision"),
+        guard_action=result.get("guard_action"),
+        guard_reason=result.get("guard_reason"),
+        guard_failure_type=result.get("guard_failure_type"),
     )
+
+
+@router.get("/guardrails/summary")
+def agent_guardrails_summary(
+    _user: UserInDB = Depends(get_current_user),
+) -> dict:
+    """How many times each guardrail blocked/redirected in this process."""
+    return guardrail_summary()
 
 
 @router.get("/traces/{run_id}", response_model=AgentTraceResponse)

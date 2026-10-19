@@ -1,4 +1,4 @@
-"""Brasaland LangGraph agent state (Parts 1–3 + memory)."""
+"""Brasaland LangGraph agent state (Parts 1–3 + memory + guardrails)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from typing import Any, Literal, NotRequired, TypedDict
 
 
 class AgentState(TypedDict):
-    """Explicit state — session + memory fields; no implicit prompt dump."""
+    """Explicit state — session, memory, and guardrail fields."""
 
     question: str
     chunks: list[dict[str, Any]]
@@ -15,7 +15,9 @@ class AgentState(TypedDict):
     empty_question: bool
     has_context: bool
     # Part 2 — routing + tool payloads
-    intent: Literal["rag", "ticket", "inventory", "memory_confirm"]
+    intent: Literal[
+        "rag", "ticket", "inventory", "memory_confirm", "guard_block", "casual"
+    ]
     tool_ok: bool
     tool_result: dict[str, Any] | None
     sources_used: list[str]
@@ -28,8 +30,14 @@ class AgentState(TypedDict):
     memory_proposal: NotRequired[dict[str, Any] | None]
     memory_decision: NotRequired[str | None]
     pending_resolved: NotRequired[bool]
+    # Part 4 — guardrails
+    guard_action: NotRequired[str | None]
+    guard_reason: NotRequired[str | None]
+    guard_failure_type: NotRequired[str | None]
 
 
-RouteAfterReceive = Literal["retrieve", "ticket", "inventory", "refuse", "memory_confirm"]
+RouteAfterReceive = Literal[
+    "retrieve", "ticket", "inventory", "refuse", "memory_confirm", "guard_block", "casual"
+]
 RouteAfterRetrieve = Literal["generate", "refuse"]
 RouteAfterTool = Literal["answer", "fallback"]
