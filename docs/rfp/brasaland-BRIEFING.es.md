@@ -69,24 +69,24 @@ Los workers reciben **metadatos compartidos + extractos relevantes a su departam
 
 Usa los PDF listos en [`rfp-requests/brasaland/`](./rfp-requests/brasaland/) como **subidas de prueba a través de la UI**. El proceso de recepción guarda cada PDF subido bajo `data/raw/` (no trates los PDF del currículo como inventario pre-sembrado en el repo). Las RFP formales e informales deben **aceptarse y procesarse**; el documento inválido debe **rechazarse**.
 
-1. **`brasaland-request-1.pdf` — RFP formal (aceptar):** _Sunset Bay Resorts_, concesión co-branded en 3 resorts de Florida, exclusividad + menú de autor, ~60–75k USD/año. Activa los cuatro departamentos, incluido `training`. **Nota:** supera 50.000 USD/año → aprobación extra de la CEO (Mariana Restrepo) en la Parte 3.
+1. **`brasaland-request-1.pdf` — RFP formal (aceptar):** _Sunset Bay Resorts_, concesión co-branded en 3 resorts de Florida, exclusividad + menú de autor, ~55–70k €/año. Activa los cuatro departamentos, incluido `training`. **Nota:** supera 50.000 €/año → aprobación extra de la CEO (Mariana Restrepo) en la Parte 3.
 2. **`brasaland-request-2.pdf` — RFP informal (aceptar):** correo de _Andes Tech Solutions_ pidiendo catering semanal para 220 empleados en Medellín, contrato 12 meses, menú estándar. Activa `marketing`, `operaciones` y `procurement` (no necesariamente `training`).
 3. **`brasaland-request-3.pdf` — inválido (rechazar):** consulta de franquicia sin alcance, presupuesto ni fecha límite. El clasificador debe descartarlo.
 
 ## 5. Restricciones de negocio (lineamientos para el evaluador de cumplimiento)
 
-- Todo precio debe expresarse en COP y en USD.
+- Todo precio debe expresarse en **euros (€)**.
 - Toda propuesta debe mencionar, al menos una vez, los tres pilares de la marca: calidad consistente, experiencia cálida, velocidad de servicio.
 - Ninguna sección puede prometer tiempos de montaje/entrega menores a 10 días hábiles.
 - Ninguna propuesta puede mencionar nombres de competidores.
 - Toda propuesta debe incluir un período de validez de la oferta (30 días desde su emisión).
-- Contratos estimados por encima de 50.000 USD/año requieren aprobación adicional del CEO antes de generarse el documento final.
+- Contratos estimados por encima de 50.000 €/año requieren aprobación adicional del CEO antes de generarse el documento final.
 
 ## 6. Entregables esperados
 
 - **Parte 1:** el ticket identifica correctamente si un documento es una RFP de Brasaland, extrae metadatos y reparte el análisis entre `marketing`, `operaciones`, `procurement` y `training` (solo los que apliquen).
 - **Parte 2:** cada departamento activo genera su sección de la propuesta y pasa por evaluación de legibilidad, pertinencia y cumplimiento de los lineamientos de esta sección 5.
-- **Parte 3:** el responsable nombrado de cada departamento activo (§2.1) aprueba de forma independiente; si el valor anual estimado supera 50.000 USD/año, **Mariana Restrepo (CEO)** también debe aprobar antes de la síntesis. No inventes jerarquía extra más allá de esa regla del BRIEFING.
+- **Parte 3:** el responsable nombrado de cada departamento activo (§2.1) aprueba de forma independiente; si el valor anual estimado supera 50.000 €/año, **Mariana Restrepo (CEO)** también debe aprobar antes de la síntesis. No inventes jerarquía extra más allá de esa regla del BRIEFING.
 
 ## 7. Parte 3 — Triggers de conflicto y árbitro fijo
 
@@ -96,6 +96,6 @@ El arbitraje debe ser un nodo dedicado del grafo disparado por **contradicciones
 | --------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
 | `cost-vs-feasibility` | El estimado de costo/`procurement` no soporta el precio por evento o por cubierto implícito en `operaciones` | Camila Ospina (Marketing; dueña del ticket)                                          | Subir precio o reducir alcance; forzar `request_changes` en la(s) sección(es) desalineada(s) |
 | `setup-sla-breach`    | Cualquier sección promete montaje/entrega bajo 10 días hábiles (viola §5)                                    | Felipe Guerrero (`operaciones`) rechaza; Camila escala si otros depto aún lo embeben | Forzar `request_changes` hasta ≥10 días hábiles en todas partes                              |
-| `ceo-threshold`       | Valor anual estimado supera 50.000 USD y la aprobación de la CEO sigue pendiente                             | Mariana Restrepo (CEO)                                                               | Bloquear ultimate synthesizer hasta `approve` de CEO; ruta de rechazo si la CEO rechaza      |
+| `ceo-threshold`       | Valor anual estimado supera 50.000 € y la aprobación de la CEO sigue pendiente                               | Mariana Restrepo (CEO)                                                               | Bloquear ultimate synthesizer hasta `approve` de CEO; ruta de rechazo si la CEO rechaza      |
 
 Conecta estos ids de trigger a tu nodo de arbitraje. Los agentes pueden **señalar** un conflicto; no deben **resolverlo** por consenso libre.

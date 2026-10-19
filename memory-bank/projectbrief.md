@@ -26,6 +26,7 @@ Plataforma digital con:
 13. RFP intake Parte 1: tickets PDF → LangGraph `rfp_intake` → key_aspects por departamento (SQLModel)
 14. Idioma de producto: español en UI y mensajes al operador (`AGENTS.md` ley 9)
 15. RFP Parte 2: generadores + evaluadores paralelos + ciclo con `needs_human_review`
+16. RFP Parte 3: HITL por departamento (interrupt/checkpointer) + documento final; moneda €
 
 ## Fuentes de verdad
 - Mapa operativo: **`PROJECT.md`**

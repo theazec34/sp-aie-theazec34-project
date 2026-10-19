@@ -10,6 +10,17 @@ export type EvaluationResult = {
   feedback_for_generator?: string;
 };
 
+export type FinalDocument = {
+  ticket_id: number;
+  title: string;
+  content: string;
+  total_estimated_value?: string | null;
+  currency?: string;
+  currency_symbol?: string;
+  sections_included?: string[];
+  generated_at?: string | null;
+};
+
 export type RfpTicket = {
   ticket_id: number;
   status: string;
@@ -46,21 +57,22 @@ export type RfpTicket = {
     needs_human_review?: boolean;
     section_status?: string;
     approval_status?: string;
+    approver?: string | null;
+    approval_comment?: string | null;
+    approval_iteration?: number;
   }>;
-  synthesizer_summary?: {
-    sales_brief?: string;
-    summary_lines?: string[];
-    departments?: Array<{
-      department_id: string;
-      department_name?: string;
-      contact?: string;
-      ask_them?: string[];
-      open_questions?: string[];
-    }>;
-    open_questions?: string[];
-    part2?: Record<string, unknown>;
-    part2_status?: string;
-  } | null;
+  synthesizer_summary?: Record<string, unknown> | null;
+  ceo_approval_status?: string | null;
+  ceo_approver?: string | null;
+  ceo_comment?: string | null;
+  pending_approvals?: Array<{
+    department_id: string;
+    thread_id?: string;
+    approver?: string;
+    interrupt?: Record<string, unknown>;
+    approval_status?: string;
+  }>;
+  final_document?: FinalDocument | null;
 };
 
 export async function listRfpTickets(): Promise<RfpTicket[]> {
@@ -93,6 +105,43 @@ export async function startRfpGeneration(
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`No se pudo iniciar la generación (${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
+export async function startRfpApprovals(ticketId: number): Promise<{
+  ticket_id: number;
+  status: string;
+  pending: unknown[];
+}> {
+  const res = await apiFetch(`/rfp/tickets/${ticketId}/approvals/start`, { method: "POST" });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`No se pudo iniciar la aprobación (${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
+export async function decideRfpApproval(
+  ticketId: number,
+  departmentId: string,
+  action: "approve" | "reject" | "request_changes",
+  comment = "",
+): Promise<{
+  ticket_id: number;
+  department_id: string;
+  approval_status: string;
+  ticket_status: string;
+  final_document?: FinalDocument | null;
+}> {
+  const res = await apiFetch(`/rfp/tickets/${ticketId}/approvals/${departmentId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, comment }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`No se pudo registrar la decisión (${res.status}): ${text}`);
   }
   return res.json();
 }

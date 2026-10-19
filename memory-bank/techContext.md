@@ -93,10 +93,21 @@
 - Entrada: handoff Parte 1 (no re-parsea PDF)
 - API: `POST /rfp/tickets/{id}/generate` → 202
 - Estados: `generando_borrador` → `en_evaluacion` → `borrador_listo` | `needs_human_review`
-- EvaluationResult: legibilidad / pertinencia / cumplimiento (BRIEFING §5)
+- EvaluationResult: legibilidad / pertinencia / cumplimiento (BRIEFING §5, moneda €)
 - Docs: `docs/rfp/rfp-response-generation-part2.md`
 - Tests: `tests/pipelines/test_rfp_generation.py`
 - CLI: `scripts/run_rfp_generation.py`
+
+## RFP Approval Completion (Hito 9 · Parte 3)
+- `approval_graph.py` (interrupt + SqliteSaver) · `arbitration.py` · `final_document.py`
+- thread_id: `rfp-{ticket_id}:{department_id}` (paralelo no bloqueante)
+- API: approvals/start, approvals/{dept}, final-document
+- Estados: `esperando_aprobacion` → `terminado`
+- Checkpoints: `data/rfp_checkpoints/rfp_approval.sqlite` (gitignore)
+- Deps: `langgraph-checkpoint-sqlite`
+- Tests: `test_rfp_approval.py` · E2E `scripts/run_rfp_e2e_approval.py`
+- Docs: `docs/rfp/rfp-approval-completion-part3.md`
+- Moneda: **EUR (€)** · umbral CEO 50.000 €/año
 ## Agent Guardrails (Hito 8 · Parte 2)
 - Paquete: `services/agent/guardrails/`
 - Capas: system prompt seguro, input/output guards, aislamiento RAG/tool, observabilidad

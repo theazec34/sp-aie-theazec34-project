@@ -84,12 +84,11 @@ def evaluate_compliance(draft: str, *, metadata: dict[str, Any] | None = None) -
     violations: list[str] = []
     rule_ids: list[str] = []
 
-    # price-cop-usd
-    has_cop = bool(re.search(r"\bcop\b", lower))
-    has_usd = bool(re.search(r"\busd\b", lower))
-    if not (has_cop and has_usd):
-        rule_ids.append("price-cop-usd")
-        violations.append(COMPLIANCE_RULES["price-cop-usd"])
+    # price-eur
+    has_eur = bool(re.search(r"€|\beur(os)?\b", lower))
+    if not has_eur:
+        rule_ids.append("price-eur")
+        violations.append(COMPLIANCE_RULES["price-eur"])
 
     # brand-pillars
     if not all(p in lower for p in BRAND_PILLARS):

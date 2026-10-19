@@ -173,3 +173,229 @@ def process_generation(ticket_id: int) -> None:
             synthesizer_payload=synth,
         )
     logger.info("ticket %s generación -> %s", ticket_id, status)
+
+
+def start_approvals(ticket_id: int) -> dict:
+    """
+    Parte 3: arranca interrupt HITL por departamento (threads independientes).
+    Estado ticket → esperando_aprobacion.
+    """
+    from sqlmodel import Session
+
+    from app.database import engine
+    from app.rfp import repository as repo
+    from data.pipelines.rfp_intake.approval_graph import start_department_approval
+    from data.pipelines.rfp_intake.departments_ref import DEPARTMENTS
+
+    with Session(engine) as session:
+        ticket = repo.get_ticket(session, ticket_id)
+        if ticket is None:
+            raise ValueError(f"ticket {ticket_id} no encontrado")
+        sections = repo.load_sections_for_approval(session, ticket_id)
+        if not sections:
+            raise ValueError("Sin secciones para aprobar")
+        repo.update_ticket_status(
+            session, ticket_id, "esperando_aprobacion", error_message=None
+        )
+
+    pending = []
+    traces = []
+    for sec in sections:
+        if not sec.get("draft_content"):
+            continue
+        info = DEPARTMENTS.get(sec["department_id"], {})
+        out = start_department_approval(
+            ticket_id=ticket_id,
+            department_id=sec["department_id"],
+            draft_content=sec["draft_content"],
+            key_aspects=sec.get("key_aspects") or [],
+            approver_name=sec.get("contact_name") or info.get("owner"),
+        )
+        traces.append(out)
+        if out.get("status") == "interrupted":
+            pending.append(
+                {
+                    "department_id": sec["department_id"],
+                    "thread_id": out.get("thread_id"),
+                    "approver": info.get("owner"),
+                    "interrupt": out.get("pending_interrupt"),
+                }
+            )
+
+    with Session(engine) as session:
+        repo.set_approval_trace(
+            session,
+            ticket_id,
+            {"pending": pending, "events": traces, "started": True},
+        )
+    return {"ticket_id": ticket_id, "status": "esperando_aprobacion", "pending": pending}
+
+
+def apply_approval_decision(
+    ticket_id: int,
+    department_id: str,
+    *,
+    action: str,
+    comment: str = "",
+) -> dict:
+    """Resume HITL de un departamento (o CEO) y reevalúa síntesis."""
+    from sqlmodel import Session
+
+    from app.database import engine
+    from app.rfp import repository as repo
+    from data.pipelines.rfp_intake.approval_graph import (
+        resume_department_approval,
+        run_arbitration_and_maybe_finalize,
+        thread_id_for,
+    )
+    from data.pipelines.rfp_intake.departments_ref import DEPARTMENTS
+
+    if action not in {"approve", "reject", "request_changes"}:
+        raise ValueError("action debe ser approve | reject | request_changes")
+
+    with Session(engine) as session:
+        ticket = repo.get_ticket(session, ticket_id)
+        if ticket is None:
+            raise ValueError("ticket no encontrado")
+        handoff = repo.load_part1_handoff(session, ticket_id)
+        metadata = (handoff or {}).get("metadata") or {}
+
+    if department_id == "ceo":
+        with Session(engine) as session:
+            repo.save_ceo_approval(
+                session, ticket_id, action=action, comment=comment
+            )
+        result = {"department_id": "ceo", "approval_status": (
+            "aprobado" if action == "approve" else "rechazado"
+        ), "status": "completed", "trace": []}
+    else:
+        result = resume_department_approval(
+            ticket_id=ticket_id,
+            department_id=department_id,
+            action=action,  # type: ignore[arg-type]
+            comment=comment,
+        )
+        # Si sigue interrupted (p.ej. tras reject→again), actualizar pending
+        if result.get("status") == "completed":
+            with Session(engine) as session:
+                info = DEPARTMENTS.get(department_id, {})
+                repo.update_section_approval(
+                    session,
+                    ticket_id,
+                    department_id,
+                    approval_status=result.get("approval_status") or "pendiente",
+                    approver=result.get("approver_name") or info.get("owner"),
+                    comment=result.get("comment") or comment,
+                    iteration=int(result.get("iteration") or 0),
+                )
+
+    # Actualizar pending + arbitraje / documento final
+    with Session(engine) as session:
+        sections = repo.load_sections_for_approval(session, ticket_id)
+        ticket = repo.get_ticket(session, ticket_id)
+        ceo_approval = None
+        if ticket and ticket.ceo_approval_status:
+            ceo_approval = {
+                "action": (
+                    "approve"
+                    if ticket.ceo_approval_status == "aprobado"
+                    else "reject"
+                ),
+                "comment": ticket.ceo_comment or "",
+                "approved_at": (
+                    ticket.ceo_approved_at.isoformat()
+                    if ticket.ceo_approved_at
+                    else None
+                ),
+            }
+        final_pack = run_arbitration_and_maybe_finalize(
+            ticket_id=ticket_id,
+            metadata=metadata,
+            sections=sections,
+            ceo_approval=ceo_approval,
+        )
+
+        # Rebuild pending from sections still pendiente + open interrupts
+        pending = []
+        for sec in sections:
+            if sec.get("approval_status") in {"aprobado"}:
+                continue
+            pending.append(
+                {
+                    "department_id": sec["department_id"],
+                    "thread_id": thread_id_for(ticket_id, sec["department_id"]),
+                    "approver": sec.get("contact_name"),
+                    "approval_status": sec.get("approval_status"),
+                }
+            )
+        if final_pack.get("needs_ceo") and (
+            not ceo_approval or ceo_approval.get("action") != "approve"
+        ):
+            pending.append(
+                {
+                    "department_id": "ceo",
+                    "thread_id": thread_id_for(ticket_id, "ceo"),
+                    "approver": "Mariana Restrepo",
+                    "approval_status": ticket.ceo_approval_status if ticket else None,
+                }
+            )
+
+        # Si reject/request_changes y completed needs_human_review — ok
+        # Si result interrupted after resume (again path), re-list interrupt
+        if result.get("status") == "interrupted":
+            pending = [
+                p
+                for p in pending
+                if p["department_id"] != department_id
+            ] + [
+                {
+                    "department_id": department_id,
+                    "thread_id": result.get("thread_id"),
+                    "approver": DEPARTMENTS.get(department_id, {}).get("owner"),
+                    "interrupt": result.get("pending_interrupt"),
+                }
+            ]
+
+        repo.set_approval_trace(
+            session,
+            ticket_id,
+            {
+                "pending": pending,
+                "last_decision": result,
+                "arbitration": final_pack.get("arbitration"),
+            },
+        )
+
+        if final_pack.get("final_document"):
+            repo.upsert_final_document(session, ticket_id, final_pack["final_document"])
+            repo.update_ticket_status(session, ticket_id, "terminado", error_message=None)
+            ticket_status = "terminado"
+        else:
+            repo.update_ticket_status(
+                session, ticket_id, "esperando_aprobacion", error_message=None
+            )
+            ticket_status = "esperando_aprobacion"
+
+        final_out = None
+        if final_pack.get("final_document"):
+            fd = final_pack["final_document"]
+            final_out = {
+                "ticket_id": ticket_id,
+                "title": fd.get("title"),
+                "content": fd.get("content"),
+                "total_estimated_value": fd.get("total_estimated_value"),
+                "currency": "EUR",
+                "currency_symbol": "€",
+                "sections_included": fd.get("sections_included") or [],
+                "generated_at": fd.get("generated_at"),
+            }
+
+    return {
+        "ticket_id": ticket_id,
+        "department_id": department_id,
+        "approval_status": result.get("approval_status") or "pendiente",
+        "ticket_status": ticket_status,
+        "pending_interrupt": result.get("pending_interrupt"),
+        "final_document": final_out,
+        "arbitration": final_pack.get("arbitration"),
+    }

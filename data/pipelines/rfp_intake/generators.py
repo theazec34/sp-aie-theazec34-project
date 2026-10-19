@@ -51,7 +51,13 @@ def generate_section(
         )
 
     # Cuerpo base compliant
-    prices = _dual_currency_line(budget, force_violate == "price-cop-usd")
+    break_price = force_violate in {"price-eur", "price-cop-usd"}
+    if break_price:
+        # Evita € residual en alcance/presupuesto al forzar fallo de price-eur
+        scope = re.sub(r"€|eur(os)?", "EUR_OMITIDO", scope, flags=re.I)
+        budget = re.sub(r"€|eur(os)?", "", budget, flags=re.I)
+
+    prices = _eur_price_line(budget, break_price)
     setup = (
         "Montaje y puesta en marcha: mínimo 12 días hábiles desde la firma "
         "(nunca menos de 10 días hábiles)."
@@ -78,9 +84,11 @@ def generate_section(
         )
 
     ceo_note = ""
-    if _budget_over_50k(budget) or force_violate == "ceo-threshold-50k":
+    if not break_price and (
+        _budget_over_50k_eur(budget) or force_violate == "ceo-threshold-50k"
+    ):
         ceo_note = (
-            "\nAviso: el valor anual estimado supera 50.000 USD; "
+            "\nAviso: el valor anual estimado supera 50.000 €; "
             "se requerirá aprobación de Mariana Restrepo (CEO) en la Parte 3."
         )
 
@@ -154,43 +162,38 @@ def generate_section(
     ).strip()
 
 
-def _dual_currency_line(budget: str, break_rule: bool) -> str:
+def _eur_price_line(budget: str, break_rule: bool) -> str:
     if break_rule:
-        return f"Precio orientativo solo en moneda local: {budget}."
-    # Asegura mención explícita COP y USD
-    has_cop = bool(re.search(r"\bCOP\b", budget, re.I))
-    has_usd = bool(re.search(r"\bUSD\b", budget, re.I))
-    if has_cop and has_usd:
-        return f"Precios de referencia: {budget} (expresados en COP y USD)."
-    if has_usd:
-        return (
-            f"Precios de referencia: {budget}. "
-            "Equivalente en COP se cotizará en la propuesta formal (COP y USD)."
-        )
-    if has_cop:
-        return (
-            f"Precios de referencia: {budget}. "
-            "Equivalente en USD se cotizará en la propuesta formal (COP y USD)."
-        )
+        # Quita cualquier mención de €/EUR para forzar fallo de cumplimiento en tests
+        stripped = re.sub(r"€|eur(os)?", "", budget, flags=re.I).strip()
+        return f"Precio orientativo sin moneda: {stripped or 'por confirmar'}."
+    if re.search(r"€|eur(os)?", budget, re.I):
+        return f"Precios de referencia: {budget} (expresados en euros €)."
+    # Normaliza presupuestos legacy COP/USD → mención en €
     return (
         f"Rango presupuestal de referencia: {budget}. "
-        "Toda cifra comercial se expresará en COP y USD."
+        "Toda cifra comercial se expresará en euros (€)."
     )
 
 
-def _budget_over_50k(budget: str) -> bool:
+def _budget_over_50k_eur(budget: str) -> bool:
+    from data.pipelines.rfp_intake.guidelines import CEO_THRESHOLD_EUR
+
     text = budget or ""
-    m = re.search(r"(\d[\d,.]*)\s*k\s*USD", text, re.I)
-    if m:
+    for m in re.finditer(r"€\s*([\d.,]+)|([\d.,]+)\s*€", text):
+        raw = (m.group(1) or m.group(2) or "").replace(".", "").replace(",", ".")
         try:
-            return float(m.group(1).replace(",", "")) * 1000 > 50000
-        except ValueError:
-            pass
-    for m in re.finditer(r"USD\s*([\d,.]+)", text, re.I):
-        try:
-            val = float(m.group(1).replace(",", ""))
-            if val > 50000:
+            if float(raw) > CEO_THRESHOLD_EUR:
                 return True
         except ValueError:
             continue
-    return bool(re.search(r"6[0-9]\s*[–\-]\s*75\s*k|60,?000|75,?000", text, re.I))
+    m = re.search(r"(\d[\d,.]*)\s*k\s*(?:€|eur)", text, re.I)
+    if m:
+        try:
+            return float(m.group(1).replace(",", ".")) * 1000 > CEO_THRESHOLD_EUR
+        except ValueError:
+            pass
+    # Legacy USD/COP seeds still treated as over-threshold when large
+    if re.search(r"6[0-9]\s*[–\-]\s*75\s*k|60[,.]?000|75[,.]?000", text, re.I):
+        return True
+    return False
