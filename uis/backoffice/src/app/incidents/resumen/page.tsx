@@ -53,7 +53,7 @@ export default function IncidentsSummaryPage() {
     setLoading(true);
     setError("");
     try {
-      const response = await apiFetch("/api/incidents/summary", { skipAuth: true });
+      const response = await apiFetch("/api/incidents/summary");
       if (!response.ok) {
         const parsed = await readApiError(response);
         throw new Error(parsed.message);

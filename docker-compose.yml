@@ -2,8 +2,8 @@
 #   docker compose up --build
 #
 # Secrets viven en `.env` (gitignored). No hardcodear claves aquí.
-# Red interna: los servicios se resuelven por nombre (`backend`, `interfaces`).
-# El navegador del host usa localhost (ver NEXT_PUBLIC_* en `.env`).
+# Red interna: Redis / Qdrant / Flower NO se publican a internet (OWASP A05).
+# Host solo: HTTPS/API (8000), frontends (3000/3001). Flower opcional en loopback.
 
 services:
   backend:
@@ -73,6 +73,7 @@ services:
     environment:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       PYTHONPATH: /app/api:/app
+      FLOWER_BASIC_AUTH: ${FLOWER_BASIC_AUTH:-}
     command:
       [
         "celery",
@@ -80,9 +81,11 @@ services:
         "celery_app.celery",
         "flower",
         "--port=5555",
+        "--basic_auth=${FLOWER_BASIC_AUTH:-ops:change-me-flower}",
       ]
+    # Solo loopback — no exposición a internet (BRIEFING hardening)
     ports:
-      - "5555:5555"
+      - "127.0.0.1:5555:5555"
     volumes:
       - ./services/celery_app.py:/app/celery_app.py
       - ./services/tasks:/app/tasks
@@ -96,9 +99,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: brasaland-redis
-    command: ["redis-server", "--maxmemory-policy", "noeviction"]
-    ports:
-      - "6379:6379"
+    command: ["redis-server", "--maxmemory-policy", "noeviction", "--bind", "0.0.0.0", "--protected-mode", "yes"]
+    # Sin ports: — solo red interna brasaland-net (CRITICAL fix OWASP A05)
     volumes:
       - redis_data:/data
     networks:
@@ -136,9 +138,7 @@ services:
   qdrant:
     image: qdrant/qdrant:v1.13.2
     container_name: brasaland-qdrant
-    ports:
-      - "6333:6333"
-      - "6334:6334"
+    # Sin ports públicos — solo backend/worker vía brasaland-net
     volumes:
       - qdrant_data:/qdrant/storage
     networks:
@@ -149,6 +149,7 @@ networks:
   brasaland-net:
     name: brasaland-net
     driver: bridge
+    internal: false
 
 volumes:
   backend_data:

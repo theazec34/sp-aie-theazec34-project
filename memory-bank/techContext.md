@@ -119,6 +119,14 @@
 - Tests: `services/api/tests/test_rfp_sse.py`
 - Sin modelos/agentes en esta capa
 
+## Seguridad — OWASP Top 10 + IA segura
+- Informes: `docs/security/owasp-top10-audit.md`, `nist-ai-secure-practices.md` (Ley 1581 + FIPA)
+- Hardening: `scripts/hardening/{00-baseline,10-apply-host,20-verify}.sh`
+- Compose: Redis/Qdrant sin ports host; Flower `127.0.0.1:5555` + basic auth
+- `/api/incidents` JWT; proveedores status/delete = admin + `confirm`
+- Seed admin: `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` (env only)
+- BRIEFING: `docs/security/brasaland-BRIEFING-ai-secure.es.md`
+
 ## WebSocket — chat Manager support agent (tiempo real Parte 2)
 - Paquete: `services/agent/chat/` (pubsub, sessions, streamer, ws)
 - Endpoint: `WS /agent/chat/ws?token=&session_id=&location_id=`

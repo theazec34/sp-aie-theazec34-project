@@ -116,11 +116,17 @@ export default function ProveedoresPage() {
     setError("");
     setMessage("");
     const next = supplier.status === "active" ? "suspended" : "active";
+    const label = next === "suspended" ? "suspender" : "reactivar";
+    const ok = window.confirm(
+      `¿Confirmas ${label} al proveedor «${supplier.name}»?\n` +
+        "Acción irreversible sin supervisión adicional (requiere rol admin).",
+    );
+    if (!ok) return;
     try {
       const response = await apiFetch(`/suppliers/${supplier.id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: next }),
+        body: JSON.stringify({ status: next, confirm: true }),
       });
       if (!response.ok) {
         const parsed = await readApiError(response);

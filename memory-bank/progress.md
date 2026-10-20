@@ -1,29 +1,23 @@
 # Progress — Brasaland Digital
 
 ## Estado (2026-10-20)
-- **`main`:** PRs **#1–#46** (SSE RFP #46 mergeado).
-- **Hito en curso:** **WebSocket chat** — Manager support agent Parte 2/2 (`cursor/websocket-chat-c620`).
-- **Moneda RFP:** **euros (€)**.
+- **`main`:** PRs **#1–#47** (WebSocket chat #47 mergeado).
+- **Hito en curso:** **OWASP Top 10 + IA segura** (`cursor/owasp-top10-audit-c620`).
 - **Fuera de alcance:** `hito-3` Talent Pipeline / `3.5`.
 
-## WebSocket chat (hito actual)
-- `WS /agent/chat/ws` — JWT `?token=` / frame auth; `session_id` = thread_id
-- Pub/Sub in-process `chat.<session_id>`; productor desacoplado de consumidores
-- Eventos: `token_chunk`, `interrupt_requested`, `generation_interrupted`, `generation_completed`, `session_snapshot`, `user_message`
-- Abort real de emisión (no HITL `interrupt()`); mensaje parcial `interrupted`
-- UI backoffice `/agent` — tokens en vivo, interrupción, backoff + rehidratación
-- Docs: `docs/realtime/websocket-chat.md`, BRIEFING `docs/realtime/brasaland-BRIEFING.es-2-2.md`
-- Tests: `services/api/tests/test_agent_chat_ws.py`
+## Seguridad / OWASP (hito actual)
+- Informe OWASP: `docs/security/owasp-top10-audit.md`
+- Informe NIST AI-secure (Ley 1581 + FIPA): `docs/security/nist-ai-secure-practices.md`
+- Hardening: `scripts/hardening/` + compose (Redis/Qdrant internos, Flower loopback)
+- Fixes críticos: JWT en `/api/incidents`, seed_auth sin password en código, proveedor `confirm`+admin, probe Brasa Points
+- Tests: `test_incidents.py`, `test_supplier_irreversible.py`, guardrail Brasa Points
 
-## SSE notificaciones (en main)
-- #46 — `rfp_ticket_created` + UI `/rfp`
-
-## RFP Partes 1–3 (en main)
-- #42 · #44 · #45
+## Tiempo real (en main)
+- #46 SSE RFP · #47 WebSocket agent chat
 
 ## Hitos en main
 | Área | PR |
 |------|-----|
-| … | #1–#45 |
-| SSE notificaciones RFP | #46 |
+| … | #1–#46 |
 | WebSocket agent chat | #47 |
+| OWASP + IA segura | este PR |

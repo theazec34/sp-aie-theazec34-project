@@ -1,0 +1,39 @@
+=== Brasaland security baseline 2026-10-20T11:27:55Z ===
+
+## Identity
+uid=1000(ubuntu) gid=1000(ubuntu) groups=1000(ubuntu),4(adm),20(dialout),24(cdrom),25(floppy),27(sudo),29(audio),30(dip),44(video),46(plugdev)
+ubuntu
+
+## Root SSH PermitRootLogin (sshd_config)
+(sshd_config no legible o ausente en este entorno)
+
+## Listening TCP ports
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 127.0.0.1:5901          0.0.0.0:*               LISTEN      2148/Xtigervnc      
+tcp        0      0 0.0.0.0:2375            0.0.0.0:*               LISTEN      -                   
+tcp        0      0 0.0.0.0:26500           0.0.0.0:*               LISTEN      -                   
+tcp        0      0 0.0.0.0:26055           0.0.0.0:*               LISTEN      2572/node           
+tcp        0      0 0.0.0.0:26058           0.0.0.0:*               LISTEN      2473/python3        
+tcp        0      0 0.0.0.0:26057           0.0.0.0:*               LISTEN      39122/node          
+tcp        0      0 0.0.0.0:26056           0.0.0.0:*               LISTEN      32978/node          
+tcp        0      0 0.0.0.0:50052           0.0.0.0:*               LISTEN      -                   
+tcp6       0      0 ::1:5901                :::*                    LISTEN      2148/Xtigervnc      
+tcp6       0      0 :::26054                :::*                    LISTEN      1538/node           
+tcp6       0      0 :::26053                :::*                    LISTEN      1538/node           
+
+## Docker published ports (compose)
+(docker no disponible)
+
+## UFW / firewall
+(sin firewall CLI)
+
+## Sensitive paths permissions
+(sin .env)
+total 128
+drwxr-xr-x 2 ubuntu ubuntu   4096 Oct 20 10:43 .
+drwxr-xr-x 7 ubuntu ubuntu   4096 Oct 20 10:54 ..
+-rw-r--r-- 1 ubuntu ubuntu   2495 Oct 19 17:28 incidents.json
+-rw-r--r-- 1 ubuntu ubuntu 114688 Oct 20 10:43 inventory.db
+
+=== fin baseline ===

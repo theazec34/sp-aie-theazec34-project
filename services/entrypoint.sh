@@ -7,6 +7,10 @@ cd /app/api
 export PYTHONPATH=.
 
 echo "[backend] Seeding auth / suppliers / inventory (idempotent)…"
+# Credenciales solo por entorno (nunca hardcodeadas en seed_auth.py)
+export SEED_ADMIN_EMAIL="${SEED_ADMIN_EMAIL:-admin@brasaland.local}"
+export SEED_ADMIN_PASSWORD="${SEED_ADMIN_PASSWORD:-ChangeMeLocalOnly12!}"
+export SEED_ADMIN_NAME="${SEED_ADMIN_NAME:-Admin Brasaland}"
 python seed_auth.py
 python seed.py
 

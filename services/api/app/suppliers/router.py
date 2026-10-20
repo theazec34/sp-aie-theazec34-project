@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 
-from app.auth.deps import get_current_user
+from app.auth.deps import get_current_user, require_admin
 from app.cache import SUPPLIERS_LIST_TTL, suppliers_cache
 from app.suppliers.models import (
     ProductCategory,
@@ -120,8 +120,17 @@ def update_supplier_rate(
 def update_supplier_status(
     supplier_id: int,
     payload: SupplierStatusUpdate,
-    _current: UserInDB = Depends(get_current_user),
+    _admin: UserInDB = Depends(require_admin),
 ) -> Supplier:
+    """Dar de baja / reactivar proveedor — acción irreversible (BRIEFING §5)."""
+    if not payload.confirm:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Confirmación humana requerida: envía confirm=true para "
+                "cambiar el estado del proveedor."
+            ),
+        )
     repo = get_repo()
     try:
         supplier = repo.update_status(supplier_id, payload.status)
@@ -135,8 +144,19 @@ def update_supplier_status(
 
 @router.delete("/{supplier_id}", status_code=204)
 def delete_supplier(
-    supplier_id: int, _current: UserInDB = Depends(get_current_user)
+    supplier_id: int,
+    confirm: bool = Query(False, description="Confirmación humana explícita"),
+    _admin: UserInDB = Depends(require_admin),
 ) -> None:
+    """Eliminar proveedor — acción irreversible (BRIEFING §5)."""
+    if not confirm:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Confirmación humana requerida: ?confirm=true para eliminar "
+                "el proveedor."
+            ),
+        )
     repo = get_repo()
     try:
         deleted = repo.delete(supplier_id)

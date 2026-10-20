@@ -24,10 +24,10 @@ docker compose up --build
 | Backoffice (Next.js) | mismo contenedor | http://localhost:3001 |
 | API FastAPI | `brasaland-backend` | http://localhost:8000 |
 | Docs API | | http://localhost:8000/docs |
-| Redis (broker Celery) | `brasaland-redis` | localhost:6379 |
+| Redis (broker Celery) | `brasaland-redis` | **solo red Docker** (no publicado al host) |
 | Celery worker | `brasaland-worker` | (sin puerto HTTP) |
-| Flower | `brasaland-flower` | http://localhost:5555 |
-| Qdrant | `brasaland-qdrant` | http://localhost:6333 |
+| Flower | `brasaland-flower` | http://127.0.0.1:5555 (loopback + basic auth) |
+| Qdrant | `brasaland-qdrant` | **solo red Docker** (`http://qdrant:6333` desde backend) |
 
 ## Red Docker
 

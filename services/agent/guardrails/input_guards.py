@@ -77,7 +77,13 @@ _SENSITIVE = re.compile(
     r"lo\s+que\s+le\s+cobramos\s+al\s+proveedor|"
     r"n[oó]mina|payroll|salario\s+de|"
     r"evaluaci[oó]n\s+de\s+desempe[nñ]o|"
-    r"performance\s+review"
+    r"performance\s+review|"
+    # Brasa Points / loyalty PII exfil (BRIEFING §4)
+    r"(brasa\s*points?|puntos\s+brasa).{0,80}(correo|email|cliente\s+con)|"
+    r"(cu[aá]ntos\s+puntos|how\s+many\s+points).{0,60}(correo|email|@)|"
+    r"(dime|tell\s+me|revela|reveal).{0,40}(puntos|points).{0,40}(cliente|customer|correo|email)|"
+    r"cliente\s+con\s+el\s+correo|"
+    r"customer\s+with\s+(the\s+)?(email|correo)"
     r")",
     re.I,
 )

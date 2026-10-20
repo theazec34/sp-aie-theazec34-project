@@ -5,21 +5,22 @@ from __future__ import annotations
 from app.cache import incidents_cache, suppliers_cache
 
 
-def test_incidents_summary_cache_hit_and_invalidation(client):
+def test_incidents_summary_cache_hit_and_invalidation(client, auth_header):
     incidents_cache.clear()
 
-    first = client.get("/api/incidents/summary")
+    first = client.get("/api/incidents/summary", headers=auth_header)
     assert first.status_code == 200
     assert first.headers.get("X-Cache") == "MISS"
     body = first.json()
 
-    second = client.get("/api/incidents/summary")
+    second = client.get("/api/incidents/summary", headers=auth_header)
     assert second.status_code == 200
     assert second.headers.get("X-Cache") == "HIT"
     assert second.json() == body
 
     created = client.post(
         "/api/incidents",
+        headers=auth_header,
         json={
             "title": "Cache invalidation probe",
             "description": "Ensures summary cache clears on write.",
@@ -30,7 +31,7 @@ def test_incidents_summary_cache_hit_and_invalidation(client):
     )
     assert created.status_code == 201
 
-    third = client.get("/api/incidents/summary")
+    third = client.get("/api/incidents/summary", headers=auth_header)
     assert third.status_code == 200
     assert third.headers.get("X-Cache") == "MISS"
     assert third.json()["total"] >= body["total"]
