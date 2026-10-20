@@ -1,26 +1,26 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-19)
-- **`main`:** PRs **#1–#44** (RFP Parte 2 #44 mergeado).
-- **Hito en curso:** **Hito 9 Parte 3 — aprobación HITL + documento final** (`feature/rfp-approval-completion`).
+## Estado (2026-10-20)
+- **`main`:** PRs **#1–#45** (RFP Parte 3 #45 mergeado).
+- **Hito en curso:** **Notificaciones SSE** — tickets RFP en tiempo real (`feature/sse-notifications`).
 - **Moneda de producto RFP/propuestas:** **euros (€)**.
 - **Fuera de alcance:** `hito-3` Talent Pipeline / `3.5`.
 
-## RFP Parte 3 (hito actual)
-- Interrupt + checkpointer SQLite por departamento (`rfp-{ticket_id}:{dept}`)
-- Aprobaciones paralelas no bloqueantes; resume explícito
-- Arbitraje fijo BRIEFING §7 (no LLM)
-- Documento final → `terminado`; CEO si > 50.000 €/año
-- API: `/approvals/start`, `/approvals/{dept}`, `/final-document`
-- Tests: `test_rfp_approval.py` + E2E `scripts/run_rfp_e2e_approval.py`
-- Docs: `docs/rfp/rfp-approval-completion-part3.md`
+## SSE notificaciones (hito actual)
+- Hub in-process + replay `Last-Event-ID`: `services/api/app/rfp/sse_hub.py`
+- `GET /rfp/events/stream` (JWT, `text/event-stream`, evento `rfp_ticket_created`)
+- Opcional: `sales_drop_alert` + `POST /rfp/events/sales-drop-alert`
+- UI: `fetch` + ReadableStream, backoff, dedupe, badge «En vivo» en `/rfp`
+- Docs: `docs/rfp/sse-notifications.md` (respuestas de diseño)
+- Tests: `services/api/tests/test_rfp_sse.py`
+- **Sin** llamadas a modelos/agentes en esta capa
 
-## RFP Partes 1–2
-- #42 intake · #44 generación/evaluación
+## RFP Partes 1–3 (en main)
+- #42 intake · #44 generación · #45 aprobación HITL + €
 
 ## Hitos en main
 | Área | PR |
 |------|-----|
-| … | #1–#43 |
-| RFP generación Parte 2 | #44 |
-| RFP aprobación Parte 3 + € | este PR |
+| … | #1–#44 |
+| RFP aprobación Parte 3 + € | #45 |
+| SSE notificaciones RFP | este PR |

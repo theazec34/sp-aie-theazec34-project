@@ -108,6 +108,17 @@
 - Tests: `test_rfp_approval.py` · E2E `scripts/run_rfp_e2e_approval.py`
 - Docs: `docs/rfp/rfp-approval-completion-part3.md`
 - Moneda: **EUR (€)** · umbral CEO 50.000 €/año
+
+## SSE — notificaciones RFP en tiempo real
+- Hub: `services/api/app/rfp/sse_hub.py` (fan-out in-process + replay ~100)
+- API: `GET /rfp/events/stream` (JWT, `text/event-stream`)
+- Eventos: `rfp_ticket_created` (al `POST /rfp/tickets`); opcional `sales_drop_alert`
+- UI: `uis/backoffice/src/lib/rfpSse.ts` — `fetch` + ReadableStream (no EventSource bare)
+- Reconexión: backoff + `Last-Event-ID` + refetch lista + dedupe `ticket_id`
+- Docs: `docs/rfp/sse-notifications.md`
+- Tests: `services/api/tests/test_rfp_sse.py`
+- Sin modelos/agentes en esta capa
+
 ## Agent Guardrails (Hito 8 · Parte 2)
 - Paquete: `services/agent/guardrails/`
 - Capas: system prompt seguro, input/output guards, aislamiento RAG/tool, observabilidad
