@@ -70,7 +70,7 @@ export default function KnowledgePage() {
           <label htmlFor="knowledge-question">Pregunta</label>
           <textarea
             id="knowledge-question"
-            className="bo-input"
+            className="bo-field"
             rows={4}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}

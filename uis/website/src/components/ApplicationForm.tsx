@@ -49,7 +49,7 @@ const FIELD_LABELS: Record<keyof ApplicationFormData, string> = {
   email: "Correo electronico",
   phone: "Telefono",
   department: "Departamento",
-  experience: "Anos de experiencia",
+  experience: "Años de experiencia",
   message: "Motivacion",
 };
 
@@ -100,7 +100,7 @@ export function ApplicationForm() {
       <div className="container">
         <SectionTitle
           id="aplicar-title"
-          title="Formulario de aplicacion"
+          title="Formulario de aplicación"
           description="Version React + TypeScript del formulario del proyecto, con validacion en cliente."
         />
 
@@ -181,7 +181,7 @@ export function ApplicationForm() {
             </label>
 
             <label className="form-field">
-              <span>Anos de experiencia</span>
+              <span>Años de experiencia</span>
               <input
                 id="experience"
                 type="number"
@@ -211,7 +211,7 @@ export function ApplicationForm() {
           {!submitted ? (
             <div className="form-actions">
               <button type="submit" className="cta" disabled={submitting}>
-                {submitting ? "Validando…" : "Enviar aplicacion"}
+                {submitting ? "Validando…" : "Enviar aplicación"}
               </button>
               <button type="button" className="cta cta-secondary" onClick={onReset}>
                 Limpiar formulario

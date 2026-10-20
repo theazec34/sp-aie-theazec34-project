@@ -70,7 +70,6 @@ export default function IncidentsPanelPage() {
     try {
       const response = await apiFetch(`/api/incidents/${item.id}/status`, {
         method: "PATCH",
-        skipAuth: true,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: nextStatus }),
       });

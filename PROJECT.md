@@ -1,6 +1,8 @@
 # PROJECT — Mapa completo Brasaland Digital
 
-Documento canónico del monorepo (actualizado 2026-09-11). Sustituye lecturas antiguas de README/memory-bank que hablaban del sitio estático o del dominio de “elecciones”.
+Documento canónico del monorepo (actualizado 2026-10-20). Sustituye lecturas antiguas de README/memory-bank que hablaban del sitio estático o del dominio de “elecciones”.
+
+**Revisión final de producto:** [docs/PROJECT_REVIEW_FINAL.md](./docs/PROJECT_REVIEW_FINAL.md).
 
 ---
 

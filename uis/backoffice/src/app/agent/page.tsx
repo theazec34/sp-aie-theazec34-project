@@ -134,10 +134,10 @@ export default function AgentChatPage() {
       <div className="bo-rfp-header">
         <div>
           <p className="bo-kicker">Operaciones · Felipe Guerrero</p>
-          <h1>Agente de soporte (encargados)</h1>
+          <h1>Agente de soporte para encargados</h1>
           <p className="bo-muted">
-            Chat en vivo con el Manager support agent — tokens conforme se generan,
-            interrupción real a mitad de respuesta. Sesión:{" "}
+            Conversación en vivo: la respuesta llega token a token y puedes
+            interrumpir si el agente se desvía. Sesión:{" "}
             <code>{sessionId || "…"}</code>
           </p>
         </div>
@@ -146,7 +146,7 @@ export default function AgentChatPage() {
 
       <div className="bo-card" style={{ marginBottom: "1rem" }}>
         <label className="bo-field">
-          Local (`location_id`)
+          Local / sede
           <input
             value={locationId}
             onChange={(e) => setLocationId(e.target.value)}

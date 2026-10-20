@@ -31,6 +31,13 @@ const STATUS_LABEL: Record<string, string> = {
   terminado: "Terminado",
 };
 
+const APPROVAL_LABEL: Record<string, string> = {
+  pendiente: "Pendiente",
+  aprobado: "Aprobado",
+  rechazado: "Rechazado",
+  needs_human_review: "Revisión humana",
+};
+
 const POLLING = new Set([
   "analizando",
   "generando_borrador",
@@ -247,10 +254,10 @@ export default function RfpIntakePage() {
     <AuthenticatedShell active="rfp">
       <div className="bo-rfp-header">
         <div>
-          <h1>RFP Brasaland (Partes 1–3)</h1>
+          <h1>Recepción de RFP</h1>
           <p className="bo-muted">
-            Recepción → borradores evaluados → aprobación humana por departamento (en
-            paralelo) → documento final. Moneda de propuesta: <strong>euros (€)</strong>.
+            Subida del PDF → análisis → borradores por departamento → aprobación humana
+            en paralelo → documento final. Moneda de propuesta: <strong>euros (€)</strong>.
           </p>
         </div>
         <span
@@ -287,14 +294,14 @@ export default function RfpIntakePage() {
             onChange={(ev) => setFile(ev.target.files?.[0] ?? null)}
           />
         </label>
-        <button type="submit" disabled={!file || busy}>
+        <button type="submit" className="bo-btn bo-btn-primary" disabled={!file || busy}>
           {busy ? "Subiendo…" : "Crear ticket"}
         </button>
       </form>
 
       {error ? <p role="alert">{error}</p> : null}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: "1.25rem" }}>
+      <div className="bo-rfp-layout">
         <section>
           <h2>Tickets</h2>
           <ul className="bo-list">
@@ -323,8 +330,13 @@ export default function RfpIntakePage() {
               </p>
               {canGenerate(selected.status) ? (
                 <p>
-                  <button type="button" disabled={genBusy} onClick={() => void onGenerate()}>
-                    {genBusy ? "Encolando…" : "Generar borradores (Parte 2)"}
+                  <button
+                    type="button"
+                    className="bo-btn bo-btn-primary"
+                    disabled={genBusy}
+                    onClick={() => void onGenerate()}
+                  >
+                    {genBusy ? "Encolando…" : "Generar borradores"}
                   </button>
                 </p>
               ) : null}
@@ -332,12 +344,13 @@ export default function RfpIntakePage() {
                 <p>
                   <button
                     type="button"
+                    className="bo-btn bo-btn-primary"
                     disabled={apprBusy !== null}
                     onClick={() => void onStartApprovals()}
                   >
                     {apprBusy === "start"
                       ? "Iniciando…"
-                      : "Iniciar aprobación humana (Parte 3)"}
+                      : "Iniciar aprobación humana"}
                   </button>
                 </p>
               ) : null}
@@ -406,7 +419,9 @@ export default function RfpIntakePage() {
                 >
                   <strong>
                     {s.department_id} ({s.contact_name}) · aprobación:{" "}
-                    {s.approval_status}
+                    {APPROVAL_LABEL[s.approval_status || ""] ??
+                      s.approval_status ??
+                      "—"}
                   </strong>
                   {s.draft_content ? (
                     <details>

@@ -112,19 +112,9 @@ export default function BackofficeHome() {
             <h3>{moduleCard.title}</h3>
             <p>{moduleCard.description}</p>
             {"href" in moduleCard && moduleCard.href ? (
-              <p style={{ marginTop: 12 }}>
-                <Link
-                  className="bo-nav-link"
-                  href={moduleCard.href}
-                  style={{
-                    display: "inline-block",
-                    background: "#ecfeff",
-                    color: "#0e7490",
-                  }}
-                >
-                  Abrir módulo
-                </Link>
-              </p>
+              <Link className="bo-module-link" href={moduleCard.href}>
+                Abrir módulo
+              </Link>
             ) : null}
           </article>
         ))}

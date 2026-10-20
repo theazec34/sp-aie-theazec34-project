@@ -33,7 +33,7 @@ function LoginForm() {
       telemetry.ensureSession();
       telemetry.setUserId(userIdFromToken(token));
       track("auth_login_succeeded", { result: "success", role: "unknown" });
-      router.replace("/proveedores");
+      router.replace("/");
     } catch (err) {
       const raw = err instanceof Error ? err.message : String(err);
       const failure_reason = /failed to fetch|networkerror|load failed/i.test(raw)

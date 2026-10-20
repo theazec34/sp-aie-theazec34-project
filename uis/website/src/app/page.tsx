@@ -40,8 +40,8 @@ export default function Home() {
       <Header navItems={navItems} />
       <main>
         <Hero
-          title="El sabor de Sudamerica con alma iberica"
-          subtitle="Experiencia Brasaland completa en Next.js: carta total, galeria visual y formulario de aplicacion con validaciones."
+          title="Brasaland — el sabor de Sudamérica con alma ibérica"
+          subtitle="Carta a la brasa, galería del local y reservas: la experiencia digital del restaurante, sin artificios."
         />
 
         <MenuSection />
@@ -55,7 +55,7 @@ export default function Home() {
             Brasa<span className="brand-highlight">land</span>
           </p>
           <p className="footer-text">
-            Next.js + TypeScript + React components reutilizables para la web principal.
+            Restaurante de cocina brasileña · Sevilla · Carta, reserva y domicilio.
           </p>
         </div>
       </footer>
