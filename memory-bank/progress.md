@@ -16,4 +16,4 @@
 |------|-----|
 | … | #1–#48 |
 | NIST CSF practices | #49 |
-| Pulido final UI/review | este PR |
+| Pulido final UI/review | #50 |
