@@ -6,7 +6,7 @@ import logging
 import sys
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 # services/agent/router.py → repo root + services/ + services/api
@@ -18,7 +18,13 @@ for _p in (_REPO, _SERVICES, _API):
         sys.path.insert(0, str(_p))
 
 from app.auth.deps import get_current_user  # noqa: E402
+from app.rate_limit import (  # noqa: E402
+    agent_query_limiter,
+    client_key,
+    enforce_rate_limit,
+)
 from app.users.models import UserInDB  # noqa: E402
+from agent.decision_log import recent_decisions  # noqa: E402
 from agent.graph import run_agent  # noqa: E402
 from agent.guardrails import guardrail_summary  # noqa: E402
 from agent.tracing import load_trace  # noqa: E402
@@ -65,14 +71,24 @@ class AgentTraceResponse(BaseModel):
 @router.post("/query", response_model=AgentQueryResponse)
 def agent_query(
     body: AgentQueryRequest,
+    request: Request,
     user: UserInDB = Depends(get_current_user),
 ) -> AgentQueryResponse:
     """Invoke the compiled LangGraph agent — no business logic in the endpoint."""
+    uid = getattr(user, "id", None) or getattr(user, "email", None)
+    enforce_rate_limit(
+        agent_query_limiter,
+        client_key(request, uid),
+        detail=(
+            "Límite de consultas al agente alcanzado. "
+            "Espera un minuto antes de reintentar (protección de costo/abuso)."
+        ),
+    )
     try:
         result = run_agent(
             body.question or "",
             session_id=body.session_id,
-            user_id=getattr(user, "id", None) or getattr(user, "email", None),
+            user_id=uid,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -82,6 +98,14 @@ def agent_query(
             status_code=503,
             detail="El agente no pudo completar la consulta. Inténtalo de nuevo.",
         ) from exc
+
+    logger.info(
+        "agent_query ok run_id=%s intent=%s guard=%s user=%s",
+        result.get("run_id"),
+        result.get("intent"),
+        result.get("guard_action"),
+        uid,
+    )
 
     return AgentQueryResponse(
         answer=str(result.get("answer") or ""),
@@ -125,3 +149,13 @@ def agent_trace(
         error=record.get("error"),
         checkpointed=record.get("checkpointed"),
     )
+
+
+@router.get("/decisions/recent")
+def agent_decisions_recent(
+    limit: int = 50,
+    _user: UserInDB = Depends(get_current_user),
+) -> dict:
+    """Auditoría de decisiones recientes (intent, guardrails, nodos) — NIST Detect."""
+    capped = max(1, min(limit, 200))
+    return {"items": recent_decisions(capped), "count": capped}
