@@ -127,6 +127,13 @@
 - Seed admin: `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` (env only)
 - BRIEFING: `docs/security/brasaland-BRIEFING-ai-secure.es.md`
 
+## NIST CSF — prácticas seguras IA
+- Informe 6 funciones: `docs/security/nist-csf-ai-report.md`
+- Rate limit LLM: `app/rate_limit.py` en `/agent/query` y `/knowledge/query` (429)
+- Decision audit: `services/agent/decision_log.py` + `GET /agent/decisions/recent`
+- Env: `AGENT_RATE_LIMIT_*`, `KNOWLEDGE_RATE_LIMIT_*`
+- Tests: `services/api/tests/test_agent_rate_limit.py`, `tests/pipelines/test_agent_decision_log.py`
+
 ## WebSocket — chat Manager support agent (tiempo real Parte 2)
 - Paquete: `services/agent/chat/` (pubsub, sessions, streamer, ws)
 - Endpoint: `WS /agent/chat/ws?token=&session_id=&location_id=`

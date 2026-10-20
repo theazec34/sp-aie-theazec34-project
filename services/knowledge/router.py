@@ -9,7 +9,7 @@ import logging
 import sys
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -19,6 +19,11 @@ for _p in (_REPO_ROOT, _API_ROOT):
         sys.path.insert(0, str(_p))
 
 from app.auth.deps import get_current_user  # noqa: E402
+from app.rate_limit import (  # noqa: E402
+    client_key,
+    enforce_rate_limit,
+    knowledge_query_limiter,
+)
 from app.users.models import UserInDB  # noqa: E402
 from data.pipelines.rag import query as rag_query  # noqa: E402
 from data.process.rag import setup as rag_setup  # noqa: E402
@@ -45,9 +50,19 @@ class ReindexResponse(BaseModel):
 @router.post("/query", response_model=KnowledgeQueryResponse)
 def knowledge_query(
     body: KnowledgeQueryRequest,
-    _user: UserInDB = Depends(get_current_user),
+    request: Request,
+    user: UserInDB = Depends(get_current_user),
 ) -> KnowledgeQueryResponse:
     """Answer a natural-language question from the Brasaland knowledge base."""
+    uid = getattr(user, "id", None) or getattr(user, "email", None)
+    enforce_rate_limit(
+        knowledge_query_limiter,
+        client_key(request, uid),
+        detail=(
+            "Límite de consultas a la base de conocimiento alcanzado. "
+            "Espera un minuto antes de reintentar."
+        ),
+    )
     try:
         answer = rag_query(body.question.strip())
     except ValueError as exc:

@@ -52,7 +52,12 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def http_exception_handler(
         _request: Request, exc: StarletteHTTPException
     ) -> JSONResponse:
-        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+        # Preservar headers (p.ej. Retry-After en 429 rate-limit)
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+            headers=dict(exc.headers or {}),
+        )
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(

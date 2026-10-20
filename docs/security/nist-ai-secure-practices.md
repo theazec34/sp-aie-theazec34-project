@@ -1,5 +1,7 @@
 # Informe NIST — Prácticas seguras en la integración de IA (Brasaland)
 
+> **Informe CSF completo (6 funciones + roadmap):** [`nist-csf-ai-report.md`](./nist-csf-ai-report.md)
+
 **Fecha:** 2026-10-20  
 **Marcos aplicables (no genéricos):**
 

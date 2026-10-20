@@ -192,6 +192,7 @@ def run_agent(
     """Invoke compiled graph; persist consultable trace."""
     import uuid
 
+    from agent.decision_log import log_agent_decision
     from agent.tracing import persist_trace
 
     rid = run_id or str(uuid.uuid4())
@@ -215,6 +216,7 @@ def run_agent(
     payload = {
         "run_id": rid,
         "session_id": sid,
+        "user_id": user_id,
         "answer": final.get("answer") or "",
         "error": final.get("error"),
         "trace": trace,
@@ -228,6 +230,8 @@ def run_agent(
         "guard_action": final.get("guard_action"),
         "guard_reason": final.get("guard_reason"),
         "guard_failure_type": final.get("guard_failure_type"),
+        "question_len": len(question or ""),
     }
     persist_trace(payload)
+    log_agent_decision(payload)
     return payload
