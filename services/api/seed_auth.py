@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-"""Seed admin user + profile into TinyDB (idempotent by email)."""
+"""Seed admin user + profile into TinyDB (idempotent by email).
+
+Credenciales SOLO desde entorno — nunca hardcodear passwords en el repo
+(OWASP A02 / BRIEFING AI-secure).
+"""
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -15,31 +20,45 @@ from app.profiles.repository import ProfileRepository
 from app.users.models import UserRole
 from app.users.repository import UserRepository
 
-ADMIN_EMAIL = "alfredobormujo@gmail.com"
-ADMIN_PASSWORD = "alfreditopambi12"
-ADMIN_NAME = "Alfredo Bormujo"
-
 
 def main() -> int:
+    email = (os.environ.get("SEED_ADMIN_EMAIL") or "").strip()
+    password = os.environ.get("SEED_ADMIN_PASSWORD") or ""
+    name = (os.environ.get("SEED_ADMIN_NAME") or "Admin Brasaland").strip()
+
+    if not email or not password:
+        print(
+            "ERROR — define SEED_ADMIN_EMAIL y SEED_ADMIN_PASSWORD en el entorno "
+            "(no hay credenciales por defecto en el código).",
+            file=sys.stderr,
+        )
+        return 2
+    if len(password) < 12:
+        print(
+            "ERROR — SEED_ADMIN_PASSWORD debe tener al menos 12 caracteres.",
+            file=sys.stderr,
+        )
+        return 2
+
     users = UserRepository()
     profiles = ProfileRepository()
     try:
-        existing = users.get_by_email(ADMIN_EMAIL)
+        existing = users.get_by_email(email)
         if existing is not None:
             if profiles.get_by_user_id(existing.id) is None:
-                profiles.create(user_id=existing.id, name=ADMIN_NAME)
-            print(f"OK — usuario ya existe (id={existing.id}, email={ADMIN_EMAIL})")
+                profiles.create(user_id=existing.id, name=name)
+            print(f"OK — usuario ya existe (id={existing.id}, email={email})")
             return 0
 
         user = users.create(
-            email=ADMIN_EMAIL,
-            hashed_password=hash_password(ADMIN_PASSWORD),
+            email=email,
+            hashed_password=hash_password(password),
             role=UserRole.ADMIN,
         )
-        profiles.create(user_id=user.id, name=ADMIN_NAME)
+        profiles.create(user_id=user.id, name=name)
         print("Brasaland — Auth seeder")
         print(f"  Created admin id={user.id}")
-        print(f"  Email ........... {ADMIN_EMAIL}")
+        print(f"  Email ........... {email}")
         print(f"  Role ............ {user.role.value}")
         print("OK — admin sembrado (password hasheada en TinyDB).")
         return 0

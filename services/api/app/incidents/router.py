@@ -1,9 +1,10 @@
-"""Public REST API for centralized incidents under /api/incidents."""
+"""REST API for centralized incidents under /api/incidents (JWT required)."""
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
+from app.auth.deps import get_current_user
 from app.cache import INCIDENTS_SUMMARY_TTL, incidents_cache
 from app.incidents.models import (
     Incident,
@@ -12,8 +13,13 @@ from app.incidents.models import (
     IncidentSummary,
 )
 from app.incidents.repository import IncidentRepository
+from app.users.models import UserInDB
 
-router = APIRouter(prefix="/api/incidents", tags=["incidents"])
+router = APIRouter(
+    prefix="/api/incidents",
+    tags=["incidents"],
+    dependencies=[Depends(get_current_user)],
+)
 
 _SUMMARY_KEY = "incidents:summary"
 
@@ -23,7 +29,10 @@ def _invalidate_incident_caches() -> None:
 
 
 @router.post("", response_model=Incident, status_code=status.HTTP_201_CREATED)
-def create_incident(payload: IncidentCreate) -> Incident:
+def create_incident(
+    payload: IncidentCreate,
+    _user: UserInDB = Depends(get_current_user),
+) -> Incident:
     repo = IncidentRepository()
     try:
         created = repo.create(payload)

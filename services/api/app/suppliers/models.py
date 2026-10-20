@@ -90,6 +90,8 @@ class SupplierRateUpdate(BaseModel):
 
 class SupplierStatusUpdate(BaseModel):
     status: SupplierStatus
+    # BRIEFING §5 — acción irreversible: requiere confirmación humana explícita
+    confirm: bool = False
 
 
 class Supplier(SupplierBase):

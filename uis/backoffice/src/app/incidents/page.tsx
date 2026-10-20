@@ -38,7 +38,7 @@ export default function IncidentsPanelPage() {
     setLoading(true);
     setError("");
     try {
-      const response = await apiFetch(`/api/incidents${query}`, { skipAuth: true });
+      const response = await apiFetch(`/api/incidents${query}`);
       if (!response.ok) {
         const parsed = await readApiError(response);
         throw new Error(parsed.message);

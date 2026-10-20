@@ -28,6 +28,8 @@ cd services/api
 
 # 5) Cargar usuario admin de prueba (email + password hasheada en TinyDB)
 #    Necesario para poder hacer login y obtener un token JWT.
+SEED_ADMIN_EMAIL=admin@brasaland.local \
+SEED_ADMIN_PASSWORD='ChangeMeLocalOnly12!' \
 PYTHONPATH=. python seed_auth.py
 
 # 6) Cargar los 15 proveedores del directorio (hito anterior)

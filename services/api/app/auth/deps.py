@@ -36,3 +36,15 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> UserInDB:
     if user is None or not user.is_active:
         raise credentials_exception
     return user
+
+
+def require_admin(user: UserInDB = Depends(get_current_user)) -> UserInDB:
+    """Acciones irreversibles (BRIEFING §5): solo rol admin."""
+    from app.users.models import UserRole
+
+    if user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Se requiere rol admin y confirmación humana explícita.",
+        )
+    return user

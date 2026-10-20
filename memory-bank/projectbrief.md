@@ -29,6 +29,7 @@ Plataforma digital con:
 16. RFP Parte 3: HITL por departamento (interrupt/checkpointer) + documento final; moneda €
 17. SSE: notificaciones push de tickets RFP (y alerta opcional de caída de ventas) al backoffice
 18. WebSocket: chat en vivo del Manager support agent (tokens + abort + rehidratación de sesión)
+19. Seguridad: auditoría OWASP Top 10 + prácticas IA (Ley 1581 / FIPA) con fixes críticos
 
 ## Fuentes de verdad
 - Mapa operativo: **`PROJECT.md`**
