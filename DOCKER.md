@@ -44,7 +44,7 @@ docker compose up --build
 
 El entrypoint del backend ejecuta (idempotente) antes de uvicorn:
 
-1. `seed_auth.py`
+1. `seed_auth.py` (requiere `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` en el entorno)
 2. `seed.py` (proveedores)
 3. `seed_inventory.py` (con timeout; no bloquea el arranque)
 

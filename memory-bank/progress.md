@@ -20,4 +20,4 @@
 |------|-----|
 | … | #1–#46 |
 | WebSocket agent chat | #47 |
-| OWASP + IA segura | este PR |
+| OWASP + IA segura | #48 |
