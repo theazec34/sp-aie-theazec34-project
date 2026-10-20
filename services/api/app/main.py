@@ -37,6 +37,7 @@ from reporting.router import router as reporting_router  # noqa: E402
 from knowledge.router import router as knowledge_router  # noqa: E402
 # LangGraph agent (sibling package services/agent)
 from agent.router import router as agent_router  # noqa: E402
+from agent.chat.ws import ws_router as agent_chat_ws_router  # noqa: E402
 
 logger = logging.getLogger("api.timing")
 if not logging.getLogger().handlers:
@@ -107,6 +108,7 @@ app.include_router(telemetry_router)
 app.include_router(reporting_router)
 app.include_router(knowledge_router)
 app.include_router(agent_router)
+app.include_router(agent_chat_ws_router)
 app.include_router(rfp_router)
 app.include_router(tasks_router)
 

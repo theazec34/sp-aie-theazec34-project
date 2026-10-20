@@ -119,6 +119,16 @@
 - Tests: `services/api/tests/test_rfp_sse.py`
 - Sin modelos/agentes en esta capa
 
+## WebSocket — chat Manager support agent (tiempo real Parte 2)
+- Paquete: `services/agent/chat/` (pubsub, sessions, streamer, ws)
+- Endpoint: `WS /agent/chat/ws?token=&session_id=&location_id=`
+- ChatSession BRIEFING: `session_id`, `agent_id=manager_support`, `user_id`, `location_id`, status
+- Pub/Sub canal `chat.<session_id>`; abort ≠ LangGraph HITL interrupt()
+- UI: backoffice `/agent` + `lib/agentChatWs.ts` (backoff + rehidratación)
+- Docs: `docs/realtime/websocket-chat.md`, `docs/realtime/brasaland-BRIEFING.es-2-2.md`
+- Tests: `services/api/tests/test_agent_chat_ws.py`
+- No rediseña el grafo: reutiliza `run_agent`
+
 ## Agent Guardrails (Hito 8 · Parte 2)
 - Paquete: `services/agent/guardrails/`
 - Capas: system prompt seguro, input/output guards, aislamiento RAG/tool, observabilidad
