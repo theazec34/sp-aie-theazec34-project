@@ -11,6 +11,12 @@ import {
   uploadRfpPdf,
   type RfpTicket,
 } from "../../lib/rfp";
+import {
+  connectRfpSse,
+  markTicketSeen,
+  type RfpTicketCreatedPayload,
+  type SalesDropAlertPayload,
+} from "../../lib/rfpSse";
 
 const STATUS_LABEL: Record<string, string> = {
   analizando: "Analizando",
@@ -31,6 +37,8 @@ const POLLING = new Set([
   "en_evaluacion",
 ]);
 
+type SseConn = "connecting" | "open" | "reconnecting" | "closed";
+
 function statusLabel(status: string): string {
   return STATUS_LABEL[status] ?? status;
 }
@@ -47,6 +55,19 @@ function canStartApproval(status: string): boolean {
   return status === "borrador_listo" || status === "needs_human_review";
 }
 
+function connLabel(state: SseConn): string {
+  switch (state) {
+    case "open":
+      return "En vivo";
+    case "connecting":
+      return "Conectando…";
+    case "reconnecting":
+      return "Reconectando…";
+    default:
+      return "Desconectado";
+  }
+}
+
 export default function RfpIntakePage() {
   const [tickets, setTickets] = useState<RfpTicket[]>([]);
   const [selected, setSelected] = useState<RfpTicket | null>(null);
@@ -55,11 +76,23 @@ export default function RfpIntakePage() {
   const [genBusy, setGenBusy] = useState(false);
   const [apprBusy, setApprBusy] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [sseState, setSseState] = useState<SseConn>("connecting");
+  const [freshIds, setFreshIds] = useState<Set<number>>(() => new Set());
+  const [toast, setToast] = useState<string | null>(null);
+  const [salesAlert, setSalesAlert] = useState<SalesDropAlertPayload | null>(null);
 
   const reload = useCallback(async () => {
     try {
       const rows = await listRfpTickets();
-      setTickets(rows);
+      setTickets((prev) => {
+        // Dedupe por ticket_id (unión estable tras refetch SSE)
+        const byId = new Map<number, RfpTicket>();
+        for (const t of rows) byId.set(t.ticket_id, t);
+        for (const t of prev) {
+          if (!byId.has(t.ticket_id)) byId.set(t.ticket_id, t);
+        }
+        return Array.from(byId.values()).sort((a, b) => b.ticket_id - a.ticket_id);
+      });
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al listar tickets");
@@ -69,6 +102,55 @@ export default function RfpIntakePage() {
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  // SSE: tickets nuevos sin refresh manual + backoff al cortar red
+  useEffect(() => {
+    const ctrl = connectRfpSse({
+      onConnectionChange: setSseState,
+      onRecover: () => reload(),
+      onRfpTicketCreated: (payload: RfpTicketCreatedPayload) => {
+        if (!markTicketSeen(payload.ticket_id)) return;
+        setFreshIds((prev) => new Set(prev).add(payload.ticket_id));
+        setToast(
+          `Nuevo ticket RFP #${payload.ticket_id} · ${payload.original_filename || "sin nombre"} · ${statusLabel(payload.status)}`,
+        );
+        setTickets((prev) => {
+          if (prev.some((t) => t.ticket_id === payload.ticket_id)) return prev;
+          const stub: RfpTicket = {
+            ticket_id: payload.ticket_id,
+            status: payload.status,
+            original_filename: payload.original_filename || "—",
+            raw_pdf_path: "",
+            created_at: payload.created_at || new Date().toISOString(),
+            updated_at: payload.created_at || new Date().toISOString(),
+            metadata: payload.client_name
+              ? {
+                  client_name: payload.client_name,
+                  location: payload.location,
+                  service_type: payload.service_type,
+                  scope: payload.scope,
+                  deadline: payload.deadline,
+                  budget_range: payload.budget_range,
+                  departments_needed: payload.departments_needed,
+                }
+              : null,
+          };
+          return [stub, ...prev];
+        });
+        void reload();
+      },
+      onSalesDropAlert: (payload) => {
+        setSalesAlert(payload);
+      },
+    });
+    return () => ctrl.stop();
+  }, [reload]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const id = window.setTimeout(() => setToast(null), 8000);
+    return () => window.clearTimeout(id);
+  }, [toast]);
 
   useEffect(() => {
     const pending = tickets.some((t) => POLLING.has(t.status));
@@ -89,6 +171,7 @@ export default function RfpIntakePage() {
     setError(null);
     try {
       const accepted = await uploadRfpPdf(file);
+      markTicketSeen(accepted.ticket_id);
       await reload();
       setSelected(await getRfpTicket(accepted.ticket_id));
       setFile(null);
@@ -102,6 +185,11 @@ export default function RfpIntakePage() {
   async function openTicket(id: number) {
     try {
       setSelected(await getRfpTicket(id));
+      setFreshIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo cargar el ticket");
     }
@@ -157,11 +245,38 @@ export default function RfpIntakePage() {
 
   return (
     <AuthenticatedShell active="rfp">
-      <h1>RFP Brasaland (Partes 1–3)</h1>
-      <p className="bo-muted">
-        Recepción → borradores evaluados → aprobación humana por departamento (en
-        paralelo) → documento final. Moneda de propuesta: <strong>euros (€)</strong>.
-      </p>
+      <div className="bo-rfp-header">
+        <div>
+          <h1>RFP Brasaland (Partes 1–3)</h1>
+          <p className="bo-muted">
+            Recepción → borradores evaluados → aprobación humana por departamento (en
+            paralelo) → documento final. Moneda de propuesta: <strong>euros (€)</strong>.
+          </p>
+        </div>
+        <span
+          className={`bo-sse-status bo-sse-status-${sseState}`}
+          title="Canal SSE autenticado (JWT)"
+        >
+          {connLabel(sseState)}
+        </span>
+      </div>
+
+      {toast ? (
+        <div className="bo-alert bo-rfp-toast" role="status" aria-live="polite">
+          {toast}
+        </div>
+      ) : null}
+
+      {salesAlert ? (
+        <div className="bo-alert bo-rfp-sales-alert" role="status">
+          <strong>Alerta de ventas:</strong> caída del {salesAlert.drop_pct}% en{" "}
+          {salesAlert.country} ({salesAlert.week_label}) — umbral {salesAlert.threshold_pct}
+          %. Notificar a {(salesAlert.notify || []).join(", ") || "ops"}.
+          <button type="button" className="bo-btn bo-btn-small" onClick={() => setSalesAlert(null)}>
+            Cerrar
+          </button>
+        </div>
+      ) : null}
 
       <form onSubmit={onUpload} className="bo-card" style={{ marginBottom: "1.5rem" }}>
         <label>
@@ -184,8 +299,11 @@ export default function RfpIntakePage() {
           <h2>Tickets</h2>
           <ul className="bo-list">
             {tickets.map((t) => (
-              <li key={t.ticket_id}>
+              <li key={t.ticket_id} className={freshIds.has(t.ticket_id) ? "bo-rfp-fresh" : undefined}>
                 <button type="button" onClick={() => void openTicket(t.ticket_id)}>
+                  {freshIds.has(t.ticket_id) ? (
+                    <span className="bo-rfp-fresh-badge">Nuevo</span>
+                  ) : null}
                   #{t.ticket_id} · {statusLabel(t.status)} · {t.original_filename}
                 </button>
               </li>
@@ -261,12 +379,6 @@ export default function RfpIntakePage() {
                       </div>
                     </div>
                   ))}
-                  {(selected.department_sections || [])
-                    .filter((s) => s.approval_status !== "aprobado")
-                    .length === 0 &&
-                  !(selected.pending_approvals || []).some((p) => p.department_id === "ceo")
-                    ? null
-                    : null}
                 </div>
               ) : null}
 

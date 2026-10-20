@@ -9,7 +9,8 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Header, HTTPException, Request, UploadFile
+from fastapi.responses import StreamingResponse
 from sqlmodel import Session
 
 from app.auth.deps import get_current_user
@@ -23,6 +24,13 @@ from app.rfp.schemas import (
     RfpGenerateAccepted,
     RfpTicketOut,
     RfpUploadAccepted,
+    SalesDropAlertIn,
+    SalesDropAlertOut,
+)
+from app.rfp.sse_hub import (
+    publish_rfp_ticket_created,
+    publish_sales_drop_alert,
+    stream_events,
 )
 from app.users.models import UserInDB
 
@@ -106,9 +114,79 @@ async def upload_rfp(
         original_filename=file.filename,
     )
     assert ticket.id is not None
+    # Notificación en tiempo real (SSE) — estado inicial analizando
+    publish_rfp_ticket_created(
+        ticket_id=ticket.id,
+        status="analizando",
+        original_filename=file.filename or "",
+        created_at=ticket.created_at.isoformat() if ticket.created_at else None,
+    )
     _enqueue(ticket.id)
     logger.info("rfp ticket=%s aceptado path=%s", ticket.id, dest)
     return RfpUploadAccepted(ticket_id=ticket.id, status="analizando")
+
+
+@router.get("/events/stream")
+async def rfp_events_stream(
+    request: Request,
+    last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
+    _user: UserInDB = Depends(get_current_user),
+) -> StreamingResponse:
+    """
+    SSE autenticado (mismo JWT que el backoffice).
+
+    Usar fetch + ReadableStream en el cliente (EventSource no envía Authorization).
+    """
+    parsed_last: int | None = None
+    if last_event_id:
+        try:
+            parsed_last = int(last_event_id)
+        except ValueError:
+            parsed_last = None
+
+    async def event_generator():
+        async for chunk in stream_events(last_event_id=parsed_last):
+            if await request.is_disconnected():
+                break
+            yield chunk
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@router.post("/events/sales-drop-alert", response_model=SalesDropAlertOut)
+def emit_sales_drop_alert(
+    body: SalesDropAlertIn,
+    _user: UserInDB = Depends(get_current_user),
+) -> SalesDropAlertOut:
+    """
+    Caso opcional: umbral de negocio (caída de ventas >15%).
+
+    Emite `sales_drop_alert` por el mismo canal SSE (Mariana Restrepo / Felipe Guerrero).
+    """
+    if body.drop_pct < 15.0:
+        raise HTTPException(
+            status_code=400,
+            detail="La alerta solo aplica con caída ≥ 15% vs semana anterior",
+        )
+    ev = publish_sales_drop_alert(
+        country=body.country,
+        drop_pct=body.drop_pct,
+        week_label=body.week_label,
+    )
+    return SalesDropAlertOut(
+        event_id=ev.id,
+        country=body.country,
+        drop_pct=body.drop_pct,
+        week_label=body.week_label,
+    )
 
 
 @router.get("/tickets", response_model=list[RfpTicketOut])

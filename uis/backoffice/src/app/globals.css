@@ -563,3 +563,112 @@ a {
 .bo-table code {
   font-size: 0.8em;
 }
+
+/* RFP SSE — notificaciones en vivo */
+.bo-rfp-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.bo-sse-status {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.35rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid var(--bo-border);
+  background: #f8fafc;
+  color: var(--bo-soft);
+}
+
+.bo-sse-status-open {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+
+.bo-sse-status-reconnecting,
+.bo-sse-status-connecting {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.bo-sse-status-closed {
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+.bo-rfp-toast {
+  background: #ecfeff;
+  color: #0e7490;
+  border: 1px solid #a5f3fc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.bo-rfp-sales-alert {
+  background: #fff7ed;
+  color: #9a3412;
+  border: 1px solid #fed7aa;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bo-rfp-fresh button {
+  border-left: 3px solid var(--bo-accent);
+  background: var(--bo-accent-weak);
+  font-weight: 600;
+}
+
+.bo-rfp-fresh-badge {
+  display: inline-block;
+  margin-right: 0.4rem;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--bo-accent);
+}
+
+.bo-muted {
+  color: var(--bo-soft);
+}
+
+.bo-card {
+  border: 1px solid var(--bo-border);
+  border-radius: 12px;
+  background: var(--bo-card);
+  padding: 1rem 1.1rem;
+}
+
+.bo-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.bo-list li {
+  margin-bottom: 0.4rem;
+}
+
+.bo-list button {
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--bo-border);
+  background: #fff;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.bo-list button:hover {
+  border-color: var(--bo-accent);
+}

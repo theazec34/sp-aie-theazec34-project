@@ -132,3 +132,20 @@ class RfpApprovalDecisionOut(BaseModel):
     ticket_status: str
     pending_interrupt: dict[str, Any] | None = None
     final_document: FinalDocumentOut | None = None
+
+
+class SalesDropAlertIn(BaseModel):
+    """Alerta opcional BRIEFING: caída de ventas >15% vs semana anterior."""
+
+    country: str
+    drop_pct: float = Field(..., description="Porcentaje de caída (p.ej. 18.5)")
+    week_label: str
+
+
+class SalesDropAlertOut(BaseModel):
+    event: str = "sales_drop_alert"
+    event_id: int
+    country: str
+    drop_pct: float
+    threshold_pct: float = 15.0
+    week_label: str

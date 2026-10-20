@@ -27,6 +27,7 @@ Plataforma digital con:
 14. Idioma de producto: español en UI y mensajes al operador (`AGENTS.md` ley 9)
 15. RFP Parte 2: generadores + evaluadores paralelos + ciclo con `needs_human_review`
 16. RFP Parte 3: HITL por departamento (interrupt/checkpointer) + documento final; moneda €
+17. SSE: notificaciones push de tickets RFP (y alerta opcional de caída de ventas) al backoffice
 
 ## Fuentes de verdad
 - Mapa operativo: **`PROJECT.md`**
