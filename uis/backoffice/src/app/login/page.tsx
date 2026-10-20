@@ -93,9 +93,9 @@ export default function LoginPage() {
   return (
     <main className="auth-shell">
       <section className="auth-card">
-        <p className="bo-kicker">Brasaland OPS</p>
+        <p className="bo-brand" style={{ marginBottom: 8 }}>Brasaland</p>
         <h1>Iniciar sesión</h1>
-        <p className="bo-soft">Accede con tu email y contraseña de la API.</p>
+        <p className="bo-soft">Panel de operaciones — email y contraseña de la API.</p>
 
         <Suspense
           fallback={
