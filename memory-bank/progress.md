@@ -26,4 +26,4 @@
 |------|-----|
 | … | #1–#45 |
 | SSE notificaciones RFP | #46 |
-| WebSocket agent chat | este PR |
+| WebSocket agent chat | #47 |
