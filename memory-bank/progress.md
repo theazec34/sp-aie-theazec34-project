@@ -1,26 +1,29 @@
 # Progress — Brasaland Digital
 
 ## Estado (2026-10-20)
-- **`main`:** PRs **#1–#45** (RFP Parte 3 #45 mergeado).
-- **Hito en curso:** **Notificaciones SSE** — tickets RFP en tiempo real (`feature/sse-notifications`).
-- **Moneda de producto RFP/propuestas:** **euros (€)**.
+- **`main`:** PRs **#1–#46** (SSE RFP #46 mergeado).
+- **Hito en curso:** **WebSocket chat** — Manager support agent Parte 2/2 (`cursor/websocket-chat-c620`).
+- **Moneda RFP:** **euros (€)**.
 - **Fuera de alcance:** `hito-3` Talent Pipeline / `3.5`.
 
-## SSE notificaciones (hito actual)
-- Hub in-process + replay `Last-Event-ID`: `services/api/app/rfp/sse_hub.py`
-- `GET /rfp/events/stream` (JWT, `text/event-stream`, evento `rfp_ticket_created`)
-- Opcional: `sales_drop_alert` + `POST /rfp/events/sales-drop-alert`
-- UI: `fetch` + ReadableStream, backoff, dedupe, badge «En vivo» en `/rfp`
-- Docs: `docs/rfp/sse-notifications.md` (respuestas de diseño)
-- Tests: `services/api/tests/test_rfp_sse.py`
-- **Sin** llamadas a modelos/agentes en esta capa
+## WebSocket chat (hito actual)
+- `WS /agent/chat/ws` — JWT `?token=` / frame auth; `session_id` = thread_id
+- Pub/Sub in-process `chat.<session_id>`; productor desacoplado de consumidores
+- Eventos: `token_chunk`, `interrupt_requested`, `generation_interrupted`, `generation_completed`, `session_snapshot`, `user_message`
+- Abort real de emisión (no HITL `interrupt()`); mensaje parcial `interrupted`
+- UI backoffice `/agent` — tokens en vivo, interrupción, backoff + rehidratación
+- Docs: `docs/realtime/websocket-chat.md`, BRIEFING `docs/realtime/brasaland-BRIEFING.es-2-2.md`
+- Tests: `services/api/tests/test_agent_chat_ws.py`
+
+## SSE notificaciones (en main)
+- #46 — `rfp_ticket_created` + UI `/rfp`
 
 ## RFP Partes 1–3 (en main)
-- #42 intake · #44 generación · #45 aprobación HITL + €
+- #42 · #44 · #45
 
 ## Hitos en main
 | Área | PR |
 |------|-----|
-| … | #1–#44 |
-| RFP aprobación Parte 3 + € | #45 |
+| … | #1–#45 |
 | SSE notificaciones RFP | #46 |
+| WebSocket agent chat | este PR |

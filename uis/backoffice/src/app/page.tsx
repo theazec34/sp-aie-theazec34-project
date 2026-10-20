@@ -18,6 +18,13 @@ const moduleCards = [
     href: "/knowledge",
   },
   {
+    id: "agent",
+    title: "Agente de soporte",
+    description:
+      "Chat en vivo (WebSocket) para encargados: tokens en tiempo real e interrupción a mitad de respuesta.",
+    href: "/agent",
+  },
+  {
     id: "reporting",
     title: "Costo y merma",
     description: "KPIs de reporting semanal para dirección y operaciones.",

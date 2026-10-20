@@ -19,7 +19,8 @@ type Props = {
     | "telemetry"
     | "reporting"
     | "knowledge"
-    | "rfp";
+    | "rfp"
+    | "agent";
 };
 
 export default function AppNav({ active }: Props) {
@@ -80,6 +81,12 @@ export default function AppNav({ active }: Props) {
           className={`bo-nav-link${active === "knowledge" ? " bo-nav-link-active" : ""}`}
         >
           Base de conocimiento
+        </Link>
+        <Link
+          href="/agent"
+          className={`bo-nav-link${active === "agent" ? " bo-nav-link-active" : ""}`}
+        >
+          Agente soporte
         </Link>
         <Link
           href="/rfp"

@@ -28,6 +28,7 @@ Plataforma digital con:
 15. RFP Parte 2: generadores + evaluadores paralelos + ciclo con `needs_human_review`
 16. RFP Parte 3: HITL por departamento (interrupt/checkpointer) + documento final; moneda €
 17. SSE: notificaciones push de tickets RFP (y alerta opcional de caída de ventas) al backoffice
+18. WebSocket: chat en vivo del Manager support agent (tokens + abort + rehidratación de sesión)
 
 ## Fuentes de verdad
 - Mapa operativo: **`PROJECT.md`**
