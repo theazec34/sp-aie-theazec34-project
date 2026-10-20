@@ -23,4 +23,4 @@
 |------|-----|
 | … | #1–#44 |
 | RFP aprobación Parte 3 + € | #45 |
-| SSE notificaciones RFP | este PR |
+| SSE notificaciones RFP | #46 |
