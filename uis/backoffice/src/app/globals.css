@@ -1,13 +1,14 @@
 :root {
-  --bo-bg: #eef1f7;
-  --bo-sidebar: #0f172a;
-  --bo-card: #ffffff;
-  --bo-ink: #101828;
-  --bo-soft: #667085;
-  /* Darker accent for WCAG AA contrast on white/#ecfeff labels (LH a11y). */
-  --bo-accent: #0e7490;
-  --bo-accent-weak: #cffafe;
-  --bo-border: #d0d5dd;
+  /* Brasaland ops — carbón + brasa (alineado a la web pública) */
+  --bo-bg: #f3ebe3;
+  --bo-sidebar: #1a1008;
+  --bo-card: #fffdf9;
+  --bo-ink: #1a1008;
+  --bo-soft: #6b5344;
+  --bo-accent: #c8380a;
+  --bo-accent-weak: #fff1e8;
+  --bo-border: #e5d5c5;
+  --bo-ember: #ffb060;
 }
 
 * {
@@ -24,7 +25,9 @@ body {
 body {
   font-family: var(--font-body), sans-serif;
   color: var(--bo-ink);
-  background: linear-gradient(180deg, #f8fafc 0%, var(--bo-bg) 100%);
+  background:
+    radial-gradient(ellipse 70% 40% at 100% 0%, rgba(200, 56, 10, 0.08) 0%, transparent 50%),
+    linear-gradient(180deg, #faf6f1 0%, var(--bo-bg) 100%);
 }
 
 a {
@@ -40,36 +43,37 @@ a {
 
 .bo-sidebar {
   padding: 28px 20px;
-  background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
-  color: #e2e8f0;
-  border-right: 1px solid #1f2937;
+  background: linear-gradient(185deg, #1a1008 0%, #2a140c 55%, #120a06 100%);
+  color: #fff7ed;
+  border-right: 1px solid rgba(255, 176, 96, 0.12);
 }
 
 .bo-brand {
   font-family: var(--font-display), sans-serif;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 700;
   margin-bottom: 24px;
   letter-spacing: 0.02em;
+  color: var(--bo-ember);
 }
 
 .bo-nav-link {
   display: block;
   padding: 10px 12px;
   border-radius: 10px;
-  color: #cbd5e1;
+  color: rgba(255, 247, 237, 0.78);
   margin-bottom: 8px;
 }
 
 .bo-nav-link:hover {
-  background: rgba(8, 145, 178, 0.14);
-  color: #ecfeff;
+  background: rgba(200, 56, 10, 0.18);
+  color: #fff7ed;
 }
 
 .bo-nav-link-active {
-  background: rgba(8, 145, 178, 0.2);
-  color: #ecfeff;
-  border: 1px solid rgba(8, 145, 178, 0.38);
+  background: rgba(200, 56, 10, 0.28);
+  color: #fff7ed;
+  border: 1px solid rgba(255, 176, 96, 0.35);
 }
 
 .bo-content {
@@ -109,8 +113,8 @@ a {
   font-size: 0.8rem;
   font-weight: 600;
   background: var(--bo-accent-weak);
-  color: #155e75;
-  border: 1px solid #a5f3fc;
+  color: #9a3412;
+  border: 1px solid #fed7aa;
 }
 
 .bo-grid {
@@ -371,8 +375,8 @@ a {
   place-items: center;
   padding: 24px;
   background:
-    radial-gradient(circle at top right, rgba(8, 145, 178, 0.16), transparent 40%),
-    linear-gradient(180deg, #f8fafc 0%, var(--bo-bg) 100%);
+    radial-gradient(circle at top right, rgba(200, 56, 10, 0.18), transparent 42%),
+    linear-gradient(180deg, #1a1008 0%, #2a140c 35%, var(--bo-bg) 70%);
 }
 
 .auth-card {
@@ -414,7 +418,7 @@ a {
 }
 
 .auth-footer a {
-  color: #0e7490;
+  color: var(--bo-accent);
   font-weight: 700;
 }
 
@@ -427,8 +431,8 @@ a {
 .api-base-field {
   padding: 10px 12px;
   border-radius: 10px;
-  background: #f0fdfa;
-  border: 1px solid #99f6e4;
+  background: var(--bo-accent-weak);
+  border: 1px solid #fed7aa;
 }
 
 .api-base-hint {
@@ -442,8 +446,8 @@ a {
   padding: 0.35rem 0.7rem;
   font-size: 0.8rem;
   background: transparent;
-  border: 1px solid #5eead4;
-  color: #0f766e;
+  border: 1px solid #fdba74;
+  color: #9a3412;
   cursor: pointer;
   border-radius: 8px;
 }
@@ -604,13 +608,54 @@ a {
 }
 
 .bo-rfp-toast {
-  background: #ecfeff;
-  color: #0e7490;
-  border: 1px solid #a5f3fc;
+  background: var(--bo-accent-weak);
+  color: #9a3412;
+  border: 1px solid #fed7aa;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+}
+
+.bo-module-link {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 0.45rem 0.9rem;
+  border-radius: 10px;
+  background: var(--bo-accent-weak);
+  color: #9a3412;
+  border: 1px solid #fed7aa;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.bo-module-link:hover {
+  background: #ffe4d4;
+}
+
+.bo-input,
+.bo-field textarea,
+.bo-field input[type="text"],
+.bo-field input:not([type]),
+.bo-agent-chat-form textarea {
+  width: 100%;
+  border: 1px solid var(--bo-border);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font: inherit;
+  background: #fff;
+}
+
+.bo-rfp-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 900px) {
+  .bo-rfp-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 .bo-rfp-sales-alert {

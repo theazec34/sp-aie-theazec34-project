@@ -33,7 +33,7 @@ function LoginForm() {
       telemetry.ensureSession();
       telemetry.setUserId(userIdFromToken(token));
       track("auth_login_succeeded", { result: "success", role: "unknown" });
-      router.replace("/proveedores");
+      router.replace("/");
     } catch (err) {
       const raw = err instanceof Error ? err.message : String(err);
       const failure_reason = /failed to fetch|networkerror|load failed/i.test(raw)
@@ -93,9 +93,9 @@ export default function LoginPage() {
   return (
     <main className="auth-shell">
       <section className="auth-card">
-        <p className="bo-kicker">Brasaland OPS</p>
+        <p className="bo-brand" style={{ marginBottom: 8 }}>Brasaland</p>
         <h1>Iniciar sesión</h1>
-        <p className="bo-soft">Accede con tu email y contraseña de la API.</p>
+        <p className="bo-soft">Panel de operaciones — email y contraseña de la API.</p>
 
         <Suspense
           fallback={

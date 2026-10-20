@@ -23,7 +23,7 @@ export function Header({ navItems }: HeaderProps) {
             Brasa<span className="brand-highlight">land</span>
           </span>
         </a>
-        <nav className="nav-links" aria-label="Navegacion principal">
+        <nav className="nav-links" aria-label="Navegación principal">
           {navItems.map((item) => (
             <a key={item.id} href={item.href}>
               {item.label}

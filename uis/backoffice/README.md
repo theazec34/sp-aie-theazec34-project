@@ -21,7 +21,7 @@ Rutas protegidas (exigen token en `localStorage`):
 
 El token se guarda tras login/registro y se envía como `Authorization: Bearer <token>`.
 Un **401** limpia la sesión y redirige a `/login`. **Cerrar sesión** hace lo mismo.
-Las llamadas a `/api/incidents*` usan `skipAuth` (endpoints públicos).
+Las llamadas a `/api/incidents*` requieren JWT (mismo token que el resto del backoffice).
 
 La web pública `uis/website` **no** tiene auth (permanece abierta).
 

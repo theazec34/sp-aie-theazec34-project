@@ -35,7 +35,7 @@ export function MenuSection() {
         <SectionTitle
           id="carta-title"
           title="Carta completa Brasaland"
-          description="Datos conectados a menu.json para reflejar categorias, platos, precios y alergenos del proyecto."
+          description="Carta viva: categorías, platos, precios y alérgenos alineados con el menú del local."
         />
         <div className="menu-summary">
           <p>
@@ -81,8 +81,8 @@ export function MenuSection() {
           </section>
         ))}
 
-        <div className="allergen-key" aria-label="Clave de alergenos">
-          <h3 className="menu-category-title">Clave de alergenos</h3>
+        <div className="allergen-key" aria-label="Clave de alérgenos">
+          <h3 className="menu-category-title">Clave de alérgenos</h3>
           <div className="allergen-items">
             {Object.entries(typedMenuData.alergenos_clave).map(([id, allergen]) => (
               <p key={id} className="allergen-item">

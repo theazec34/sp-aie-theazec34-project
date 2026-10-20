@@ -41,7 +41,6 @@ export default function NuevaIncidenciaPage() {
     try {
       const response = await apiFetch("/api/incidents", {
         method: "POST",
-        skipAuth: true,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
