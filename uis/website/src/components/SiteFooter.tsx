@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { footerNav, hours, legalLinks, restaurant } from "@/data/site";
+import { company, footerNav, hours, legalLinks, restaurant } from "@/data/site";
 
 export function SiteFooter() {
   const year = new Date().getFullYear();
@@ -14,6 +14,9 @@ export function SiteFooter() {
           <p className="footer-text">{restaurant.slogan}</p>
           <p className="footer-text">
             Carnes a la brasa que unen la gastronomía sudamericana con la tradición ibérica.
+          </p>
+          <p className="footer-text">
+            {company.legalName} · NIF {company.nif}
           </p>
         </div>
 
@@ -33,10 +36,7 @@ export function SiteFooter() {
           <ul className="footer-list">
             <li>{restaurant.address}</li>
             <li>
-              <a href={`tel:${restaurant.phone.replace(/\s/g, "")}`}>
-                {restaurant.phone}
-                {restaurant.phoneIsPlaceholder ? " [provisional]" : ""}
-              </a>
+              <a href={`tel:${restaurant.phone.replace(/\s/g, "")}`}>{restaurant.phone}</a>
             </li>
             <li>
               <a href={`mailto:${restaurant.email}`}>{restaurant.email}</a>
@@ -48,9 +48,6 @@ export function SiteFooter() {
               <li key={line}>{line}</li>
             ))}
           </ul>
-          {hours.provisional ? (
-            <p className="footer-note">Horario orientativo — confirmar en el local.</p>
-          ) : null}
         </div>
       </div>
 
@@ -63,7 +60,7 @@ export function SiteFooter() {
           ))}
         </nav>
         <p className="footer-copy">
-          © {year} Brasaland. Todos los derechos reservados.
+          © {year} {company.legalName}. Todos los derechos reservados.
         </p>
       </div>
     </footer>

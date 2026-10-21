@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHero } from "@/components/PageHero";
-import { hours, restaurant } from "@/data/site";
+import { hours, mapsEmbedSrc, restaurant } from "@/data/site";
 
 export const metadata: Metadata = {
   title: "Contacto",
-  description: "Dirección, teléfono y correo de Brasaland.",
+  description: "Dirección, teléfono, mapa y horarios de Brasaland en Sevilla.",
 };
 
 export default function ContactoPage() {
@@ -15,45 +15,73 @@ export default function ContactoPage() {
         eyebrow="Contacto"
         title="Estamos en Sevilla"
         description="Escríbenos o llámanos para reservas, eventos y consultas de alérgenos."
+        imageSrc="/Imagenes/Corte carne.jpg"
+        imageAlt="Brasaland Sevilla"
+        align="center"
       />
+
       <section className="section">
-        <div className="container contact-grid">
-          <div className="feature-tile">
-            <h2>Dirección</h2>
-            <p>{restaurant.address}</p>
-            <p className="field-hint">
-              [Mapa embebido pendiente — añadir cuando haya ficha Google Maps definitiva]
-            </p>
+        <div className="container">
+          <div className="contact-highlights">
+            <article className="contact-stat">
+              <p className="info-label">Dirección</p>
+              <p className="contact-stat-value">{restaurant.address}</p>
+            </article>
+            <article className="contact-stat">
+              <p className="info-label">Teléfono</p>
+              <p className="contact-stat-value">
+                <a href={`tel:${restaurant.phone.replace(/\s/g, "")}`}>{restaurant.phone}</a>
+              </p>
+            </article>
+            <article className="contact-stat">
+              <p className="info-label">Correo</p>
+              <p className="contact-stat-value">
+                <a href={`mailto:${restaurant.email}`}>{restaurant.email}</a>
+              </p>
+            </article>
           </div>
-          <div className="feature-tile">
-            <h2>Teléfono y correo</h2>
-            <p>
-              <a href={`tel:${restaurant.phone.replace(/\s/g, "")}`}>
-                {restaurant.phone}
-                {restaurant.phoneIsPlaceholder ? " [provisional]" : ""}
+
+          <div className="map-block">
+            <h2 className="section-title">Cómo llegar</h2>
+            <p className="section-text section-text-center">
+              Calle de la Brasa, 14 — Sevilla. Abre el mapa para rutas en coche o a pie.
+            </p>
+            <div className="map-frame">
+              <iframe
+                title="Mapa de Brasaland en Google Maps"
+                src={mapsEmbedSrc}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
+            </div>
+            <p className="section-cta-row section-cta-center">
+              <a
+                className="cta cta-ghost"
+                href="https://www.google.com/maps/search/?api=1&query=Calle+de+la+Brasa+14+Sevilla"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Abrir en Google Maps
               </a>
             </p>
-            <p>
-              <a href={`mailto:${restaurant.email}`}>{restaurant.email}</a>
-            </p>
           </div>
-          <div className="feature-tile">
-            <h2>Horario</h2>
-            <ul className="plain-list">
+
+          <div className="contact-hours">
+            <h2 className="section-title">Horario</h2>
+            <ul className="plain-list hours-list">
               {hours.lines.map((line) => (
                 <li key={line}>{line}</li>
               ))}
             </ul>
-            {hours.provisional ? (
-              <p className="field-hint">Horario orientativo — confirmar en el local.</p>
-            ) : null}
           </div>
+
+          <p className="section-cta-row section-cta-center">
+            <Link className="cta" href="/reservas">
+              Reservar mesa
+            </Link>
+          </p>
         </div>
-        <p className="section-cta-row">
-          <Link className="cta" href="/reservas">
-            Reservar mesa
-          </Link>
-        </p>
       </section>
     </>
   );

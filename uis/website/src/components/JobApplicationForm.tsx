@@ -243,7 +243,7 @@ export function JobApplicationForm() {
       ) : null}
 
       <p className="form-disclaimer">
-        La candidatura se registra en el sistema (TinyDB). No implica contratación. Contacto
+        La candidatura se registra en el sistema de Brasaland. No implica contratación. Contacto
         de respaldo: {restaurant.email}.
       </p>
 

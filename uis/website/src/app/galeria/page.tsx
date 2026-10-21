@@ -14,6 +14,9 @@ export default function GaleriaPage() {
         eyebrow="Galería"
         title="El fuego, en imágenes"
         description="Selección fotográfica del proyecto: brasa, platos y detalles de sala."
+        imageSrc="/Imagenes/Pescado braseado.jpg"
+        imageAlt="Platos Brasaland"
+        align="center"
       />
       <section className="section">
         <div className="container">
