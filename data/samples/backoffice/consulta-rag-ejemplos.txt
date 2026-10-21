@@ -1,0 +1,5 @@
+# Preguntas de ejemplo para Base de conocimiento (/knowledge)
+1. ¿Cuáles son los tres pilares de la marca Brasaland?
+2. ¿Qué alérgenos debe declarar la entraña argentina?
+3. ¿Cuál es el protocolo de stock bajo de carbón?
+4. ¿Quién aprueba RFP por encima de 50.000 €/año?

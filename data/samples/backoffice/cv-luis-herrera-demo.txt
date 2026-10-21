@@ -1,0 +1,7 @@
+CV — Luis Herrera Demo
+Perfil: Camarero / sala de restaurante asador
+Experiencia: 3 años en sala (turno noche)
+Idiomas: Español (nativo), inglés básico
+Disponibilidad: noches y fines de semana
+Contacto: luis.herrera.demo@example.com
+Nota: archivo de ejemplo para adjuntar en /trabaja-con-nosotros (el formulario guarda el nombre del fichero).

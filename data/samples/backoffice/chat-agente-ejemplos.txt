@@ -1,0 +1,5 @@
+# Mensajes de ejemplo para Agente de soporte (/agent)
+1. ¿Cuántas incidencias abiertas hay esta semana?
+2. Resume el stock bajo de ingredientes en la sede 1.
+3. ¿Qué proveedores de carnes están activos?
+4. (Luego pulsa Interrumpir a mitad de respuesta para probar el abort)
