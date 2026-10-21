@@ -36,8 +36,8 @@ export default function ApiBaseUrlField({ onChange }: Props) {
         autoComplete="off"
       />
       <span className="api-base-hint">
-        En Codespaces debe apuntar al puerto 8000 (Public). Borra el valor y pulsa
-        «Usar auto-detectada» si hace falta.
+        Por defecto usa <code>/api-backend</code> (proxy same-origin del backoffice).
+        Solo cambia esto si necesitas URL directa a :8000 (p. ej. depuración).
       </span>
       <button
         type="button"

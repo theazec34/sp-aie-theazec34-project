@@ -3,8 +3,11 @@
  */
 import {
   clearToken,
+  detectApiBaseUrl,
+  getApiBaseUrl,
   getToken,
   networkErrorMessage,
+  setStoredApiBaseUrl,
   setToken,
 } from "../lib/auth";
 import { parseApiErrorPayload } from "../lib/errors";
@@ -26,14 +29,30 @@ describe("token helpers", () => {
   });
 });
 
+describe("api base url", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("happy: detectApiBaseUrl usa proxy same-origin", () => {
+    expect(detectApiBaseUrl()).toBe("/api-backend");
+    expect(getApiBaseUrl()).toBe("/api-backend");
+  });
+
+  it("edge: override en localStorage se respeta", () => {
+    setStoredApiBaseUrl("http://127.0.0.1:8000");
+    expect(getApiBaseUrl()).toBe("http://127.0.0.1:8000");
+  });
+});
+
 describe("networkErrorMessage", () => {
   it("happy: Failed to fetch → mensaje legible con CTA implícita", () => {
     const msg = networkErrorMessage(
       new Error("Failed to fetch"),
-      "https://example-8000.app.github.dev"
+      "/api-backend"
     );
     expect(msg).toMatch(/No se pudo conectar/);
-    expect(msg).toMatch(/8000/);
+    expect(msg).toMatch(/api-backend/);
   });
 
   it("fail mode: otros errores se reenvían", () => {
