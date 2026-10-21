@@ -21,10 +21,10 @@
 
 ## Rediseño website (actual)
 - Next.js 16 App Router: `/`, `/carta`, `/reservas`, `/nosotros`, `/galeria`, `/eventos`, `/trabaja-con-nosotros`, `/contacto` + legales.
-- Hero full-bleed + InfoStrip; carta desde `menu.json` (sin inventar categorías vacías).
-- Formularios reservas/empleo: validación + mailto; **no** fingen confirmación/envío al servidor.
-- Footer profesional; leyenda 14 alérgenos UE; E2E actualizados.
-- Checks: `npm run lint` + `npm run build` en `uis/website` OK.
+- Hero full-bleed + InfoStrip; carta desde `menu.json`; disclaimer 14 alérgenos UE.
+- Formularios: validación + mailto; stub `lib/integrations.ts` (sin fingir envío).
+- Home: rail editorial de experiencia + bloque ubicación (sin sección vacía de reseñas).
+- Checks: `npm run lint` + `npm run build` OK.
 
 ## Hotfix Docker boot (`cursor/docker-boot-pythonpath-c620`)
 - PYTHONPATH, entrypoint worker/flower, pandas, Redis hostname en Compose.
