@@ -55,7 +55,7 @@ export const legalLinks: NavItem[] = [
 
 export const galleryPhotos: GalleryPhoto[] = [
   { id: "corte-carne", title: "Corte a la brasa", path: "/Imagenes/Corte carne.jpg" },
-  { id: "entraña", title: "Entraña argentina", path: "/Imagenes/Entraña argentina.jpg" },
+  { id: "entraña", title: "Entraña argentina", path: "/Imagenes/Entrana-argentina.jpg" },
   { id: "arroz-bogavante", title: "Arroz con bogavante", path: "/Imagenes/Arroz bogavante.jpg" },
   { id: "tabla-ibericos", title: "Tabla ibéricos", path: "/Imagenes/Tabla ibericos.jpg" },
   { id: "pata-cordero", title: "Cordero a la brasa", path: "/Imagenes/Pata de cordero.jpg" },

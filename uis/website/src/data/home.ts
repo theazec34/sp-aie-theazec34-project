@@ -1,7 +1,7 @@
 /** Map dish id → photo in /public/Imagenes (reused on carta + home). */
 export const menuImageMap: Record<string, string> = {
   "tira-asado": "/Imagenes/Corte carne.jpg",
-  "entraña": "/Imagenes/Entraña argentina.jpg",
+  "entraña": "/Imagenes/Entrana-argentina.jpg",
   picanha: "/Imagenes/Corte carne.jpg",
   "secreto-iberico": "/Imagenes/Pata de cordero.jpg",
   ribeye: "/Imagenes/Corte carne.jpg",
