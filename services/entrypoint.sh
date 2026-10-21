@@ -1,10 +1,9 @@
 #!/bin/sh
-# Seeds (API only) then uvicorn — or exec Compose command (worker/flower).
+# Seeds rápidos → uvicorn → seeds lentos en background.
+# Así /health y el login no esperan a seed_inventory.
 set -e
 
 cd /app/api
-# Must include /app so `import data.pipelines.*` resolves (COPY data → /app/data).
-# Do NOT set PYTHONPATH=. alone — that hides the monorepo data package.
 export PYTHONPATH="/app/api:/app"
 
 # Worker / Flower pass a command via Compose → skip API seed + uvicorn.
@@ -18,22 +17,38 @@ if [ -z "${SECRET_KEY:-}" ]; then
   exit 1
 fi
 
-echo "[backend] Seeding auth / suppliers / inventory / intake (idempotent)…"
+echo "[backend] Seeding auth / suppliers / intake (rápido)…"
 export SEED_ADMIN_EMAIL="${SEED_ADMIN_EMAIL:-admin@brasaland.com}"
 export SEED_ADMIN_PASSWORD="${SEED_ADMIN_PASSWORD:-ChangeMeLocalOnly12!}"
 export SEED_ADMIN_NAME="${SEED_ADMIN_NAME:-Admin Brasaland}"
 python seed_auth.py
 python seed.py
-python seed_public_intake.py || echo "[backend] WARN — seed_public_intake failed; starting API anyway." >&2
-
-# Inventory seed may talk to Supabase; never block API boot.
-if command -v timeout >/dev/null 2>&1; then
-  if ! timeout 30 python seed_inventory.py; then
-    echo "[backend] WARN — seed_inventory timed out or failed; starting API anyway." >&2
-  fi
-else
-  python seed_inventory.py || echo "[backend] WARN — seed_inventory failed; starting API anyway." >&2
-fi
+python seed_public_intake.py || echo "[backend] WARN — seed_public_intake failed." >&2
 
 echo "[backend] Starting uvicorn on 0.0.0.0:8000 (--reload)"
-exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload &
+UVICORN_PID=$!
+
+# Wait until /health answers so Compose healthcheck / login can proceed.
+i=0
+until curl -sf http://127.0.0.1:8000/health >/dev/null 2>&1; do
+  i=$((i + 1))
+  if [ "$i" -gt 60 ]; then
+    echo "[backend] ERROR — uvicorn no respondió /health a tiempo." >&2
+    kill "$UVICORN_PID" 2>/dev/null || true
+    exit 1
+  fi
+  sleep 1
+done
+echo "[backend] /health OK"
+
+# Inventory seed may talk to Supabase; never block login.
+(
+  if command -v timeout >/dev/null 2>&1; then
+    timeout 45 python seed_inventory.py || echo "[backend] WARN — seed_inventory timed out/failed." >&2
+  else
+    python seed_inventory.py || echo "[backend] WARN — seed_inventory failed." >&2
+  fi
+) &
+
+wait "$UVICORN_PID"

@@ -1,22 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Sans, Space_Grotesk } from "next/font/google";
 import TelemetryProvider from "../components/TelemetryProvider";
 import WebVitalsReporter from "../components/WebVitalsReporter";
 import "./globals.css";
 
-const bodyFont = IBM_Plex_Sans({
-  variable: "--font-body",
-  subsets: ["latin"],
-  weight: ["400", "600"],
-  display: "swap",
-});
-
-const displayFont = Space_Grotesk({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["700"],
-  display: "swap",
-});
+/**
+ * Sin next/font/google: en Docker/Codespaces sin salida a fonts.googleapis.com
+ * cada compilación reintentaba y dejaba el login colgado en «Entrando…».
+ * Las variables se definen en globals.css con stacks locales.
+ */
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -38,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${bodyFont.variable} ${displayFont.variable}`}>
+    <html lang="es">
       <body>
         <TelemetryProvider>
           <WebVitalsReporter />

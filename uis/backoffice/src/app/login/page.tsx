@@ -30,13 +30,16 @@ function LoginForm() {
     try {
       const token = await loginRequest(apiBase, email.trim(), password);
       setToken(token);
+      setLoading(false);
       telemetry.ensureSession();
       telemetry.setUserId(userIdFromToken(token));
       track("auth_login_succeeded", { result: "success", role: "unknown" });
       router.replace("/");
     } catch (err) {
       const raw = err instanceof Error ? err.message : String(err);
-      const failure_reason = /failed to fetch|networkerror|load failed/i.test(raw)
+      const failure_reason = /failed to fetch|networkerror|load failed|no respondió a tiempo|timeout/i.test(
+        raw
+      )
         ? "network"
         : /inactiv/i.test(raw)
           ? "inactive"
@@ -46,7 +49,6 @@ function LoginForm() {
         failure_reason,
       });
       setError(networkErrorMessage(err, apiBase));
-    } finally {
       setLoading(false);
     }
   }

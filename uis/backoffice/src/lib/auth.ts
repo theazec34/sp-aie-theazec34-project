@@ -116,6 +116,8 @@ export function networkErrorMessage(err: unknown, apiBase: string): string {
   return raw;
 }
 
+const LOGIN_TIMEOUT_MS = 12_000;
+
 /** OAuth2PasswordRequestForm login — username field carries the email. */
 export async function loginRequest(
   apiBase: string,
@@ -126,11 +128,26 @@ export async function loginRequest(
   body.set("username", email);
   body.set("password", password);
 
-  const response = await fetch(`${apiBase.replace(/\/$/, "")}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
-  });
+  const url = `${apiBase.replace(/\/$/, "")}/auth/login`;
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+      signal: AbortSignal.timeout(LOGIN_TIMEOUT_MS),
+    });
+  } catch (err) {
+    const name = err instanceof Error ? err.name : "";
+    if (name === "TimeoutError" || name === "AbortError") {
+      throw new Error(
+        `La API no respondió a tiempo (${apiBase}). ` +
+          `Espera a que brasaland-backend esté sano (curl :8000/health) y reintenta. ` +
+          `Si usas Docker: docker compose logs backend`
+      );
+    }
+    throw err;
+  }
 
   if (!response.ok) {
     const detail = await response.json().catch(() => ({}));

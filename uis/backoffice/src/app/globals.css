@@ -1,5 +1,7 @@
 :root {
   /* Brasaland ops — carbón + brasa (alineado a la web pública) */
+  --font-body: "IBM Plex Sans", "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-display: "Space Grotesk", "Trebuchet MS", "Segoe UI", sans-serif;
   --bo-bg: #f3ebe3;
   --bo-sidebar: #1a1008;
   --bo-card: #fffdf9;
