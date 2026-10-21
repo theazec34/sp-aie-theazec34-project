@@ -10,6 +10,8 @@
 - Evita `Failed to fetch` cuando `localhost:8000` no es alcanzable desde el navegador (Codespaces/Docker).
 - WebSocket del agente sigue en origen directo `:8000` (rewrite Next no hace upgrade WS).
 - Guía módulos + muestras: `docs/backoffice/GUIA-MODULOS.es.md`, `data/samples/backoffice/`.
+- Menú lateral alineado con el orden del panel (Reservas → Candidaturas → …).
+- Compose: fallback `SECRET_KEY` + seed `seed_public_intake.py` (demo reserva/candidatura). Sin `SECRET_KEY` el login devolvía HTTP 500.
 
 ## Pulido páginas web (actual)
 - Sin etiquetas «provisional»; banners con foto; Eventos (flamenco/vivo); Empleo (sala/brasas).

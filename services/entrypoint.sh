@@ -13,12 +13,18 @@ if [ "$#" -gt 0 ]; then
   exec "$@"
 fi
 
-echo "[backend] Seeding auth / suppliers / inventory (idempotent)…"
+if [ -z "${SECRET_KEY:-}" ]; then
+  echo "[backend] ERROR — SECRET_KEY vacía. Copia .env.example → .env (raíz) y reinicia." >&2
+  exit 1
+fi
+
+echo "[backend] Seeding auth / suppliers / inventory / intake (idempotent)…"
 export SEED_ADMIN_EMAIL="${SEED_ADMIN_EMAIL:-admin@brasaland.com}"
 export SEED_ADMIN_PASSWORD="${SEED_ADMIN_PASSWORD:-ChangeMeLocalOnly12!}"
 export SEED_ADMIN_NAME="${SEED_ADMIN_NAME:-Admin Brasaland}"
 python seed_auth.py
 python seed.py
+python seed_public_intake.py || echo "[backend] WARN — seed_public_intake failed; starting API anyway." >&2
 
 # Inventory seed may talk to Supabase; never block API boot.
 if command -v timeout >/dev/null 2>&1; then
