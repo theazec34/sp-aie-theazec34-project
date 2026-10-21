@@ -18,6 +18,7 @@ from app.incidents.router import router as incidents_router
 from app.inventory import models as _inventory_models  # noqa: F401 — register metadata
 from app.inventory.router import router as inventory_router
 from app.profiles.router import router as profiles_router
+from app.public_intake.router import api_router as public_intake_router
 from app.rfp import models as _rfp_models  # noqa: F401 — register metadata
 from app.rfp.router import router as rfp_router
 from app.suppliers.router import router as suppliers_router
@@ -65,7 +66,8 @@ app = FastAPI(
     version="1.3.0",
     description=(
         "API Brasaland Digital: auth JWT (TinyDB), inventario SQLModel "
-        "(Postgres/Supabase o SQLite), proveedores e incidencias."
+        "(Postgres/Supabase o SQLite), proveedores, incidencias, "
+        "reservas y candidaturas públicas."
     ),
     lifespan=lifespan,
 )
@@ -111,6 +113,7 @@ app.include_router(agent_router)
 app.include_router(agent_chat_ws_router)
 app.include_router(rfp_router)
 app.include_router(tasks_router)
+app.include_router(public_intake_router)
 
 
 @app.get("/health")

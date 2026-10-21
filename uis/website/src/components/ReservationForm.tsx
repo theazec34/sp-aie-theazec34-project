@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { restaurant } from "@/data/site";
+import { postJson } from "@/lib/api";
 import { INTEGRATIONS } from "@/lib/integrations";
 import type { ReservationFormData, ReservationFormErrors } from "@/types/site";
 
@@ -35,13 +36,15 @@ function validate(form: ReservationFormData): ReservationFormErrors {
   return errors;
 }
 
-type Status = "idle" | "ready" | "error";
+type Status = "idle" | "sent" | "error";
 
 export function ReservationForm() {
   const [form, setForm] = useState(INITIAL);
   const [errors, setErrors] = useState<ReservationFormErrors>({});
   const [status, setStatus] = useState<Status>("idle");
   const [submitting, setSubmitting] = useState(false);
+  const [serverMessage, setServerMessage] = useState("");
+  const [ticketId, setTicketId] = useState<number | null>(null);
 
   const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors]);
 
@@ -55,9 +58,10 @@ export function ReservationForm() {
     setStatus("idle");
   }
 
-  function onSubmit(event: FormEvent) {
+  async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setSubmitting(true);
+    setServerMessage("");
     try {
       const validation = validate(form);
       setErrors(validation);
@@ -67,8 +71,29 @@ export function ReservationForm() {
         document.getElementById(`res-${first}`)?.focus();
         return;
       }
-      // Sin endpoint de reservas: preparamos mailto / estado listo (no fingimos confirmación).
-      setStatus("ready");
+
+      const result = await postJson<{ id: number; message: string }>(
+        INTEGRATIONS.reservations.path,
+        {
+          full_name: form.fullName.trim(),
+          phone: form.phone.trim(),
+          email: form.email.trim(),
+          date: form.date,
+          time: form.time.length === 5 ? `${form.time}:00` : form.time,
+          guests: Number(form.guests),
+          notes: form.notes.trim(),
+        }
+      );
+
+      if (!result.ok) {
+        setStatus("error");
+        setServerMessage(result.detail);
+        return;
+      }
+
+      setTicketId(result.data.id);
+      setServerMessage(result.data.message);
+      setStatus("sent");
     } finally {
       setSubmitting(false);
     }
@@ -101,10 +126,9 @@ export function ReservationForm() {
             onChange={(e) => update("fullName", e.target.value)}
             autoComplete="name"
             aria-invalid={Boolean(errors.fullName)}
-            aria-describedby={errors.fullName ? "err-fullName" : undefined}
           />
           {errors.fullName ? (
-            <span id="err-fullName" className="field-error" role="alert">
+            <span className="field-error" role="alert">
               {errors.fullName}
             </span>
           ) : null}
@@ -119,10 +143,9 @@ export function ReservationForm() {
             onChange={(e) => update("phone", e.target.value)}
             autoComplete="tel"
             aria-invalid={Boolean(errors.phone)}
-            aria-describedby={errors.phone ? "err-phone" : undefined}
           />
           {errors.phone ? (
-            <span id="err-phone" className="field-error" role="alert">
+            <span className="field-error" role="alert">
               {errors.phone}
             </span>
           ) : null}
@@ -137,10 +160,9 @@ export function ReservationForm() {
             onChange={(e) => update("email", e.target.value)}
             autoComplete="email"
             aria-invalid={Boolean(errors.email)}
-            aria-describedby={errors.email ? "err-email" : undefined}
           />
           {errors.email ? (
-            <span id="err-email" className="field-error" role="alert">
+            <span className="field-error" role="alert">
               {errors.email}
             </span>
           ) : null}
@@ -209,35 +231,31 @@ export function ReservationForm() {
       </label>
 
       <p className="form-disclaimer">
-        Esta solicitud no confirma mesa automáticamente
-        {INTEGRATIONS.reservations.ready
-          ? "."
-          : `: aún no hay motor de reservas (${INTEGRATIONS.reservations.suggestedPath}).`}{" "}
-        Al validar el formulario podrás enviarla por correo a{" "}
-        <strong>{restaurant.email}</strong> o llamarnos.
+        La solicitud se guarda en el sistema Brasaland con estado «recibida».{" "}
+        <strong>No confirma mesa automáticamente</strong>: el restaurante debe
+        validarla. Si la API no responde, puedes usar el correo de respaldo.
       </p>
 
       <div className="form-actions">
         <button className="cta" type="submit" disabled={submitting}>
-          {submitting ? "Validando…" : "Preparar solicitud"}
+          {submitting ? "Enviando…" : "Enviar solicitud"}
         </button>
-        {status === "ready" ? (
+        {INTEGRATIONS.reservations.mailtoFallback ? (
           <a className="cta cta-ghost" href={mailto}>
-            Enviar por correo
+            Respaldo por correo
           </a>
         ) : null}
       </div>
 
-      {status === "ready" ? (
+      {status === "sent" ? (
         <p className="form-status form-status-ok" role="status">
-          Datos válidos. La reserva no está confirmada hasta que el restaurante responda.
-          Usa «Enviar por correo» o llama al {restaurant.phone}
-          {restaurant.phoneIsPlaceholder ? " [teléfono provisional]" : ""}.
+          {serverMessage}
+          {ticketId != null ? ` (ref. #${ticketId})` : ""}
         </p>
       ) : null}
       {status === "error" || hasErrors ? (
         <p className="form-status form-status-error" role="alert">
-          Revisa los campos marcados.
+          {serverMessage || "Revisa los campos marcados."}
         </p>
       ) : null}
     </form>

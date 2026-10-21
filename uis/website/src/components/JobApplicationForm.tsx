@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { restaurant } from "@/data/site";
+import { postJson } from "@/lib/api";
 import { INTEGRATIONS } from "@/lib/integrations";
 import type { ApplicationFormData, ApplicationFormErrors } from "@/types/site";
 
@@ -44,8 +45,10 @@ function validate(form: ApplicationFormData): ApplicationFormErrors {
 export function JobApplicationForm() {
   const [form, setForm] = useState(INITIAL);
   const [errors, setErrors] = useState<ApplicationFormErrors>({});
-  const [ready, setReady] = useState(false);
+  const [sent, setSent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [serverMessage, setServerMessage] = useState("");
+  const [ticketId, setTicketId] = useState<number | null>(null);
 
   function update<K extends keyof ApplicationFormData>(key: K, value: ApplicationFormData[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -54,7 +57,7 @@ export function JobApplicationForm() {
       delete next[key];
       return next;
     });
-    setReady(false);
+    setSent(false);
   }
 
   const mailto = useMemo(() => {
@@ -66,7 +69,7 @@ export function JobApplicationForm() {
         `Teléfono: ${form.phone}`,
         `Puesto: ${form.department}`,
         `Experiencia (años): ${form.experience}`,
-        `CV adjunto en cliente de correo: ${form.cvName || "no indicado"}`,
+        `CV: ${form.cvName || "no indicado"}`,
         "",
         form.message,
       ].join("\n")
@@ -74,9 +77,10 @@ export function JobApplicationForm() {
     return `mailto:rrhh@brasaland.com?subject=${subject}&body=${body}`;
   }, [form]);
 
-  function onSubmit(event: FormEvent) {
+  async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setSubmitting(true);
+    setServerMessage("");
     try {
       const validation = validate(form);
       setErrors(validation);
@@ -85,7 +89,29 @@ export function JobApplicationForm() {
         document.getElementById(first)?.focus();
         return;
       }
-      setReady(true);
+
+      const result = await postJson<{ id: number; status_message: string }>(
+        INTEGRATIONS.careers.path,
+        {
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          department: form.department,
+          experience_years: Number(form.experience),
+          message: form.message.trim(),
+          cv_filename: form.cvName || "",
+          privacy_accepted: form.privacy,
+        }
+      );
+
+      if (!result.ok) {
+        setServerMessage(result.detail);
+        return;
+      }
+
+      setTicketId(result.data.id);
+      setServerMessage(result.data.status_message);
+      setSent(true);
     } finally {
       setSubmitting(false);
     }
@@ -167,7 +193,7 @@ export function JobApplicationForm() {
           ) : null}
         </label>
         <label className="form-field">
-          <span>CV (opcional — no se sube al servidor)</span>
+          <span>CV (opcional — solo nombre de fichero)</span>
           <input
             id="cvName"
             type="file"
@@ -175,7 +201,7 @@ export function JobApplicationForm() {
             onChange={(e) => update("cvName", e.target.files?.[0]?.name ?? "")}
           />
           <span className="field-hint">
-            El archivo no se almacena aquí; adjúntalo al enviar el correo.
+            El archivo no se sube al servidor en esta versión; se guarda el nombre.
           </span>
         </label>
       </div>
@@ -206,9 +232,8 @@ export function JobApplicationForm() {
           aria-invalid={Boolean(errors.privacy)}
         />
         <span>
-          He leído la{" "}
-          <a href="/privacidad">política de privacidad</a> y consiento el tratamiento de
-          mis datos para gestionar esta candidatura.
+          He leído la <a href="/privacidad">política de privacidad</a> y consiento el
+          tratamiento de mis datos para gestionar esta candidatura.
         </span>
       </label>
       {errors.privacy ? (
@@ -218,29 +243,30 @@ export function JobApplicationForm() {
       ) : null}
 
       <p className="form-disclaimer">
-        No afirmamos que la candidatura se haya enviado al servidor
-        {INTEGRATIONS.careers.ready
-          ? "."
-          : ` (falta ${INTEGRATIONS.careers.suggestedPath} o un ATS).`}{" "}
-        Tras validar, puedes abrir tu cliente de correo hacia rrhh@brasaland.com (o
-        contactar {restaurant.email}).
+        La candidatura se registra en el sistema (TinyDB). No implica contratación. Contacto
+        de respaldo: {restaurant.email}.
       </p>
 
       <div className="form-actions">
         <button className="cta" type="submit" disabled={submitting}>
-          {submitting ? "Validando…" : "Preparar candidatura"}
+          {submitting ? "Enviando…" : "Enviar candidatura"}
         </button>
-        {ready ? (
+        {INTEGRATIONS.careers.mailtoFallback ? (
           <a className="cta cta-ghost" href={mailto}>
-            Abrir correo
+            Respaldo por correo
           </a>
         ) : null}
       </div>
 
-      {ready ? (
+      {sent ? (
         <p className="form-status form-status-ok" role="status">
-          Formulario válido. La candidatura no queda registrada en la web hasta que envíes
-          el correo o el equipo active un receptor.
+          {serverMessage}
+          {ticketId != null ? ` (ref. #${ticketId})` : ""}
+        </p>
+      ) : null}
+      {!sent && serverMessage ? (
+        <p className="form-status form-status-error" role="alert">
+          {serverMessage}
         </p>
       ) : null}
     </form>

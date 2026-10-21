@@ -6,6 +6,6 @@ test("job application form validates required fields", async ({ page }) => {
   const form = page.locator("#aplicar");
   await expect(form).toBeVisible();
 
-  await form.getByRole("button", { name: /Preparar candidatura/i }).click();
+  await form.getByRole("button", { name: /Enviar candidatura/i }).click();
   await expect(form.getByText(/nombre es obligatorio/i)).toBeVisible();
 });

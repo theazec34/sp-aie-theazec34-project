@@ -20,7 +20,9 @@ type Props = {
     | "reporting"
     | "knowledge"
     | "rfp"
-    | "agent";
+    | "agent"
+    | "web-reservations"
+    | "careers";
 };
 
 export default function AppNav({ active }: Props) {
@@ -93,6 +95,18 @@ export default function AppNav({ active }: Props) {
           className={`bo-nav-link${active === "rfp" ? " bo-nav-link-active" : ""}`}
         >
           Recepción RFP
+        </Link>
+        <Link
+          href="/web-reservations"
+          className={`bo-nav-link${active === "web-reservations" ? " bo-nav-link-active" : ""}`}
+        >
+          Reservas web
+        </Link>
+        <Link
+          href="/careers"
+          className={`bo-nav-link${active === "careers" ? " bo-nav-link-active" : ""}`}
+        >
+          Candidaturas
         </Link>
         <Link
           href="/incidents/nueva"

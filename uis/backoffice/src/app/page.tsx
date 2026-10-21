@@ -5,6 +5,19 @@ import AuthenticatedShell from "../components/AuthenticatedShell";
 
 const moduleCards = [
   {
+    id: "web-reservations",
+    title: "Reservas web",
+    description:
+      "Solicitudes de mesa enviadas desde la web pública (estado recibida; confirmación manual).",
+    href: "/web-reservations",
+  },
+  {
+    id: "careers",
+    title: "Candidaturas",
+    description: "Solicitudes de empleo recibidas desde /trabaja-con-nosotros.",
+    href: "/careers",
+  },
+  {
     id: "rfp",
     title: "Recepción de RFP",
     description:
