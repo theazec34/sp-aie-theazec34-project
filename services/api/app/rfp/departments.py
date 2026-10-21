@@ -5,10 +5,15 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-# Asegura import de `data.pipelines.*` cuando el CWD es services/api
-_REPO = Path(__file__).resolve().parents[4]
-if str(_REPO) not in sys.path:
-    sys.path.insert(0, str(_REPO))
+# Local:  services/api/app/rfp/… → repo root (parents[4])
+# Docker: /app/api/app/rfp/… → /app (parents[3]) where data/ is mounted/copied
+_HERE = Path(__file__).resolve()
+for _candidate in (_HERE.parents[3], _HERE.parents[4]):
+    if (_candidate / "data" / "pipelines").is_dir():
+        _root = str(_candidate)
+        if _root not in sys.path:
+            sys.path.insert(0, _root)
+        break
 
 from data.pipelines.rfp_intake.departments_ref import (  # noqa: E402, F401
     DEPARTMENTS,
