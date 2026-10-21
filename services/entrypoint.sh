@@ -1,14 +1,20 @@
 #!/bin/sh
-# Idempotent seeds then uvicorn with hot reload.
-# Optimal for local/demo: one `docker compose up` leaves the API ready to use.
+# Seeds (API only) then uvicorn — or exec Compose command (worker/flower).
 set -e
 
 cd /app/api
-export PYTHONPATH=.
+# Must include /app so `import data.pipelines.*` resolves (COPY data → /app/data).
+# Do NOT set PYTHONPATH=. alone — that hides the monorepo data package.
+export PYTHONPATH="/app/api:/app"
+
+# Worker / Flower pass a command via Compose → skip API seed + uvicorn.
+if [ "$#" -gt 0 ]; then
+  echo "[entrypoint] exec: $*"
+  exec "$@"
+fi
 
 echo "[backend] Seeding auth / suppliers / inventory (idempotent)…"
-# Credenciales solo por entorno (nunca hardcodeadas en seed_auth.py)
-export SEED_ADMIN_EMAIL="${SEED_ADMIN_EMAIL:-admin@brasaland.local}"
+export SEED_ADMIN_EMAIL="${SEED_ADMIN_EMAIL:-admin@brasaland.com}"
 export SEED_ADMIN_PASSWORD="${SEED_ADMIN_PASSWORD:-ChangeMeLocalOnly12!}"
 export SEED_ADMIN_NAME="${SEED_ADMIN_NAME:-Admin Brasaland}"
 python seed_auth.py

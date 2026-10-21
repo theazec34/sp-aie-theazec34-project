@@ -27,7 +27,14 @@ class UserRepository:
         return len(self._table)
 
     def list(self) -> list[UserPublic]:
-        return [self._to_public(doc) for doc in self._table.all()]
+        # Saltar filas corruptas / emails reservados (.local) para no tumbar seeds.
+        out: list[UserPublic] = []
+        for doc in self._table.all():
+            try:
+                out.append(self._to_public(doc))
+            except Exception:  # noqa: BLE001
+                continue
+        return out
 
     def get(self, user_id: int) -> UserInDB | None:
         doc = self._table.get(doc_id=user_id)

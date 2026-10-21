@@ -43,6 +43,14 @@ def main() -> int:
     users = UserRepository()
     profiles = ProfileRepository()
     try:
+        # Migrar emails .local de semillas antiguas (email-validator los rechaza).
+        for doc in list(users._table.all()):
+            old = (doc.get("email") or "").strip().lower()
+            if old.endswith(".local"):
+                new = old[: -len(".local")] + ".com"
+                users._table.update({"email": new}, doc_ids=[doc.doc_id])
+                print(f"OK — migrado email {old} → {new}")
+
         existing = users.get_by_email(email)
         if existing is not None:
             if profiles.get_by_user_id(existing.id) is None:
