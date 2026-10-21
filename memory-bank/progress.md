@@ -9,6 +9,7 @@
 - Mismo patrón que website: browser → `/api-backend/*` → rewrite `INTERNAL_API_URL`.
 - Evita `Failed to fetch` cuando `localhost:8000` no es alcanzable desde el navegador (Codespaces/Docker).
 - WebSocket del agente sigue en origen directo `:8000` (rewrite Next no hace upgrade WS).
+- Guía módulos + muestras: `docs/backoffice/GUIA-MODULOS.es.md`, `data/samples/backoffice/`.
 
 ## Pulido páginas web (actual)
 - Sin etiquetas «provisional»; banners con foto; Eventos (flamenco/vivo); Empleo (sala/brasas).

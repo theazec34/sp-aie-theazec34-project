@@ -1,0 +1,9 @@
+{
+  "full_name": "María López Demo",
+  "phone": "+34 612 345 678",
+  "email": "maria.lopez.demo@example.com",
+  "date": "2026-11-15",
+  "time": "21:00",
+  "guests": 4,
+  "notes": "Mesa cerca de la parrilla si es posible. Cumpleaños."
+}

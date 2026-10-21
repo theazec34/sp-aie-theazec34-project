@@ -1,0 +1,9 @@
+{
+  "full_name": "Luis Herrera Demo",
+  "email": "luis.herrera.demo@example.com",
+  "phone": "+34 600 111 222",
+  "role": "Sala",
+  "experience_years": 3,
+  "message": "Experiencia en sala de asador; disponible turnos noche y fines de semana.",
+  "cv_filename": "cv-luis-herrera-demo.pdf"
+}

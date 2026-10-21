@@ -1,0 +1,7 @@
+{
+  "title": "Fallo parrilla principal sede demo",
+  "description": "La parrilla 2 no mantiene temperatura estable desde el servicio de mediodía. Requiere revisión de quemadores.",
+  "category": "equipment_failure",
+  "origin": "branch",
+  "branch": "medellin_centro"
+}

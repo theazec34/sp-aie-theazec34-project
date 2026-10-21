@@ -1,0 +1,9 @@
+incident_id,date,location_id,category,description,status,customer_id,satisfaction_score,reporter_id
+BRS-000001,2024-01-14,COL-07,FOOD_QUALITY,Porción servida menor a la estándar del menú,CLOSED,CLI-471507,5,MGR-01
+BRS-000002,2024-01-04,COL-01,SUPPLY,"Bajo stock de carbón para parrillas, pedido urgente enviado",DISCARDED,CLI-777568,,MGR-06
+BRS-000003,2024-01-08,COL-04,SUPPLY,Proveedor de salsas no entregó el pedido semanal,OPEN,CLI-214576,,MGR-08
+BRS-000004,2024-01-06,COL-05,CUSTOMER_COMPLAINT,Queja por ruido excesivo en el área de mesas,CLOSED,,2,MGR-04
+BRS-000005,2024-01-15,FLA-03,EQUIPMENT,Lavaplatos industrial con fuga de agua detectada,OPEN,CLI-179046,,MGR-02
+BRS-000006,2024-01-18,FLA-04,CUSTOMER_COMPLAINT,Cliente insatisfecho con el tiempo de espera en mesa,CLOSED,,5,MGR-02
+BRS-000007,2024-01-08,COL-03,CUSTOMER_COMPLAINT,Reclamación por reserva no encontrada al llegar,CLOSED,CLI-989921,4,MGR-08
+BRS-000008,2024-01-29,COL-01,FOOD_QUALITY,Cliente reporta alimento frío al momento de servir,OPEN,CLI-520521,,MGR-07

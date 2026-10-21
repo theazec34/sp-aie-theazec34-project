@@ -1,0 +1,9 @@
+{
+  "name": "Carnes del Sur Demo SL",
+  "country": "ES",
+  "categories": ["carnes", "embutidos"],
+  "contact_email": "pedidos@carnesdelsur-demo.example",
+  "phone": "+34 954 000 111",
+  "status": "active",
+  "notes": "Proveedor de demostración para el directorio Brasaland."
+}
