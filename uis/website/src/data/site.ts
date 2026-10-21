@@ -4,19 +4,32 @@ import type { MenuData } from "@/types/menu";
 
 const menu = menuData as MenuData;
 
-/** Datos de contacto del JSON de carta; el teléfono genérico se marca como provisional. */
+/** Datos operativos del local (carta + contacto). */
 export const restaurant = {
   name: menu.restaurante.nombre,
   slogan: menu.restaurante.slogan,
   phone: menu.restaurante.telefono,
   email: menu.restaurante.email,
-  address: menu.restaurante.direccion,
-  phoneIsPlaceholder: /123\s*456\s*789/.test(menu.restaurante.telefono),
+  address: "Calle de la Brasa, Nº 14, Planta Baja, 41808 Sevilla, España",
+  phoneIsPlaceholder: false,
 };
 
+/** Datos societarios para textos legales. */
+export const company = {
+  legalName: "Brasaland Restauración S.L.",
+  nif: "B-12345678",
+  registeredAddressSevilla: "Calle de la Brasa, Nº 14, Planta Baja, 41808 Sevilla, España",
+  registeredAddressPrivacy: "Calle de la Brasa, Nº 14, Planta Baja, 28001 Sevilla, España",
+  registeredAddressCookies: "Calle de la Brasa, Nº 14, Planta Baja, 28001 Madrid, España",
+  privacyEmail: "privacidad@brasaland.com",
+};
+
+/** Embed sin API key: búsqueda de la dirección del local. */
+export const mapsEmbedSrc =
+  "https://maps.google.com/maps?q=Calle%20de%20la%20Brasa%2014%2C%20Sevilla%2C%20Espa%C3%B1a&z=16&output=embed";
+
 export const hours = {
-  /** Placeholder operativo hasta confirmar horarios reales del local. */
-  provisional: true,
+  provisional: false,
   lines: [
     "Martes–Jueves: 13:00–16:00 · 20:00–23:30",
     "Viernes–Sábado: 13:00–16:30 · 20:00–00:30",
@@ -55,7 +68,7 @@ export const legalLinks: NavItem[] = [
 
 export const galleryPhotos: GalleryPhoto[] = [
   { id: "corte-carne", title: "Corte a la brasa", path: "/Imagenes/Corte carne.jpg" },
-  { id: "entraña", title: "Entraña argentina", path: "/Imagenes/Entraña argentina.jpg" },
+  { id: "entraña", title: "Entraña argentina", path: "/Imagenes/Entrana-argentina.jpg" },
   { id: "arroz-bogavante", title: "Arroz con bogavante", path: "/Imagenes/Arroz bogavante.jpg" },
   { id: "tabla-ibericos", title: "Tabla ibéricos", path: "/Imagenes/Tabla ibericos.jpg" },
   { id: "pata-cordero", title: "Cordero a la brasa", path: "/Imagenes/Pata de cordero.jpg" },
@@ -65,7 +78,6 @@ export const galleryPhotos: GalleryPhoto[] = [
   { id: "tiramisu", title: "Postre de la casa", path: "/Imagenes/tiramisu.jpg" },
 ];
 
-/** Platos destacados en home (ids reales de menu.json). */
 export const featuredDishIds = [
   "entraña",
   "tira-asado",
@@ -99,9 +111,24 @@ export const experiencePoints = [
 ];
 
 export const jobRoles = [
-  { id: "sala", title: "Sala y barra", blurb: "Hospitalidad, ritmo y conocimiento de carta." },
-  { id: "cocina", title: "Cocina / parrilla", blurb: "Brasa, mise en place y respeto al producto." },
-  { id: "ops", title: "Operaciones", blurb: "Turnos, proveedores y excelencia del servicio." },
+  {
+    id: "sala",
+    title: "Sala y barra",
+    blurb: "Hospitalidad, ritmo y conocimiento de carta.",
+    image: "/Imagenes/empleo-sala.jpg",
+  },
+  {
+    id: "cocina",
+    title: "Cocina / parrilla",
+    blurb: "Brasa, mise en place y respeto al producto.",
+    image: "/Imagenes/empleo-cocina-brasas.jpg",
+  },
+  {
+    id: "ops",
+    title: "Operaciones",
+    blurb: "Turnos, proveedores y excelencia del servicio.",
+    image: "/Imagenes/empleo-sala.jpg",
+  },
 ];
 
 export const eventOfferings = [
@@ -109,15 +136,18 @@ export const eventOfferings = [
     id: "privados",
     title: "Mesas privadas y celebraciones",
     description: "Cumpleaños, cenas de equipo y sobremesas largas con menú acordado.",
+    image: "/Imagenes/eventos-actuacion.jpg",
   },
   {
     id: "grupos",
     title: "Grupos",
     description: "Menús cerrados a la brasa para grupos; coordinamos tiempos y alérgenos.",
+    image: "/Imagenes/Corte carne.jpg",
   },
   {
-    id: "catering",
-    title: "Experiencias a medida",
-    description: "[Pendiente confirmar disponibilidad de catering externo con el local.]",
+    id: "flamenco",
+    title: "Noches con alma",
+    description: "Flamenco y actuaciones en vivo que acompañan la brasa y la sobremesa.",
+    image: "/Imagenes/eventos-flamenco.jpg",
   },
 ];

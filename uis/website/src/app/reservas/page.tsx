@@ -14,7 +14,10 @@ export default function ReservasPage() {
       <PageHero
         eyebrow="Reservas"
         title="Tu mesa junto al fuego"
-        description={`Cuéntanos cuándo vienes. Teléfono ${restaurant.phone}${restaurant.phoneIsPlaceholder ? " [provisional]" : ""} · ${restaurant.email}.`}
+        description={`Cuéntanos cuándo vienes. Teléfono ${restaurant.phone} · ${restaurant.email}.`}
+        imageSrc="/Imagenes/Tabla ibericos.jpg"
+        imageAlt="Mesa Brasaland"
+        align="center"
       />
       <section className="section">
         <div className="container narrow">

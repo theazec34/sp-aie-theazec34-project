@@ -10,12 +10,7 @@ export function InfoStrip() {
         </div>
         <div>
           <p className="info-label">Horario</p>
-          <p className="info-value">
-            {hours.lines[0]}
-            {hours.provisional ? (
-              <span className="info-provisional"> · orientativo</span>
-            ) : null}
-          </p>
+          <p className="info-value">{hours.lines[0]}</p>
         </div>
         <div>
           <p className="info-label">Especialidad</p>
