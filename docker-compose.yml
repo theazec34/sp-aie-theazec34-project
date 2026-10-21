@@ -15,8 +15,9 @@ services:
     env_file:
       - .env
     environment:
-      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      # Forzar hostnames de la red Compose (ignora 127.0.0.1 del .env local)
+      QDRANT_URL: http://qdrant:6333
+      REDIS_URL: redis://redis:6379/0
     ports:
       - "8000:8000"
     volumes:
@@ -45,8 +46,8 @@ services:
     env_file:
       - .env
     environment:
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
-      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+      REDIS_URL: redis://redis:6379/0
+      QDRANT_URL: http://qdrant:6333
       PYTHONPATH: /app/api:/app
     command: ["celery", "-A", "celery_app.celery", "worker", "--loglevel=INFO"]
     volumes:
@@ -71,7 +72,7 @@ services:
     env_file:
       - .env
     environment:
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      REDIS_URL: redis://redis:6379/0
       PYTHONPATH: /app/api:/app
       FLOWER_BASIC_AUTH: ${FLOWER_BASIC_AUTH:-}
     command:

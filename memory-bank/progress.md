@@ -7,9 +7,11 @@
 
 ## Hotfix Docker boot (actual)
 - Causa 1: `entrypoint.sh` hacía `PYTHONPATH=.` → `ModuleNotFoundError: data.pipelines`.
-- Causa 2: el entrypoint ignoraba el `command` de Compose → worker/flower arrancaban uvicorn y competían en seeds.
-- Fix: `PYTHONPATH=/app/api:/app`, `exec "$@"` si hay args, default email `.com`, migrate `.local`, `list()` tolerante.
-- Demo: `docker compose down -v && docker compose up --build` (limpia TinyDB viejo).
+- Causa 2: el entrypoint ignoraba el `command` de Compose → worker/flower arrancaban uvicorn.
+- Causa 3: falta `pandas` en `services/api/requirements.txt` (telemetry).
+- Causa 4: `.env` con `REDIS_URL=127.0.0.1` rompe worker/flower en Compose.
+- Fix: PYTHONPATH, `exec "$@"`, pandas, Redis/Qdrant hostnames fijos en compose, migrate `.local`.
+- Demo: `docker compose up --build` tras pull de esta rama.
 
 ## Hotfix seed email (#52)
 - `.env.example` → `SEED_ADMIN_EMAIL=admin@brasaland.com`.
