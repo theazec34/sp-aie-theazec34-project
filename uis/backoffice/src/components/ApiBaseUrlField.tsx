@@ -28,12 +28,15 @@ export default function ApiBaseUrlField({ onChange }: Props) {
     <label className="bo-field api-base-field">
       <span>URL de la API</span>
       <input
-        type="url"
+        type="text"
+        inputMode="url"
+        spellCheck={false}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onBlur={() => commit(value)}
         placeholder={typeof window === "undefined" ? "" : detectApiBaseUrl()}
         autoComplete="off"
+        aria-describedby="api-base-hint"
       />
       <span className="api-base-hint">
         Por defecto usa <code>/api-backend</code> (proxy same-origin del backoffice).
