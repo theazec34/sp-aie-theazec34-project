@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Playfair_Display } from "next/font/google";
+import { DM_Sans, Fraunces } from "next/font/google";
+import { SiteFooter } from "@/components/SiteFooter";
+import { SiteHeader } from "@/components/SiteHeader";
 import "./globals.css";
 
 const fontBody = DM_Sans({
@@ -8,10 +10,10 @@ const fontBody = DM_Sans({
   display: "swap",
 });
 
-const fontDisplay = Playfair_Display({
+const fontDisplay = Fraunces({
   variable: "--font-display",
   subsets: ["latin"],
-  weight: ["700", "900"],
+  weight: ["600", "700", "800"],
   display: "swap",
 });
 
@@ -21,16 +23,16 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Brasaland — Carta, galería y reservas en Sevilla",
-  description:
-    "Restaurante Brasaland: carnes a la brasa, arroces y sabor ibérico. Consulta la carta, alérgenos y fotos del proyecto.",
-  icons: {
-    icon: "/favicon.png",
+  title: {
+    default: "Brasaland — Carnes a la brasa en Sevilla",
+    template: "%s · Brasaland",
   },
+  description:
+    "Restaurante Brasaland: fuego sudamericano y alma ibérica. Carta, reservas, eventos y candidaturas.",
+  icons: { icon: "/favicon.png" },
   openGraph: {
-    title: "Brasaland — Carta y reservas",
-    description:
-      "Carnes a la brasa, arroces y cocina con alma ibérica. Carta digital y galería Brasaland.",
+    title: "Brasaland — El fuego nos une",
+    description: "Carnes a la brasa, arroces y hospitalidad en Sevilla.",
     locale: "es_ES",
     type: "website",
   },
@@ -43,7 +45,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={`${fontBody.variable} ${fontDisplay.variable}`}>
-      <body>{children}</body>
+      <body>
+        <SiteHeader />
+        <main className="site-main">{children}</main>
+        <SiteFooter />
+      </body>
     </html>
   );
 }

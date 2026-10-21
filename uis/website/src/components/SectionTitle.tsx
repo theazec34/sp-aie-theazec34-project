@@ -1,14 +1,16 @@
 interface SectionTitleProps {
   id: string;
+  eyebrow?: string;
   title: string;
-  description: string;
+  description?: string;
 }
 
-export function SectionTitle({ id, title, description }: SectionTitleProps) {
+export function SectionTitle({ id, eyebrow, title, description }: SectionTitleProps) {
   return (
-    <header id={id}>
+    <header className="section-header" id={id}>
+      {eyebrow ? <p className="section-eyebrow">{eyebrow}</p> : null}
       <h2 className="section-title">{title}</h2>
-      <p className="section-text">{description}</p>
+      {description ? <p className="section-text">{description}</p> : null}
     </header>
   );
 }
