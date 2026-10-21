@@ -16,7 +16,7 @@ export default function EmpleoPage() {
         eyebrow="Empleo"
         title="Gente de brasa y de sala"
         description="Buscamos personas con ritmo, respeto al producto y ganas de hospitalidad real."
-        imageSrc="/Imagenes/empleo-sala.jpg"
+        imageSrc="/Imagenes/empleo-sala-hq.jpg"
         imageAlt="Sala de restaurante con equipo de servicio"
         align="center"
       />
@@ -62,7 +62,7 @@ export default function EmpleoPage() {
           </div>
           <div className="split-media">
             <Image
-              src="/Imagenes/empleo-cocina-brasas.jpg"
+              src="/Imagenes/empleo-cocina-hq.jpg"
               alt="Cocina con parrilla y brasas"
               width={960}
               height={640}

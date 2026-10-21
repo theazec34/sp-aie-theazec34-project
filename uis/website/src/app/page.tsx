@@ -13,6 +13,8 @@ export default function HomePage() {
       <Hero
         title="El fuego nos une. El sabor nos define."
         subtitle="Carnes a la brasa que fusionan la gastronomía sudamericana con la tradición ibérica: producto, paciencia y mesa generosa en el corazón de Sevilla."
+        imageSrc="/Imagenes/banner-home-hero.jpg"
+        imageAlt="Parrilla de carbón con cortes a la brasa en Brasaland"
       />
       <InfoStrip />
       <FeaturedDishes />
@@ -44,8 +46,19 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="section" aria-labelledby="experience-title">
-        <div className="container">
+      <section className="experience-banner" aria-labelledby="experience-title">
+        <div className="experience-banner-bg" aria-hidden="true">
+          <Image
+            src="/Imagenes/banner-experiencia-vivo.jpg"
+            alt=""
+            fill
+            sizes="100vw"
+            className="experience-banner-image"
+            loading="lazy"
+          />
+          <div className="experience-banner-overlay" />
+        </div>
+        <div className="container experience-banner-inner">
           <SectionTitle
             id="experience-title"
             eyebrow="Experiencia"
@@ -113,9 +126,9 @@ export default function HomePage() {
           </div>
           <div className="split-media">
             <Image
-              src="/Imagenes/Tabla ibericos.jpg"
-              alt="Tabla ibérica Brasaland"
-              width={960}
+              src="/Imagenes/banner-ubicacion.jpg"
+              alt="Mesa ibérica Brasaland"
+              width={1280}
               height={720}
               className="split-image"
               sizes="(max-width: 900px) 100vw, 48vw"

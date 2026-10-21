@@ -15,7 +15,7 @@ export default function ContactoPage() {
         eyebrow="Contacto"
         title="Estamos en Sevilla"
         description="Escríbenos o llámanos para reservas, eventos y consultas de alérgenos."
-        imageSrc="/Imagenes/Corte carne.jpg"
+        imageSrc="/Imagenes/banner-contacto.jpg"
         imageAlt="Brasaland Sevilla"
         align="center"
       />

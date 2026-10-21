@@ -115,19 +115,19 @@ export const jobRoles = [
     id: "sala",
     title: "Sala y barra",
     blurb: "Hospitalidad, ritmo y conocimiento de carta.",
-    image: "/Imagenes/empleo-sala.jpg",
+    image: "/Imagenes/empleo-sala-hq.jpg",
   },
   {
     id: "cocina",
     title: "Cocina / parrilla",
     blurb: "Brasa, mise en place y respeto al producto.",
-    image: "/Imagenes/empleo-cocina-brasas.jpg",
+    image: "/Imagenes/empleo-cocina-hq.jpg",
   },
   {
     id: "ops",
     title: "Operaciones",
     blurb: "Turnos, proveedores y excelencia del servicio.",
-    image: "/Imagenes/empleo-sala.jpg",
+    image: "/Imagenes/empleo-operaciones.jpg",
   },
 ];
 
@@ -136,18 +136,18 @@ export const eventOfferings = [
     id: "privados",
     title: "Mesas privadas y celebraciones",
     description: "Cumpleaños, cenas de equipo y sobremesas largas con menú acordado.",
-    image: "/Imagenes/eventos-actuacion.jpg",
+    image: "/Imagenes/eventos-actuacion-hq.jpg",
   },
   {
     id: "grupos",
     title: "Grupos",
     description: "Menús cerrados a la brasa para grupos; coordinamos tiempos y alérgenos.",
-    image: "/Imagenes/Corte carne.jpg",
+    image: "/Imagenes/banner-home-hero.jpg",
   },
   {
     id: "flamenco",
     title: "Noches con alma",
     description: "Flamenco y actuaciones en vivo que acompañan la brasa y la sobremesa.",
-    image: "/Imagenes/eventos-flamenco.jpg",
+    image: "/Imagenes/eventos-flamenco-hq.jpg",
   },
 ];
