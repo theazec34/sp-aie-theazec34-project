@@ -12,6 +12,7 @@
 - Guía módulos + muestras: `docs/backoffice/GUIA-MODULOS.es.md`, `data/samples/backoffice/`.
 - Menú lateral alineado con el orden del panel (Reservas → Candidaturas → …).
 - Compose: fallback `SECRET_KEY` + seed `seed_public_intake.py` (demo reserva/candidatura). Sin `SECRET_KEY` el login devolvía HTTP 500.
+- Login colgado «Entrando…»: healthcheck backend, interfaces espera healthy, timeout 12s en login, sin Google Fonts en backoffice (fallaban en Docker), seed_inventory en background.
 
 ## Pulido páginas web (actual)
 - Sin etiquetas «provisional»; banners con foto; Eventos (flamenco/vivo); Empleo (sala/brasas).

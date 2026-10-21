@@ -39,6 +39,12 @@ services:
     depends_on:
       - qdrant
       - redis
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:8000/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 36
+      start_period: 20s
     networks:
       - brasaland-net
     restart: unless-stopped
@@ -137,7 +143,8 @@ services:
       - website_node_modules:/app/website/node_modules
       - backoffice_node_modules:/app/backoffice/node_modules
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - brasaland-net
     restart: unless-stopped
