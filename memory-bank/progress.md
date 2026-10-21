@@ -1,9 +1,15 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-21)
-- **`main`:** PRs **#1–#62** (+ intake/hotfixes en ramas).
-- **En curso:** backoffice `failed to fetch` → proxy `/api-backend` (`cursor/backoffice-api-proxy-c620`).
+## Estado (2026-10-21) — cierre de día
+- **`main`:** PRs **#1–#67** (website polish, proxy backoffice, login hang, URL input).
+- **Pendiente mañana:** acceso login en Codespaces (proxy) + explicación IA / `GENERATION_*` API keys.
+- **Doc continuidad IA:** `docs/backoffice/IA-Y-API-KEYS.es.md`
 - **Fuera de alcance:** `hito-3` Talent Pipeline / `3.5`.
+
+## Continuidad mañana
+1. Codespaces: puerto 8000 **Public**; login con auto-detect (`…-8000.app.github.dev`) si `/api-backend` timeout.
+2. Verificar proxy route-handler `uis/backoffice/src/app/api-backend/[...path]/route.ts`.
+3. Repasar IA: agente, RAG, RFP + variables `GENERATION_*` / `EMBEDDING_*` (ver doc arriba).
 
 ## Backoffice API proxy (actual)
 - Mismo patrón que website: browser → `/api-backend/*` → rewrite `INTERNAL_API_URL`.

@@ -1,24 +1,14 @@
 import type { NextConfig } from "next";
 import path from "path";
 
-/** Server-side target for /api-backend rewrite (Docker: http://backend:8000). */
-const rewriteTarget = (
-  process.env.INTERNAL_API_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  "http://127.0.0.1:8000"
-).replace(/\/$/, "");
-
+/**
+ * El proxy a la API vive en `src/app/api-backend/[...path]/route.ts`
+ * (lee INTERNAL_API_URL en runtime). No usamos rewrites aquí: con Turbopack
+ * + Docker a veces el rewrite no resolvía backend:8000 y el login hacía timeout.
+ */
 const nextConfig: NextConfig = {
   turbopack: {
     root: path.join(__dirname),
-  },
-  async rewrites() {
-    return [
-      {
-        source: "/api-backend/:path*",
-        destination: `${rewriteTarget}/:path*`,
-      },
-    ];
   },
 };
 

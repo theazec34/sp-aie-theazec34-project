@@ -39,8 +39,9 @@ export default function ApiBaseUrlField({ onChange }: Props) {
         aria-describedby="api-base-hint"
       />
       <span id="api-base-hint" className="api-base-hint">
-        Por defecto usa <code>/api-backend</code> (proxy same-origin del backoffice).
-        Solo cambia esto si necesitas URL directa a :8000 (p. ej. depuración).
+        En Codespaces: URL <code>…-8000.app.github.dev</code> (puerto 8000 en{" "}
+        <strong>Public</strong>). En Docker local: <code>/api-backend</code>. Pulsa
+        «Usar auto-detectada» si el login hace timeout.
       </span>
       <button
         type="button"
