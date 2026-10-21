@@ -38,7 +38,7 @@ export default function ApiBaseUrlField({ onChange }: Props) {
         autoComplete="off"
         aria-describedby="api-base-hint"
       />
-      <span className="api-base-hint">
+      <span id="api-base-hint" className="api-base-hint">
         Por defecto usa <code>/api-backend</code> (proxy same-origin del backoffice).
         Solo cambia esto si necesitas URL directa a :8000 (p. ej. depuración).
       </span>
