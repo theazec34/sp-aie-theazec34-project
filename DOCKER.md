@@ -12,11 +12,17 @@ cp .env.example .env
 # Edita SECRET_KEY y, si usas inventario en Supabase, DATABASE_URL
 ```
 
+> **Codespaces / Linux:** si `cp -n` avisa de portabilidad, usa `cp .env.example .env` (sin `-n`) o `cp --update=none .env.example .env`.
+
 ## Arranque
+
+Desde la **raíz** del monorepo (donde está `docker-compose.yml`):
 
 ```bash
 docker compose up --build
 ```
+
+El `.dockerignore` de raíz **debe** dejar pasar `data/`, `docs/company-knowledge-base/` y `docs/rfp/` (el `Dockerfile` hace `COPY` de esas rutas). Si el build falla con `"/docs/rfp": not found`, actualiza `main` o revisa que no hayas excluido `docs` enteros en `.dockerignore`.
 
 | Servicio | Contenedor | URL en el host |
 |----------|------------|----------------|
