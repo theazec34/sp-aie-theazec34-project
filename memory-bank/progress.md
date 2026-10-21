@@ -21,6 +21,22 @@
 ## Hotfix Docker (#51)
 - `.dockerignore` excepciones `data/` + `docs/rfp`.
 
+## Demo delivery — gaps audit (2026-10-21)
+Auditoría media de incompletos para demo pública:
+
+**Fixeable in-repo (TinyDB/file OK):**
+1. Reservas/empleo/eventos: solo mailto — no `POST` (`uis/website` forms + `lib/integrations.ts`); API sin `/api/reservations` ni `/api/careers` (`services/api/app/main.py`).
+2. Contacto sin form ni mapa embebido; legales placeholder; catering `[Pendiente…]` en `data/site.ts`.
+3. KB Qdrant no se indexa al boot — hace falta `POST /knowledge/reindex` (JWT) o script; sin corpus `/agent` se niega o 503 si Qdrant cae.
+4. Dominio TS `ReservaMesa` en `src/` no cableado a API/web.
+
+**Docker (ya arreglado en #51–#53):** dockerignore `data/`+`docs/rfp`, seed email TLD real, PYTHONPATH worker/flower, pandas, Redis hostname. Residual: SQLite fallback si Supabase cae; `.env` con `SEED_ADMIN_*` obligatorio para login; `services/entrypoint.sh` aún default `admin@brasaland.local` (EmailStr puede tumbar seed si falta `.env`).
+
+**Credenciales externas (no bloquean demo con defaults):**
+- `GENERATION_PROVIDER=grounded` → `/agent` sin LLM key.
+- Falla si `GENERATION_PROVIDER=openai` sin `GENERATION_BASE_URL`/`GENERATION_MODEL_ID`/`GENERATION_API_KEY`.
+- Opcional: `OPENAI_API_KEY` solo si `AGENT_MEMORY_LLM=1`; `RESEND_API_KEY`; portal 4Geeks embeddings; `DATABASE_URL` Supabase.
+
 ## Hitos en main
 | Área | PR |
 |------|-----|
