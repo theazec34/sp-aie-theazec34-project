@@ -12,11 +12,19 @@
 **/.pytest_cache
 **/coverage
 **/*.log
+# Runtime DBs under services/*/data — keep root ./data for COPY in Dockerfile
 **/data
+!data
+!data/**
 **/*.db
 uis
 scripts
-docs
+# Docs: exclude bulk, keep knowledge + RFP briefings required by services/Dockerfile
+docs/**
+!docs/company-knowledge-base/
+!docs/company-knowledge-base/**
+!docs/rfp/
+!docs/rfp/**
 apps
 Imagenes
 src
@@ -26,3 +34,5 @@ playwright-report
 test-results
 *.md
 !DOCKER.md
+!docs/company-knowledge-base/**/*.md
+!docs/rfp/**/*.md
