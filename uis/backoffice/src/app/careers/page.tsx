@@ -26,7 +26,13 @@ export default function CareersPage() {
     (async () => {
       try {
         const res = await apiFetch("/careers");
-        if (!res.ok) throw new ApiError("No se pudieron cargar las candidaturas", res.status);
+        if (!res.ok) {
+          throw new ApiError(
+            `No se pudieron cargar las candidaturas (HTTP ${res.status}). ` +
+              `Comprueba login JWT, URL /api-backend y que el backend tenga SECRET_KEY.`,
+            res.status
+          );
+        }
         const data = (await res.json()) as CareerRow[];
         if (!cancelled) setRows(data);
       } catch (err) {

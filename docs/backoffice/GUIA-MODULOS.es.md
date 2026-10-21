@@ -2,7 +2,11 @@
 
 Panel interno Brasaland. Requiere **login JWT** (admin del seed: `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` en `.env`).
 
-**Antes de probar:** API en `:8000` + backoffice en `:3001`. Con el proxy actual, en login usa URL **`/api-backend`** («Usar auto-detectada»). Si ves *Failed to fetch*, reinicia interfaces y limpia un override antiguo a `localhost:8000`.
+**Antes de probar:**
+1. Copia `.env.example` → `.env` en la raíz (obligatorio `SECRET_KEY`; sin ella el login/API autenticada responde **HTTP 500**).
+2. API `:8000` + backoffice `:3001` (`docker compose up` o uvicorn + `npm run dev`).
+3. En login usa URL **`/api-backend`** («Usar auto-detectada»).
+4. El menú izquierdo sigue el mismo orden que las tarjetas del Panel.
 
 Archivos de ejemplo: [`data/samples/backoffice/`](../../data/samples/backoffice/) y RFP en [`rfp-requests/brasaland/`](../../rfp-requests/brasaland/).
 

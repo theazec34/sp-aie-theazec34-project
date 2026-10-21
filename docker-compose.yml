@@ -18,6 +18,11 @@ services:
       # Forzar hostnames de la red Compose (ignora 127.0.0.1 del .env local)
       QDRANT_URL: http://qdrant:6333
       REDIS_URL: redis://redis:6379/0
+      # Fallbacks locales si `.env` está incompleto (login JWT necesita SECRET_KEY)
+      SECRET_KEY: ${SECRET_KEY:-dev-brasaland-change-me-in-production}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@brasaland.com}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-ChangeMeLocalOnly12!}
+      SEED_ADMIN_NAME: ${SEED_ADMIN_NAME:-Admin Brasaland}
     ports:
       - "8000:8000"
     volumes:

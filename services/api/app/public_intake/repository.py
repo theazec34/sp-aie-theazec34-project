@@ -23,6 +23,9 @@ class PublicIntakeRepository:
     def __init__(self, db_path: Path | None = None) -> None:
         self.db_path = db_path or DEFAULT_DB_PATH
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        # TinyDB needs valid JSON; an empty file breaks some hosts/volumes.
+        if not self.db_path.exists() or self.db_path.stat().st_size == 0:
+            self.db_path.write_text("{}\n", encoding="utf-8")
         self._db = TinyDB(self.db_path)
         self._reservations = self._db.table("reservations")
         self._careers = self._db.table("careers")
