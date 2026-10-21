@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { restaurant } from "@/data/site";
+import { INTEGRATIONS } from "@/lib/integrations";
 import type { ReservationFormData, ReservationFormErrors } from "@/types/site";
 
 const INITIAL: ReservationFormData = {
@@ -208,8 +209,11 @@ export function ReservationForm() {
       </label>
 
       <p className="form-disclaimer">
-        Esta solicitud no confirma mesa automáticamente: aún no hay motor de reservas
-        conectado. Al validar el formulario podrás enviarla por correo a{" "}
+        Esta solicitud no confirma mesa automáticamente
+        {INTEGRATIONS.reservations.ready
+          ? "."
+          : `: aún no hay motor de reservas (${INTEGRATIONS.reservations.suggestedPath}).`}{" "}
+        Al validar el formulario podrás enviarla por correo a{" "}
         <strong>{restaurant.email}</strong> o llamarnos.
       </p>
 

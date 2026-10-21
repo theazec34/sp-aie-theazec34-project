@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { restaurant } from "@/data/site";
+import { INTEGRATIONS } from "@/lib/integrations";
 import type { ApplicationFormData, ApplicationFormErrors } from "@/types/site";
 
 const INITIAL: ApplicationFormData = {
@@ -217,9 +218,12 @@ export function JobApplicationForm() {
       ) : null}
 
       <p className="form-disclaimer">
-        No afirmamos que la candidatura se haya enviado al servidor: falta un buzón/ATS
-        conectado. Tras validar, puedes abrir tu cliente de correo hacia rrhh@brasaland.com
-        (o contactar {restaurant.email}).
+        No afirmamos que la candidatura se haya enviado al servidor
+        {INTEGRATIONS.careers.ready
+          ? "."
+          : ` (falta ${INTEGRATIONS.careers.suggestedPath} o un ATS).`}{" "}
+        Tras validar, puedes abrir tu cliente de correo hacia rrhh@brasaland.com (o
+        contactar {restaurant.email}).
       </p>
 
       <div className="form-actions">

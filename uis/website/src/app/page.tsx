@@ -5,7 +5,7 @@ import { GalleryGrid } from "@/components/GalleryGrid";
 import { Hero } from "@/components/Hero";
 import { InfoStrip } from "@/components/InfoStrip";
 import { SectionTitle } from "@/components/SectionTitle";
-import { experiencePoints, philosophy, restaurant } from "@/data/site";
+import { experiencePoints, hours, philosophy, restaurant } from "@/data/site";
 
 export default function HomePage() {
   return (
@@ -52,14 +52,19 @@ export default function HomePage() {
             title="Una noche en Brasaland"
             description="Brasa, sala y ritmo de restaurante: ven a comer, quédate a conversar."
           />
-          <div className="grid-3">
-            {experiencePoints.map((item) => (
-              <article key={item.id} className="feature-tile">
-                <h3>{item.title}</h3>
-                <p>{item.description}</p>
-              </article>
+          <ol className="experience-rail">
+            {experiencePoints.map((item, index) => (
+              <li key={item.id} className="experience-item">
+                <span className="experience-index" aria-hidden="true">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <div>
+                  <h3>{item.title}</h3>
+                  <p>{item.description}</p>
+                </div>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
       </section>
 
@@ -80,17 +85,43 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="section" aria-labelledby="reviews-title">
-        <div className="container narrow">
-          <SectionTitle
-            id="reviews-title"
-            eyebrow="Opiniones"
-            title="Lo que cuentan en la mesa"
-            description="No publicamos reseñas inventadas. Cuando tengamos testimonios verificables (Google u otras fuentes), los mostraremos aquí con enlace a la fuente."
-          />
-          <p className="placeholder-box">
-            [Pendiente] Enlace a reseñas verificables del local — no sustituir con citas ficticias.
-          </p>
+      <section className="section" aria-labelledby="location-title">
+        <div className="container split">
+          <div className="split-copy">
+            <SectionTitle
+              id="location-title"
+              eyebrow="Ubicación"
+              title="Te esperamos en Sevilla"
+              description={`${restaurant.address}. Escríbenos a ${restaurant.email} o solicita mesa desde reservas.`}
+            />
+            <ul className="plain-list">
+              {hours.lines.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+            {hours.provisional ? (
+              <p className="field-hint">Horario orientativo — confirmar en el local.</p>
+            ) : null}
+            <p className="section-cta-row">
+              <Link className="cta" href="/reservas">
+                Reservar mesa
+              </Link>
+              <Link className="cta cta-ghost" href="/contacto">
+                Contacto
+              </Link>
+            </p>
+          </div>
+          <div className="split-media">
+            <Image
+              src="/Imagenes/Tabla ibericos.jpg"
+              alt="Tabla ibérica Brasaland"
+              width={960}
+              height={720}
+              className="split-image"
+              sizes="(max-width: 900px) 100vw, 48vw"
+              loading="lazy"
+            />
+          </div>
         </div>
       </section>
 
@@ -107,8 +138,8 @@ export default function HomePage() {
             <Link className="cta" href="/reservas">
               Reservar mesa
             </Link>
-            <Link className="cta cta-ghost-light" href="/contacto">
-              Cómo llegar
+            <Link className="cta cta-ghost-light" href="/carta">
+              Descubrir la carta
             </Link>
           </div>
         </div>
