@@ -62,7 +62,7 @@ export default function EmpleoPage() {
           </div>
           <div className="split-media">
             <Image
-              src="/Imagenes/empleo-cocina-brasas.jpg"
+              src="/Imagenes/empleo-cocina-hq.jpg"
               alt="Cocina con parrilla y brasas"
               width={960}
               height={640}
