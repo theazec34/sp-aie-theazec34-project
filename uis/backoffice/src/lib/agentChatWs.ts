@@ -4,7 +4,7 @@
  * Reconexión con backoff + mismo session_id para rehidratar.
  */
 
-import { getApiBaseUrl, getToken } from "./auth";
+import { getDirectApiBaseUrl, getToken } from "./auth";
 
 export type ChatMessage = {
   message_id: string;
@@ -60,7 +60,8 @@ export function setStoredSessionId(id: string) {
 }
 
 function wsBaseUrl(): string {
-  const http = getApiBaseUrl().replace(/\/$/, "");
+  // WS no pasa por el rewrite de Next; usar origen absoluto de la API.
+  const http = getDirectApiBaseUrl().replace(/\/$/, "");
   if (http.startsWith("https://")) return `wss://${http.slice("https://".length)}`;
   if (http.startsWith("http://")) return `ws://${http.slice("http://".length)}`;
   return `ws://${http}`;

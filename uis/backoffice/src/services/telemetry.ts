@@ -41,10 +41,17 @@ function uuid(): string {
 }
 
 function readEndpoint(): string {
-  const raw =
-    process.env.NEXT_PUBLIC_TELEMETRY_ENDPOINT ||
-    "http://localhost:8000/telemetry/events";
-  return raw.replace(/\/$/, "");
+  if (process.env.NEXT_PUBLIC_TELEMETRY_ENDPOINT) {
+    return process.env.NEXT_PUBLIC_TELEMETRY_ENDPOINT.replace(/\/$/, "");
+  }
+  // Same-origin proxy (align with getApiBaseUrl) unless DIRECT mode.
+  if (process.env.NEXT_PUBLIC_API_DIRECT === "1") {
+    const base = (
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+    ).replace(/\/$/, "");
+    return `${base}/telemetry/events`;
+  }
+  return "/api-backend/telemetry/events";
 }
 
 /** Decode JWT `sub` without verifying (client convenience only). */

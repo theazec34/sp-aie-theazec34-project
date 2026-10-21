@@ -39,7 +39,7 @@ El `.dockerignore` de raíz **debe** dejar pasar `data/`, `docs/company-knowledg
 
 - Red explícita: `brasaland-net`
 - Nombre del servicio API: **`backend`** → URL interna `http://backend:8000` (`INTERNAL_API_URL`)
-- El **navegador** del host no resuelve nombres Docker: usa `NEXT_PUBLIC_API_URL=http://localhost:8000`
+- Website y backoffice: el **navegador** llama a `/api-backend/*` (rewrite Next → `INTERNAL_API_URL`). No hace falta exponer `localhost:8000` al browser salvo WebSocket del agente o `NEXT_PUBLIC_API_DIRECT=1`.
 
 ## Hot reload
 
