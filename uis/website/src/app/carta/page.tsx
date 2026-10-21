@@ -15,7 +15,7 @@ export default function CartaPage() {
         eyebrow="Carta"
         title="Sabores a la brasa"
         description={`${restaurant.slogan}. Precios en euros. Consulta alérgenos en cada plato y en la leyenda de los 14 grupos.`}
-        imageSrc="/Imagenes/Entrana-argentina.jpg"
+        imageSrc="/Imagenes/entrana-chimichurri.jpg"
         imageAlt="Carnes a la brasa Brasaland"
         align="center"
       />
