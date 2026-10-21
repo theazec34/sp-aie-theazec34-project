@@ -32,7 +32,7 @@ export default function HomePage() {
           </div>
           <div className="split-media">
             <Image
-              src="/Imagenes/entrana-chimichurri.jpg"
+              src="/Imagenes/Entrana-argentina.jpg"
               alt="Entraña a la brasa"
               width={960}
               height={720}
