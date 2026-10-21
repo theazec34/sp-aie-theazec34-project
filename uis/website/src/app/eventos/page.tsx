@@ -16,7 +16,7 @@ export default function EventosPage() {
         eyebrow="Eventos"
         title="Mesas para celebrar"
         description="Grupos, celebraciones y propuestas a medida alrededor de la brasa — con ritmo, fuego y sala."
-        imageSrc="/Imagenes/eventos-flamenco.jpg"
+        imageSrc="/Imagenes/eventos-flamenco-hq.jpg"
         imageAlt="Actuación de flamenco en ambiente de restaurante"
         align="center"
       />
@@ -64,7 +64,7 @@ export default function EventosPage() {
         <div className="container split">
           <div className="split-media">
             <Image
-              src="/Imagenes/eventos-actuacion.jpg"
+              src="/Imagenes/eventos-actuacion-hq.jpg"
               alt="Actuación en vivo en Brasaland"
               width={960}
               height={640}

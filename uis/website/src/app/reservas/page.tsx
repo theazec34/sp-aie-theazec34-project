@@ -15,7 +15,7 @@ export default function ReservasPage() {
         eyebrow="Reservas"
         title="Tu mesa junto al fuego"
         description={`Cuéntanos cuándo vienes. Teléfono ${restaurant.phone} · ${restaurant.email}.`}
-        imageSrc="/Imagenes/Tabla ibericos.jpg"
+        imageSrc="/Imagenes/banner-reservas.jpg"
         imageAlt="Mesa Brasaland"
         align="center"
       />

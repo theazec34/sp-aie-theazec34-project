@@ -734,11 +734,54 @@ body .section .cta-ghost:hover,
   color: var(--texto-suave);
 }
 
+.experience-banner {
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  padding: clamp(3.5rem, 8vw, 5.5rem) 0;
+}
+
+.experience-banner-bg {
+  position: absolute;
+  inset: 0;
+}
+
+.experience-banner-image {
+  object-fit: cover;
+  object-position: center 35%;
+}
+
+.experience-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(105deg, rgba(10, 6, 3, 0.88) 0%, rgba(10, 6, 3, 0.72) 48%, rgba(10, 6, 3, 0.55) 100%),
+    radial-gradient(ellipse at 75% 40%, rgba(200, 56, 10, 0.28), transparent 55%);
+}
+
+.experience-banner-inner {
+  position: relative;
+  z-index: 1;
+}
+
+.experience-banner .section-eyebrow {
+  color: #ffb060;
+}
+
+.experience-banner .section-title {
+  color: #fff;
+}
+
+.experience-banner .section-text {
+  color: rgba(255, 255, 255, 0.88);
+}
+
 .experience-rail {
   list-style: none;
   display: grid;
   gap: var(--space-4);
-  border-top: 1px solid var(--line);
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  max-width: 40rem;
 }
 
 .experience-item {
@@ -747,14 +790,14 @@ body .section .cta-ghost:hover,
   gap: var(--space-4);
   align-items: start;
   padding: var(--space-4) 0;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .experience-index {
   font-family: var(--font-display), Georgia, serif;
   font-size: 1.6rem;
   font-weight: 800;
-  color: var(--brasa);
+  color: #ffb060;
   line-height: 1;
 }
 
@@ -762,10 +805,11 @@ body .section .cta-ghost:hover,
   font-family: var(--font-display), Georgia, serif;
   font-size: 1.35rem;
   margin-bottom: 0.35rem;
+  color: #fff;
 }
 
 .experience-item p {
-  color: var(--texto-suave);
+  color: rgba(255, 255, 255, 0.84);
   max-width: 42rem;
 }
 

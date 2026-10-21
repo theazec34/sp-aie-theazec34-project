@@ -15,7 +15,7 @@ export default function NosotrosPage() {
         eyebrow="Nosotros"
         title="De la parrilla al alma ibérica"
         description={philosophy.body}
-        imageSrc="/Imagenes/Pata de cordero.jpg"
+        imageSrc="/Imagenes/banner-nosotros.jpg"
         imageAlt="Cocina a la brasa Brasaland"
         align="center"
       />

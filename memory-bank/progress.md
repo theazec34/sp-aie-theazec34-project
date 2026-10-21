@@ -11,6 +11,7 @@
 - Tipografía y CTAs más destacados; build/lint OK.
 - Galería: «Corte a la brasa» → `Corte carne.jpg` (foto antigua); «Entraña argentina» → `entrana-chimichurri.jpg` (foto nueva distinta).
 - Carta: fotos generadas únicas por plato (tira asado, picanha, ribeye, croquetas, patacón, empanadas, pulpo, arroz negro, arroz pollo, paella, tres leches, churros, alfajores, flan) — sin reutilizar placeholders.
+- Home: banner Experiencia con fondo espectáculo en vivo; hero/ubicación HQ; Operaciones = descarga de mercancía (ya no duplica Sala).
 
 ## Public intake (actual)
 - API: `POST/GET /reservations`, `POST/GET /careers` (TinyDB `public_intake.json`).
