@@ -1,33 +1,32 @@
 import Image from "next/image";
-import { SectionTitle } from "@/components/SectionTitle";
-import { allProjectPhotos } from "@/data/home";
+import { galleryPhotos } from "@/data/site";
 
-export function GalleryGrid() {
+interface GalleryGridProps {
+  limit?: number;
+  showCaptions?: boolean;
+}
+
+export function GalleryGrid({ limit, showCaptions = true }: GalleryGridProps) {
+  const photos = typeof limit === "number" ? galleryPhotos.slice(0, limit) : galleryPhotos;
+
   return (
-    <section id="galeria" className="section section-soft">
-      <div className="container">
-        <SectionTitle
-          id="galeria-title"
-          title="Todas las fotos del proyecto"
-          description="Galería visual de platos y atmósfera Brasaland."
-        />
-        <div className="gallery-grid">
-          {allProjectPhotos.map((photo) => (
-            <figure key={photo.id} className="gallery-card">
-              <Image
-                src={photo.path}
-                alt={photo.title}
-                width={960}
-                height={523}
-                className="gallery-image"
-                sizes="(max-width: 920px) 50vw, 25vw"
-                loading="lazy"
-              />
-              <figcaption className="gallery-caption">{photo.title}</figcaption>
-            </figure>
-          ))}
-        </div>
-      </div>
-    </section>
+    <div className="gallery-grid">
+      {photos.map((photo, index) => (
+        <figure key={photo.id} className="gallery-card">
+          <Image
+            src={photo.path}
+            alt={photo.title}
+            width={960}
+            height={720}
+            className="gallery-image"
+            sizes="(max-width: 720px) 50vw, 25vw"
+            loading={index < 2 ? "eager" : "lazy"}
+          />
+          {showCaptions ? (
+            <figcaption className="gallery-caption">{photo.title}</figcaption>
+          ) : null}
+        </figure>
+      ))}
+    </div>
   );
 }

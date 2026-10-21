@@ -1,28 +1,10 @@
-import { GalleryPhoto, NavItem } from "@/types/site";
-
-export const navItems: NavItem[] = [
-  { id: "inicio", label: "Inicio", href: "#inicio" },
-  { id: "carta", label: "Carta", href: "#carta" },
-  { id: "galeria", label: "Fotos", href: "#galeria" },
-  { id: "aplicar", label: "Formulario", href: "#aplicar" },
-];
-
-/** Gallery shows a smaller unique set to avoid re-downloading carta images (LCP/network). */
-export const allProjectPhotos: GalleryPhoto[] = [
-  { id: "corte-carne", title: "Corte de carne", path: "/Imagenes/Corte carne.jpg" },
-  { id: "arroz-bogavante", title: "Arroz bogavante", path: "/Imagenes/Arroz bogavante.jpg" },
-  { id: "tabla-ibericos", title: "Tabla ibericos", path: "/Imagenes/Tabla ibericos.jpg" },
-  { id: "pata-cordero", title: "Pata de cordero", path: "/Imagenes/Pata de cordero.jpg" },
-  { id: "tarta-galleta", title: "Tarta de galleta", path: "/Imagenes/Tarta de galleta.jpg" },
-  { id: "tiramisu", title: "Tiramisu", path: "/Imagenes/tiramisu.jpg" },
-];
-
+/** Map dish id → photo in /public/Imagenes (reused on carta + home). */
 export const menuImageMap: Record<string, string> = {
   "tira-asado": "/Imagenes/Corte carne.jpg",
   "entraña": "/Imagenes/Entraña argentina.jpg",
-  "picanha": "/Imagenes/Corte carne.jpg",
+  picanha: "/Imagenes/Corte carne.jpg",
   "secreto-iberico": "/Imagenes/Pata de cordero.jpg",
-  ribeye: "/Imagenes/Pescado braseado.jpg",
+  ribeye: "/Imagenes/Corte carne.jpg",
   "arroz-bogavante": "/Imagenes/Arroz bogavante.jpg",
   "arroz-negro": "/Imagenes/Arroz caldoso.jpg",
   "arroz-sudamericano": "/Imagenes/Arroz caldoso.jpg",
@@ -37,3 +19,6 @@ export const menuImageMap: Record<string, string> = {
   alfajores: "/Imagenes/tiramisu.jpg",
   "flan-iberico": "/Imagenes/tiramisu.jpg",
 };
+
+/** @deprecated use galleryPhotos from site.ts */
+export { galleryPhotos as allProjectPhotos, navItems } from "@/data/site";
