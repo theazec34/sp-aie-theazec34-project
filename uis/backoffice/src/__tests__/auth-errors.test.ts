@@ -34,14 +34,36 @@ describe("api base url", () => {
     localStorage.clear();
   });
 
-  it("happy: detectApiBaseUrl usa proxy same-origin", () => {
+  it("happy: en host local detectApiBaseUrl usa proxy same-origin", () => {
     expect(detectApiBaseUrl()).toBe("/api-backend");
     expect(getApiBaseUrl()).toBe("/api-backend");
   });
 
-  it("edge: override en localStorage se respeta", () => {
+  it("edge: override en localStorage se respeta fuera de Codespaces", () => {
     setStoredApiBaseUrl("http://127.0.0.1:8000");
     expect(getApiBaseUrl()).toBe("http://127.0.0.1:8000");
+  });
+
+  it("Codespaces: auto-detect apunta al puerto 8000 del host", () => {
+    const original = window.location;
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: {
+        protocol: "https:",
+        hostname: "amusing-space-3001.app.github.dev",
+        port: "",
+        origin: "https://amusing-space-3001.app.github.dev",
+      },
+    });
+    localStorage.setItem("brasaland_api_base_url", "/api-backend");
+    expect(detectApiBaseUrl()).toBe(
+      "https://amusing-space-8000.app.github.dev"
+    );
+    expect(getApiBaseUrl()).toBe("https://amusing-space-8000.app.github.dev");
+    Object.defineProperty(window, "location", {
+      configurable: true,
+      value: original,
+    });
   });
 });
 

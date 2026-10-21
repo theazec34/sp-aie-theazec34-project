@@ -38,16 +38,22 @@ export function detectApiBaseUrl(): string {
   if (typeof window === "undefined") {
     return envApiBaseUrl();
   }
+  const { protocol, hostname, port } = window.location;
+  // Codespaces: el proxy Docker→backend a veces no responde a tiempo desde
+  // el rewrite/Turbopack. La URL pública del puerto 8000 sí llega al API.
+  if (hostname.includes("github.dev") || hostname.includes("githubpreview.dev")) {
+    const apiHost = hostname.replace(/-\d+(?=\.)/, "-8000");
+    return `${protocol}//${apiHost}`;
+  }
   if (process.env.NEXT_PUBLIC_API_DIRECT === "1") {
-    const { protocol, hostname, port } = window.location;
-    if (hostname.includes("github.dev") || hostname.includes("githubpreview.dev")) {
-      const apiHost = hostname.replace(/-\d+(?=\.)/, "-8000");
-      return `${protocol}//${apiHost}`;
-    }
     if (port === "8000") {
       return window.location.origin;
     }
-    return envApiBaseUrl();
+    return (
+      process.env.NEXT_PUBLIC_INVENTORY_API_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      "http://localhost:8000"
+    ).replace(/\/$/, "");
   }
   return "/api-backend";
 }
@@ -67,13 +73,15 @@ export function setStoredApiBaseUrl(url: string): void {
   }
 }
 
-/** Ignore stale localhost overrides when the page is on Codespaces. */
+/** Ignore stale overrides that break Codespaces (localhost o /api-backend). */
 function shouldIgnoreStored(url: string): boolean {
   if (typeof window === "undefined") return false;
   const host = window.location.hostname;
   const onCodespace =
     host.includes("github.dev") || host.includes("githubpreview.dev");
   if (!onCodespace) return false;
+  const cleaned = url.replace(/\/$/, "");
+  if (cleaned === "/api-backend") return true;
   return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(url);
 }
 
