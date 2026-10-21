@@ -1,14 +1,18 @@
 # Progress — Brasaland Digital
 
 ## Estado (2026-10-21)
-- **`main`:** PRs **#1–#50** (pulido final mergeado).
-- **Hotfix en curso:** Docker build Codespaces — `.dockerignore` bloqueaba `COPY data` / `docs/rfp` (`cursor/docker-ignore-build-fix-c620`).
+- **`main`:** PRs **#1–#51** (Docker ignore #51 mergeado).
+- **Hotfix en curso:** seed admin — `admin@brasaland.local` rechazado por EmailStr (`cursor/seed-admin-email-fix-c620`).
 - **Fuera de alcance:** `hito-3` Talent Pipeline / `3.5`.
 
-## Hotfix Docker (actual)
-- Causa: raíz `.dockerignore` tenía `docs` y `**/data` → build `worker`/`flower`/`backend` fallaba con `"/docs/rfp": not found`.
-- Fix: excepciones para `data/`, `docs/company-knowledge-base/`, `docs/rfp/` (+ `*.md` de esas rutas).
-- Nota demo: arrancar siempre desde la raíz del monorepo.
+## Hotfix seed email (actual)
+- Causa: `email-validator` rechaza TLD `.local` → `seed_auth` tumba backend/worker/flower en bucle.
+- Fix: `.env.example` → `SEED_ADMIN_EMAIL=admin@brasaland.com`.
+- Demo Codespaces: editar `.env` y `docker compose up --build` de nuevo.
+
+## Hotfix Docker (#51)
+- Causa: `.dockerignore` excluía `docs` / `**/data` → `COPY docs/rfp` fallaba.
+- Fix: excepciones para `data/`, `docs/company-knowledge-base/`, `docs/rfp/`.
 
 ## Pulido final (#50)
 - Review: `docs/PROJECT_REVIEW_FINAL.md`
