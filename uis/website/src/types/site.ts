@@ -36,6 +36,20 @@ export interface ApplicationFormData {
   department: string;
   experience: string;
   message: string;
+  privacy: boolean;
+  cvName: string;
 }
 
 export type ApplicationFormErrors = Partial<Record<keyof ApplicationFormData, string>>;
+
+export interface ReservationFormData {
+  fullName: string;
+  phone: string;
+  email: string;
+  date: string;
+  time: string;
+  guests: string;
+  notes: string;
+}
+
+export type ReservationFormErrors = Partial<Record<keyof ReservationFormData, string>>;

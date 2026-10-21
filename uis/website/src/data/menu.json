@@ -7,14 +7,20 @@
     "direccion": "Calle Las Ánimas 4, Sevilla"
   },
   "alergenos_clave": {
-    "G": { "nombre": "Gluten", "emoji": "🌾" },
-    "L": { "nombre": "Lácteos", "emoji": "🥛" },
-    "H": { "nombre": "Huevo", "emoji": "🥚" },
-    "F": { "nombre": "Frutos secos", "emoji": "🥜" },
-    "M": { "nombre": "Mostaza", "emoji": "🌿" },
-    "So": { "nombre": "Soja", "emoji": "🫘" },
-    "Se": { "nombre": "Sésamo", "emoji": "🌱" },
-    "Su": { "nombre": "Sulfitos", "emoji": "🍷" }
+    "G": { "nombre": "Cereales con gluten", "emoji": "G" },
+    "Cr": { "nombre": "Crustáceos", "emoji": "Cr" },
+    "H": { "nombre": "Huevos", "emoji": "H" },
+    "P": { "nombre": "Pescado", "emoji": "P" },
+    "Ca": { "nombre": "Cacahuetes", "emoji": "Ca" },
+    "So": { "nombre": "Soja", "emoji": "So" },
+    "L": { "nombre": "Leche y lácteos", "emoji": "L" },
+    "F": { "nombre": "Frutos de cáscara", "emoji": "F" },
+    "Ap": { "nombre": "Apio", "emoji": "Ap" },
+    "M": { "nombre": "Mostaza", "emoji": "M" },
+    "Se": { "nombre": "Sésamo", "emoji": "Se" },
+    "Su": { "nombre": "Sulfitos", "emoji": "Su" },
+    "Al": { "nombre": "Altramuces", "emoji": "Al" },
+    "Mo": { "nombre": "Moluscos", "emoji": "Mo" }
   },
   "categorias": [
     {

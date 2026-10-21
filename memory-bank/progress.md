@@ -1,23 +1,25 @@
 # Progress — Brasaland Digital
 
 ## Estado (2026-10-21)
-- **`main`:** PRs **#1–#51** (Docker ignore #51 mergeado).
-- **Hotfix en curso:** seed admin — `admin@brasaland.local` rechazado por EmailStr (`cursor/seed-admin-email-fix-c620`).
+- **`main`:** PRs **#1–#52** (+ hotfixes Docker en ramas paralelas).
+- **En curso:** rediseño web pública gastronómica (`cursor/website-redesign-c620`).
 - **Fuera de alcance:** `hito-3` Talent Pipeline / `3.5`.
 
-## Hotfix seed email (actual)
-- Causa: `email-validator` rechaza TLD `.local` → `seed_auth` tumba backend/worker/flower en bucle.
-- Fix: `.env.example` → `SEED_ADMIN_EMAIL=admin@brasaland.com`.
-- Demo Codespaces: editar `.env` y `docker compose up --build` de nuevo.
+## Rediseño website (actual)
+- Next.js 16 App Router: `/`, `/carta`, `/reservas`, `/nosotros`, `/galeria`, `/eventos`, `/trabaja-con-nosotros`, `/contacto` + legales.
+- Hero full-bleed + InfoStrip; carta desde `menu.json` (sin inventar categorías vacías).
+- Formularios reservas/empleo: validación + mailto; **no** fingen confirmación/envío al servidor.
+- Footer profesional; leyenda 14 alérgenos UE; E2E actualizados.
+- Checks: `npm run lint` + `npm run build` en `uis/website` OK.
+
+## Hotfix Docker boot (`cursor/docker-boot-pythonpath-c620`)
+- PYTHONPATH, entrypoint worker/flower, pandas, Redis hostname en Compose.
+
+## Hotfix seed email (#52)
+- `.env.example` → `SEED_ADMIN_EMAIL=admin@brasaland.com`.
 
 ## Hotfix Docker (#51)
-- Causa: `.dockerignore` excluía `docs` / `**/data` → `COPY docs/rfp` fallaba.
-- Fix: excepciones para `data/`, `docs/company-knowledge-base/`, `docs/rfp/`.
-
-## Pulido final (#50)
-- Review: `docs/PROJECT_REVIEW_FINAL.md`
-- Fix: `skipAuth` incidencias + login → `/`
-- Visual: backoffice carbón/brasa; hero web full-bleed con marca; copy ES
+- `.dockerignore` excepciones `data/` + `docs/rfp`.
 
 ## Hitos en main
 | Área | PR |

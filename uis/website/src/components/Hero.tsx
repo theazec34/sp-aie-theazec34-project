@@ -1,24 +1,47 @@
+import Image from "next/image";
+import Link from "next/link";
+
 interface HeroProps {
   title: string;
   subtitle: string;
+  imageSrc?: string;
+  imageAlt?: string;
 }
 
-export function Hero({ title, subtitle }: HeroProps) {
+export function Hero({
+  title,
+  subtitle,
+  imageSrc = "/Imagenes/Corte carne.jpg",
+  imageAlt = "Corte de carne a la brasa en Brasaland",
+}: HeroProps) {
   return (
-    <section id="inicio" className="hero">
-      <div className="hero-atmosphere" aria-hidden="true" />
+    <section className="hero" aria-labelledby="hero-title">
+      <div className="hero-media" aria-hidden="true">
+        <Image
+          src={imageSrc}
+          alt={imageAlt}
+          fill
+          priority
+          sizes="100vw"
+          className="hero-image"
+        />
+        <div className="hero-overlay" />
+      </div>
+
       <div className="container hero-grid">
-        <div className="hero-copy">
+        <div className="hero-copy reveal">
           <p className="hero-brand">Brasaland</p>
-          <h1 className="hero-title">{title}</h1>
+          <h1 id="hero-title" className="hero-title">
+            {title}
+          </h1>
           <p className="hero-subtitle">{subtitle}</p>
           <div className="hero-cta-row">
-            <a className="cta" href="#carta">
-              Ver la carta
-            </a>
-            <a className="cta cta-ghost" href="#aplicar">
+            <Link className="cta" href="/carta">
+              Descubrir la carta
+            </Link>
+            <Link className="cta cta-ghost" href="/reservas">
               Reservar mesa
-            </a>
+            </Link>
           </div>
         </div>
       </div>
