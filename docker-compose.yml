@@ -116,9 +116,10 @@ services:
     env_file:
       - .env
     environment:
-      # Explicit for Next.js at runtime (browser still sees host localhost URLs)
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
-      NEXT_PUBLIC_INVENTORY_API_URL: ${NEXT_PUBLIC_INVENTORY_API_URL}
+      # Backoffice browser → host URL; website forms use /api-backend rewrite
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NEXT_PUBLIC_INVENTORY_API_URL: ${NEXT_PUBLIC_INVENTORY_API_URL:-http://localhost:8000}
+      INTERNAL_API_URL: http://backend:8000
       WATCHPACK_POLLING: "true"
       CHOKIDAR_USEPOLLING: "true"
     ports:
