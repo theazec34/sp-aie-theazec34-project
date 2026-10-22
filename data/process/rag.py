@@ -210,6 +210,7 @@ def _fastembed_model_name() -> str:
 
 
 _fastembed_model = None
+HASH_EMBED_DIM = 384
 
 
 def _get_fastembed():
@@ -219,6 +220,32 @@ def _get_fastembed():
 
         _fastembed_model = TextEmbedding(model_name=_fastembed_model_name())
     return _fastembed_model
+
+
+def _hash_embed(text: str, dim: int = HASH_EMBED_DIM) -> list[float]:
+    """Deterministic offline embedding (no HuggingFace). Demo / Codespaces sin egress.
+
+    Not semantic SOTA — enough for keyword-ish RAG when FastEmbed cannot download.
+    """
+    import hashlib
+    import math
+    import re
+
+    tokens = re.findall(r"[\wáéíóúüñ]+", text.lower(), flags=re.UNICODE)
+    if not tokens:
+        tokens = ["empty"]
+    vec = [0.0] * dim
+    for tok in tokens:
+        digest = hashlib.sha256(tok.encode("utf-8")).digest()
+        # Two signed features per token
+        idx = int.from_bytes(digest[:4], "little") % dim
+        sign = 1.0 if digest[4] % 2 == 0 else -1.0
+        vec[idx] += sign
+        idx2 = int.from_bytes(digest[5:9], "little") % dim
+        sign2 = 1.0 if digest[9] % 2 == 0 else -1.0
+        vec[idx2] += 0.5 * sign2
+    norm = math.sqrt(sum(v * v for v in vec)) or 1.0
+    return [v / norm for v in vec]
 
 
 def embed(text: str) -> list[float]:
@@ -241,10 +268,21 @@ def embed(text: str) -> list[float]:
         response = client.embeddings.create(model=model_id, input=cleaned)
         return list(response.data[0].embedding)
 
+    if provider in {"hash", "offline", "local"}:
+        return _hash_embed(cleaned)
+
     if provider == "fastembed":
-        model = _get_fastembed()
-        vectors = list(model.embed([cleaned]))
-        return [float(x) for x in vectors[0].tolist()]
+        try:
+            model = _get_fastembed()
+            vectors = list(model.embed([cleaned]))
+            return [float(x) for x in vectors[0].tolist()]
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "FastEmbed unavailable (%s) — using offline hash embeddings. "
+                "Set EMBEDDING_PROVIDER=hash to silence this, or fix egress to HuggingFace.",
+                exc,
+            )
+            return _hash_embed(cleaned)
 
     raise RuntimeError(f"Unknown EMBEDDING_PROVIDER={provider!r}")
 

@@ -44,7 +44,7 @@ describe("api base url", () => {
     expect(getApiBaseUrl()).toBe("http://127.0.0.1:8000");
   });
 
-  it("Codespaces: auto-detect apunta al puerto 8000 del host", () => {
+  it("Codespaces: auto-detect usa /api-backend (proxy Route Handler)", () => {
     const original = window.location;
     Object.defineProperty(window, "location", {
       configurable: true,
@@ -55,11 +55,13 @@ describe("api base url", () => {
         origin: "https://amusing-space-3001.app.github.dev",
       },
     });
-    localStorage.setItem("brasaland_api_base_url", "/api-backend");
-    expect(detectApiBaseUrl()).toBe(
+    localStorage.setItem(
+      "brasaland_api_base_url",
       "https://amusing-space-8000.app.github.dev"
     );
-    expect(getApiBaseUrl()).toBe("https://amusing-space-8000.app.github.dev");
+    expect(detectApiBaseUrl()).toBe("/api-backend");
+    // Override …-8000 se ignora en Codespaces → proxy
+    expect(getApiBaseUrl()).toBe("/api-backend");
     Object.defineProperty(window, "location", {
       configurable: true,
       value: original,
