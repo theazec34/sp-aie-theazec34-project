@@ -16,9 +16,10 @@ rfp-requests/brasaland/brasaland-request-3.pdf   # inválido → descartar
 En Codespaces: descarga el PDF desde el explorador de archivos → súbelo en **Recepción RFP** → Crear ticket.  
 SSE «Desconectado» = refresca con puerto **8000 Public**.
 
-## Base de conocimiento + Agente
-No usan `LLM_*` a pelo: el runtime lee `GENERATION_*`.  
-Alias soportados: `LLM_BASE_URL` → `GENERATION_BASE_URL`, `LLM_MODEL` → `GENERATION_MODEL_ID`, `LLM_API_KEY` → `GENERATION_API_KEY`.
+## BrasAI (antes «Base de conocimiento») + Agente
+Menú: **BrasAI**. No usan `LLM_*` a pelo: el runtime lee `GENERATION_*`.  
+Alias: `LLM_BASE_URL` → `GENERATION_BASE_URL`, `LLM_MODEL` → `GENERATION_MODEL_ID`, `LLM_API_KEY` → `GENERATION_API_KEY`.  
+Si el LLM falla, BrasAI cae a modo **grounded** (texto de los manuales) en vez de quedarse colgado.
 
 En `.env` (raíz), ejemplo 4Geeks:
 ```bash
@@ -45,8 +46,9 @@ Tras `seed_telemetry.py` y reinicio, pulsa **Actualizar** (rango = últimos día
 ## Proveedores e inventario
 - **Entrada inventario** = compra a proveedor (aumenta stock).
 - **Salida inventario** = consumo / merma (baja stock).
-- **COP** = peso colombiano. **EUR (€)** = España. **USD** = USA. Sin conversión automática.
-- Seed nuevo prioriza proveedores España en € (hay que resetear TinyDB de proveedores o volumen `backend_data` si ya tenías el seed viejo).
+- **Todas las tarifas en EUR (€)**; al sembrar se convierte COP÷4300 y USD×0.92.
+- Re-sembrar: `docker compose exec backend python seed.py --force`
+- RFP necesita `markitdown` en la imagen backend (`docker compose up -d --build backend`).
 
 ## Cambiar contraseña
 Va en **Mi cuenta → Cambiar contraseña** (ya no en el menú lateral).

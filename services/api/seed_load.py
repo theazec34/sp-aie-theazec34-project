@@ -137,7 +137,7 @@ def _seed_suppliers(rng: random.Random) -> tuple[int, int, int]:
                 country=country,
                 categories=cats,
                 rate_per_unit=rate,
-                currency=Currency.COP if country is Country.COLOMBIA else Currency.USD,
+                currency=Currency.EUR,
                 status=SupplierStatus.ACTIVE if i % 7 else SupplierStatus.SUSPENDED,
                 contact_email=f"compras.{i + 1}@{city.lower().replace(' ', '')}.brasaland.test",
                 notes=f"Ruta {city}; lead time {rng.randint(1, 5)} días; MOQ {rng.choice([10, 25, 50])}.",

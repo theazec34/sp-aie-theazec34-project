@@ -21,3 +21,6 @@ redis>=5.0.0
 flower>=2.0.0
 langgraph>=0.2.0
 pandas>=2.2.0
+markitdown[pdf]>=0.1.8
+py-readability-metrics>=1.4.5
+reportlab>=4.0.0

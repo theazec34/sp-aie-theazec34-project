@@ -1,5 +1,6 @@
-"""Initial supplier directory — demo Sevilla (€) + USA (USD) + 1 LatAm (COP)."""
+"""Supplier directory — tarifas en EUR (€). Seeds LatAm/USA convertidos."""
 
+# COP≈/4300, USD≈×0.92 → EUR (demo Sevilla)
 SUPPLIERS_SEED = [
     {
         "name": "Carnes del Guadalquivir S.L.",
@@ -9,7 +10,7 @@ SUPPLIERS_SEED = [
         "currency": "EUR",
         "status": "active",
         "contact_email": "ventas@carnesguadalquivir.es",
-        "notes": "Proveedor principal de res y cerdo para Sevilla. Entrega martes y viernes.",
+        "notes": "Proveedor principal Sevilla. Entrega martes y viernes.",
     },
     {
         "name": "Frigorífico Andaluz",
@@ -19,7 +20,6 @@ SUPPLIERS_SEED = [
         "currency": "EUR",
         "status": "active",
         "contact_email": "pedidos@frigoandaluz.es",
-        "notes": "Proveedor secundario cuando Guadalquivir no tiene stock.",
     },
     {
         "name": "Huerta La Vega",
@@ -29,7 +29,6 @@ SUPPLIERS_SEED = [
         "currency": "EUR",
         "status": "active",
         "contact_email": "pedidos@huertalavega.es",
-        "notes": "Mercado de abastos Sevilla. Entrega diaria antes de las 7:00.",
     },
     {
         "name": "Condimentos Triana",
@@ -57,7 +56,6 @@ SUPPLIERS_SEED = [
         "currency": "EUR",
         "status": "active",
         "contact_email": "ventas@empaquessevilla.es",
-        "notes": "Cajas, bolsas y servilletas para el local de Sevilla.",
     },
     {
         "name": "Limpieza Hostelería Sur",
@@ -67,7 +65,6 @@ SUPPLIERS_SEED = [
         "currency": "EUR",
         "status": "suspended",
         "contact_email": "comercial@limpiezasur.es",
-        "notes": "Suspendido por retrasos. En revisión.",
     },
     {
         "name": "Carbón Brasas Ibéricas",
@@ -77,24 +74,24 @@ SUPPLIERS_SEED = [
         "currency": "EUR",
         "status": "active",
         "contact_email": "pedidos@brasasibericas.es",
-        "notes": "Carbón homologado para parrilla. Contrato anual.",
     },
+    # USA → EUR (×0.92)
     {
         "name": "Miami Meat Distributors LLC",
         "country": "USA",
         "categories": ["carne"],
-        "rate_per_unit": 6.80,
-        "currency": "USD",
+        "rate_per_unit": 6.26,  # 6.80 USD
+        "currency": "EUR",
         "status": "active",
         "contact_email": "orders@miamimeat.com",
-        "notes": "Proveedor Florida (referencia multi-sede).",
+        "notes": "Tarifa convertida USD→EUR (×0.92) para demo unificada.",
     },
     {
         "name": "Sunshine Produce FL",
         "country": "USA",
         "categories": ["verduras_y_hortalizas"],
-        "rate_per_unit": 2.15,
-        "currency": "USD",
+        "rate_per_unit": 1.98,
+        "currency": "EUR",
         "status": "active",
         "contact_email": "sales@sunshineproduce.com",
     },
@@ -102,8 +99,8 @@ SUPPLIERS_SEED = [
         "name": "Latin Flavors Inc.",
         "country": "USA",
         "categories": ["salsas_y_condimentos", "bebidas"],
-        "rate_per_unit": 4.50,
-        "currency": "USD",
+        "rate_per_unit": 4.14,
+        "currency": "EUR",
         "status": "active",
         "contact_email": "orders@latinflavors.com",
     },
@@ -111,8 +108,8 @@ SUPPLIERS_SEED = [
         "name": "PackRight USA",
         "country": "USA",
         "categories": ["packaging"],
-        "rate_per_unit": 0.35,
-        "currency": "USD",
+        "rate_per_unit": 0.32,
+        "currency": "EUR",
         "status": "active",
         "contact_email": "info@packright.us",
     },
@@ -120,8 +117,8 @@ SUPPLIERS_SEED = [
         "name": "CleanPro Florida",
         "country": "USA",
         "categories": ["productos_limpieza"],
-        "rate_per_unit": 12.90,
-        "currency": "USD",
+        "rate_per_unit": 11.87,
+        "currency": "EUR",
         "status": "active",
         "contact_email": "orders@cleanproflorida.com",
     },
@@ -129,19 +126,20 @@ SUPPLIERS_SEED = [
         "name": "GrillFuel Supply Co.",
         "country": "USA",
         "categories": ["carbon_y_combustible"],
-        "rate_per_unit": 38.50,
-        "currency": "USD",
+        "rate_per_unit": 35.42,
+        "currency": "EUR",
         "status": "active",
         "contact_email": "supply@grillfuel.com",
     },
+    # Colombia → EUR (/4300)
     {
         "name": "Carnes del Valle S.A.S.",
         "country": "Colombia",
         "categories": ["carne"],
-        "rate_per_unit": 28500.0,
-        "currency": "COP",
+        "rate_per_unit": 6.63,  # 28500 COP
+        "currency": "EUR",
         "status": "active",
         "contact_email": "ventas@carnesdelvalle.co",
-        "notes": "Ejemplo LatAm: COP = peso colombiano (no se convierte a €).",
+        "notes": "Tarifa convertida COP→EUR (/4300) para demo unificada en €.",
     },
 ]

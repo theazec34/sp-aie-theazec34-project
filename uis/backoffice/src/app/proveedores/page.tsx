@@ -16,7 +16,7 @@ type Supplier = {
   country: "España" | "Colombia" | "USA";
   categories: string[];
   rate_per_unit: number;
-  currency: "EUR" | "COP" | "USD";
+  currency: "EUR";
   status: SupplierStatus;
   contact_email?: string | null;
   notes?: string | null;
@@ -162,9 +162,9 @@ export default function ProveedoresPage() {
                 onChange={(event) => setCountryFilter(event.target.value)}
               >
                 <option value="">Todos</option>
-                <option value="España">España (€)</option>
-                <option value="Colombia">Colombia (COP)</option>
-                <option value="USA">USA (USD)</option>
+                <option value="España">España</option>
+                <option value="Colombia">Colombia</option>
+                <option value="USA">USA</option>
               </select>
             </label>
             <label>
@@ -186,8 +186,8 @@ export default function ProveedoresPage() {
             </button>
           </div>
           <p className="bo-soft">
-            Moneda por país: <strong>España → EUR (€)</strong>, Colombia → COP
-            (peso colombiano), USA → USD. No se convierte entre monedas.
+            Todas las tarifas en <strong>euros (€)</strong>. Seeds históricos
+            COP/USD se convierten al sembrar (COP÷4300, USD×0.92).
           </p>
           {loading ? <p className="bo-soft">Cargando…</p> : null}
           {error ? (

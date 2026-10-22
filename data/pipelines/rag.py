@@ -207,7 +207,8 @@ def _openai_generate(question: str, context: list[dict[str, Any]]) -> str:
             "GENERATION_BASE_URL and GENERATION_MODEL_ID required for "
             "GENERATION_PROVIDER=openai"
         )
-    client = OpenAI(base_url=base_url, api_key=api_key, timeout=60.0)
+    # 25s: en Codespaces un gateway lento no debe dejar la UI en «Consultando…»
+    client = OpenAI(base_url=base_url, api_key=api_key, timeout=25.0)
     if not context:
         user = (
             f"No se recuperó contexto relevante de los manuales.\n\n"
@@ -252,12 +253,19 @@ def generate_answer(question: str, context: list[dict[str, Any]]) -> str:
     _load_env()
     provider = generation_provider()
     if not context:
-        # Still go through generation path so voice/refusal is consistent
         if provider == "openai":
-            return _openai_generate(question.strip(), [])
+            try:
+                return _openai_generate(question.strip(), [])
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("openai generation failed, grounded fallback: %s", exc)
+                return refusal_message()
         return refusal_message()
     if provider == "openai":
-        return _openai_generate(question.strip(), context)
+        try:
+            return _openai_generate(question.strip(), context)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("openai generation failed, grounded fallback: %s", exc)
+            return _grounded_generate(question.strip(), context)
     if provider == "grounded":
         return _grounded_generate(question.strip(), context)
     raise RuntimeError(f"Unknown GENERATION_PROVIDER={provider!r}")
