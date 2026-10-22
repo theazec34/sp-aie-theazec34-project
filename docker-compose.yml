@@ -156,6 +156,8 @@ services:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
       NEXT_PUBLIC_INVENTORY_API_URL: ${NEXT_PUBLIC_INVENTORY_API_URL:-http://localhost:8000}
       INTERNAL_API_URL: http://backend:8000
+      # Node a veces resuelve AAAA primero y falla el proxy → backend
+      NODE_OPTIONS: "--dns-result-order=ipv4first"
       WATCHPACK_POLLING: "true"
       CHOKIDAR_USEPOLLING: "true"
     ports:

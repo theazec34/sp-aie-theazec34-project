@@ -34,7 +34,7 @@
 
 ## Public intake (actual)
 - API: `POST/GET /reservations`, `POST/GET /careers` (TinyDB `public_intake.json`).
-- Website: formularios POST vía Route Handler `uis/website/src/app/api-backend/[...path]/route.ts` → `INTERNAL_API_URL` (sin rewrite).
+- Website: en Codespaces el browser llama `…-8000.app.github.dev` (igual que backoffice); en local `/api-backend` (proxy Node IPv4).
 - Backoffice: `/web-reservations`, `/careers` (JWT).
 - Mensajes honestos: solicitud **recibida**, no mesa/contrato confirmados.
 - Tests: `services/api/tests/test_public_intake.py`.
