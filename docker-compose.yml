@@ -37,8 +37,10 @@ services:
       # Persistencia TinyDB / SQLite / CSV uploads compartidos con worker
       - backend_data:/app/api/data
     depends_on:
-      - qdrant
-      - redis
+      qdrant:
+        condition: service_started
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://127.0.0.1:8000/health"]
       interval: 5s
@@ -69,8 +71,10 @@ services:
       - ./packages:/packages
       - backend_data:/app/api/data
     depends_on:
-      - redis
-      - backend
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_started
     networks:
       - brasaland-net
     restart: unless-stopped
@@ -102,8 +106,10 @@ services:
       - ./services/celery_app.py:/app/celery_app.py
       - ./services/tasks:/app/tasks
     depends_on:
-      - redis
-      - worker
+      redis:
+        condition: service_healthy
+      worker:
+        condition: service_started
     networks:
       - brasaland-net
     restart: unless-stopped
@@ -111,10 +117,29 @@ services:
   redis:
     image: redis:7-alpine
     container_name: brasaland-redis
-    command: ["redis-server", "--maxmemory-policy", "noeviction", "--bind", "0.0.0.0", "--protected-mode", "yes"]
+    # protected-mode no: sin requirepass, Redis rechazaría clientes de otros
+    # contenedores (worker/Flower → Timeout). Sin ports públicos = OWASP A05 OK.
+    command:
+      [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--maxmemory-policy",
+        "noeviction",
+        "--bind",
+        "0.0.0.0",
+        "--protected-mode",
+        "no",
+      ]
     # Sin ports: — solo red interna brasaland-net (CRITICAL fix OWASP A05)
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
     networks:
       - brasaland-net
     restart: unless-stopped
@@ -127,7 +152,7 @@ services:
     env_file:
       - .env
     environment:
-      # Browser → /api-backend (rewrite); server → backend:8000
+      # Browser → /api-backend (Route Handler); server → backend:8000
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
       NEXT_PUBLIC_INVENTORY_API_URL: ${NEXT_PUBLIC_INVENTORY_API_URL:-http://localhost:8000}
       INTERNAL_API_URL: http://backend:8000

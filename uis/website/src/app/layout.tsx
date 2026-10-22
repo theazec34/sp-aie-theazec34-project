@@ -1,21 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Fraunces } from "next/font/google";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import "./globals.css";
 
-const fontBody = DM_Sans({
-  variable: "--font-body",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const fontDisplay = Fraunces({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["600", "700", "800"],
-  display: "swap",
-});
+/**
+ * Sin next/font/google: en Docker/Codespaces sin salida a fonts.googleapis.com
+ * cada ruta reintentaba descargar DM Sans / Fraunces y ralentizaba formularios.
+ * Stacks locales en globals.css (--font-body / --font-display).
+ */
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -44,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${fontBody.variable} ${fontDisplay.variable}`}>
+    <html lang="es" data-scroll-behavior="smooth">
       <body>
         <SiteHeader />
         <main className="site-main">{children}</main>
