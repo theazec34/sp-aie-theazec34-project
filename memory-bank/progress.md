@@ -4,6 +4,8 @@
 - **Causa «Enviando…» en /trabaja-con-nosotros:** rewrite Next → `backend:8000` colgaba; website usa Route Handler `/api-backend` + timeout 15s (igual que backoffice).
 - **Causa Flower/worker `Timeout connecting to redis`:** Redis con `--protected-mode yes` sin password rechaza clientes de otros contenedores → `protected-mode no` + healthcheck; worker/flower esperan `service_healthy`.
 - **Website:** sin Google Fonts (stacks locales); evita reintentos a fonts.googleapis.com en Docker.
+- **Hydration `bis_skin_checked`:** extensión del navegador muta el DOM; `suppressHydrationWarning` en html/body (website + backoffice). No es bug de Brasaland.
+- **Favicon:** icono brasa/parrilla (terracotta sobre carbón) en website y backoffice.
 - **BuildKit / disco:** `docker builder prune -af` + `scripts/docker-rebuild-clean.sh`.
 - **Doc IA:** `docs/backoffice/IA-Y-API-KEYS.es.md`
 - **Fuera de alcance:** `hito-3` Talent Pipeline / `3.5`.

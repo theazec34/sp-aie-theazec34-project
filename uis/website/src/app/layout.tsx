@@ -36,8 +36,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" data-scroll-behavior="smooth">
-      <body>
+    // suppressHydrationWarning: extensiones del navegador (p. ej. bis_skin_checked)
+    // mutan el DOM antes de hidratar y disparan el overlay de Next en DEV.
+    <html lang="es" data-scroll-behavior="smooth" suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <SiteHeader />
         <main className="site-main">{children}</main>
         <SiteFooter />

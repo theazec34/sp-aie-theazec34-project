@@ -29,8 +29,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
-      <body>
+    // Extensiones del navegador inyectan attrs (bis_skin_checked) → mismatch DEV
+    <html lang="es" suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <TelemetryProvider>
           <WebVitalsReporter />
           {children}
