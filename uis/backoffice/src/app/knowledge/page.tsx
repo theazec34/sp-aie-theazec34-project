@@ -10,7 +10,9 @@ type QueryResponse = {
   answer: string;
 };
 
-const QUERY_TIMEOUT_MS = 45_000;
+/** Primera carga: FastEmbed puede bajar el modelo; luego LLM 4Geeks. */
+const QUERY_TIMEOUT_MS = 120_000;
+const REINDEX_TIMEOUT_MS = 180_000;
 
 export default function KnowledgePage() {
   const [question, setQuestion] = useState(
@@ -18,7 +20,9 @@ export default function KnowledgePage() {
   );
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
+  const [reindexing, setReindexing] = useState(false);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -30,6 +34,7 @@ export default function KnowledgePage() {
     }
     setLoading(true);
     setError("");
+    setInfo("");
     setAnswer("");
     try {
       const response = await apiFetch("/knowledge/query", {
@@ -51,8 +56,10 @@ export default function KnowledgePage() {
       const name = err instanceof Error ? err.name : "";
       if (name === "TimeoutError" || name === "AbortError") {
         setError(
-          "BrasAI no respondió a tiempo. Revisa GENERATION_* / LLM_* en .env, " +
-            "puerto 8000 Public, y: docker compose logs backend | tail -50",
+          "BrasAI no respondió a tiempo (120s). Suele ser: 1) colección Qdrant " +
+            "sin indexar → pulsa «Reindexar manuales», 2) modelo LLM lento/incorrecto " +
+            "en GENERATION_MODEL_ID, 3) primera descarga de FastEmbed. " +
+            "Revisa: docker compose logs backend | tail -80",
         );
       } else {
         setError(friendlyCatch(err, getApiBaseUrl()));
@@ -63,6 +70,34 @@ export default function KnowledgePage() {
     }
   }
 
+  async function onReindex() {
+    setReindexing(true);
+    setError("");
+    setInfo("Indexando manuales en Qdrant (puede tardar 1–3 min)…");
+    try {
+      const response = await apiFetch("/knowledge/reindex", {
+        method: "POST",
+        signal: AbortSignal.timeout(REINDEX_TIMEOUT_MS),
+      });
+      if (!response.ok) {
+        const parsed = await readApiError(response);
+        throw new Error(parsed.message);
+      }
+      const data = (await response.json()) as {
+        chunks_indexed?: number;
+        collection?: string;
+      };
+      setInfo(
+        `Listo: ${data.chunks_indexed ?? "?"} fragmentos en «${data.collection ?? "brasaland_knowledge"}». Ya puedes preguntar.`,
+      );
+    } catch (err) {
+      setInfo("");
+      setError(friendlyCatch(err, getApiBaseUrl()));
+    } finally {
+      setReindexing(false);
+    }
+  }
+
   return (
     <AuthenticatedShell active="knowledge">
       <header className="bo-topbar">
@@ -70,10 +105,18 @@ export default function KnowledgePage() {
           <p className="bo-kicker">Operaciones · Marketing</p>
           <h1>BrasAI</h1>
           <p className="bo-soft">
-            Asistente sobre Brasa Points, desperdicio, alérgenos y pedidos a
-            proveedores — respuestas desde los manuales oficiales.
+            Asistente sobre Brasa Points, desperdicio, alérgenos y pedidos —
+            respuestas desde los manuales oficiales (RAG).
           </p>
         </div>
+        <button
+          type="button"
+          className="bo-btn bo-btn-small"
+          disabled={reindexing || loading}
+          onClick={() => void onReindex()}
+        >
+          {reindexing ? "Indexando…" : "Reindexar manuales"}
+        </button>
       </header>
 
       <section className="bo-panel">
@@ -85,18 +128,24 @@ export default function KnowledgePage() {
             rows={4}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
-            disabled={loading}
+            disabled={loading || reindexing}
             placeholder="Ej. ¿La Costilla BBQ tiene alérgenos?"
           />
           <button
             type="submit"
             className="bo-btn bo-btn-primary"
-            disabled={loading}
+            disabled={loading || reindexing}
           >
             {loading ? "Consultando…" : "Preguntar a BrasAI"}
           </button>
         </form>
       </section>
+
+      {info ? (
+        <section className="bo-panel" aria-live="polite">
+          <p className="bo-soft">{info}</p>
+        </section>
+      ) : null}
 
       {error ? (
         <section className="bo-panel" role="alert">
@@ -107,7 +156,10 @@ export default function KnowledgePage() {
 
       {loading ? (
         <section className="bo-panel" aria-live="polite">
-          <p className="bo-soft">BrasAI está generando la respuesta…</p>
+          <p className="bo-soft">
+            BrasAI está generando la respuesta (embeddings + LLM; la primera
+            vez puede tardar más de un minuto)…
+          </p>
         </section>
       ) : null}
 

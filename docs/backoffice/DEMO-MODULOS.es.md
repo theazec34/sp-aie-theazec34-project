@@ -21,6 +21,24 @@ Menú: **BrasAI**. No usan `LLM_*` a pelo: el runtime lee `GENERATION_*`.
 Alias: `LLM_BASE_URL` → `GENERATION_BASE_URL`, `LLM_MODEL` → `GENERATION_MODEL_ID`, `LLM_API_KEY` → `GENERATION_API_KEY`.  
 Si el LLM falla, BrasAI cae a modo **grounded** (texto de los manuales) en vez de quedarse colgado.
 
+**Si timeout con API key OK:** suele ser Qdrant sin indexar o FastEmbed bajando el modelo.
+```bash
+# Indexar corpus (1–3 min)
+docker compose exec backend python -c "from data.process.rag import setup; print(setup())"
+# Probar LLM 4Geeks (debe imprimir una frase)
+docker compose exec backend python - <<'PY'
+import os
+from openai import OpenAI
+c = OpenAI(base_url=os.environ["GENERATION_BASE_URL"], api_key=os.environ["GENERATION_API_KEY"], timeout=30)
+r = c.chat.completions.create(
+    model=os.environ["GENERATION_MODEL_ID"],
+    messages=[{"role":"user","content":"Di solo: hola brasaland"}],
+)
+print(r.choices[0].message.content)
+PY
+```
+En la UI: botón **Reindexar manuales**.
+
 En `.env` (raíz), ejemplo 4Geeks:
 ```bash
 GENERATION_PROVIDER=openai

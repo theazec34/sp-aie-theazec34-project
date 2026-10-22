@@ -47,6 +47,23 @@ class ReindexResponse(BaseModel):
     chunks_indexed: int
 
 
+def _collection_is_empty() -> bool:
+    """True if Qdrant has no points (first boot / volume wiped)."""
+    try:
+        from data.process.rag import collection_name, get_qdrant_client
+
+        client = get_qdrant_client()
+        name = collection_name()
+        names = {c.name for c in client.get_collections().collections}
+        if name not in names:
+            return True
+        info = client.get_collection(name)
+        points = getattr(info, "points_count", 0) or 0
+        return int(points) == 0
+    except Exception:  # noqa: BLE001
+        return True
+
+
 @router.post("/query", response_model=KnowledgeQueryResponse)
 def knowledge_query(
     body: KnowledgeQueryRequest,
@@ -59,11 +76,14 @@ def knowledge_query(
         knowledge_query_limiter,
         client_key(request, uid),
         detail=(
-            "Límite de consultas a la base de conocimiento alcanzado. "
+            "Límite de consultas a BrasAI alcanzado. "
             "Espera un minuto antes de reintentar."
         ),
     )
     try:
+        if _collection_is_empty():
+            logger.info("BrasAI: colección vacía — indexando corpus…")
+            rag_setup()
         answer = rag_query(body.question.strip())
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -71,7 +91,10 @@ def knowledge_query(
         logger.exception("knowledge query failed")
         raise HTTPException(
             status_code=503,
-            detail=f"Servicio de conocimiento no disponible: {exc}",
+            detail=(
+                f"BrasAI no disponible: {exc}. "
+                "Prueba POST /knowledge/reindex o revisa GENERATION_* / Qdrant."
+            ),
         ) from exc
     return KnowledgeQueryResponse(answer=answer)
 
