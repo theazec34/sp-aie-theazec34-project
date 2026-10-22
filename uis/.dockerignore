@@ -1,5 +1,6 @@
 **/node_modules
 **/.next
+**/.next/**
 **/out
 **/.env
 **/.env.*
@@ -14,3 +15,12 @@ README.md
 web
 **/__tests__
 **/.DS_Store
+**/.turbo
+**/playwright-report
+**/test-results
+# Artefactos locales que hinchan el contexto y rompen snapshots BuildKit
+backoffice/node_modules
+website/node_modules
+backoffice/.next
+website/.next
+

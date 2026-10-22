@@ -3,6 +3,7 @@
 ## Estado (2026-10-22) — retoma
 - **`main`:** PRs **#1–#68** (incluye proxy Codespaces + doc IA/API keys).
 - **Hoy:** arranque Compose + uso puertos 3000/3001/8000/5555.
+- **BuildKit snapshot not found:** `docker builder prune -af` + `build --no-cache` (script `scripts/docker-rebuild-clean.sh`).
 - **Doc continuidad IA:** `docs/backoffice/IA-Y-API-KEYS.es.md`
 - **Fuera de alcance:** `hito-3` Talent Pipeline / `3.5`.
 
