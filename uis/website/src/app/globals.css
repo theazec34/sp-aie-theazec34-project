@@ -22,6 +22,9 @@
   --max-width: 1240px;
   --header-h: 72px;
   --shadow-soft: 0 18px 50px rgba(26, 16, 8, 0.12);
+  /* Local stacks (no Google Fonts fetch in Docker/Codespaces) */
+  --font-body: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
 }
 
 html {
@@ -44,7 +47,7 @@ body {
     radial-gradient(ellipse 80% 50% at 100% -10%, rgba(200, 56, 10, 0.08), transparent 55%),
     radial-gradient(ellipse 60% 40% at 0% 20%, rgba(201, 164, 108, 0.14), transparent 50%),
     linear-gradient(180deg, var(--crema) 0%, #fffdf8 42%, var(--crema-soft) 100%);
-  font-family: var(--font-body), "Segoe UI", sans-serif;
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.55;

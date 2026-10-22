@@ -1,13 +1,11 @@
 import type { NextConfig } from "next";
 import path from "path";
 
-/** Server-side target for /api-backend rewrite (Docker: http://backend:8000). */
-const rewriteTarget = (
-  process.env.INTERNAL_API_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  "http://127.0.0.1:8000"
-).replace(/\/$/, "");
-
+/**
+ * Proxy API: `src/app/api-backend/[...path]/route.ts` (INTERNAL_API_URL en runtime).
+ * Sin rewrites — en Codespaces/Turbopack el rewrite a backend:8000 hacía timeout
+ * en formularios (reservas / candidaturas quedaban en «Enviando…»).
+ */
 const nextConfig: NextConfig = {
   turbopack: {
     root: path.join(__dirname),
@@ -16,14 +14,8 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-  },
-  async rewrites() {
-    return [
-      {
-        source: "/api-backend/:path*",
-        destination: `${rewriteTarget}/:path*`,
-      },
-    ];
+    // Evita errores "Single item size exceeds maxSize" con poco disco en Codespaces
+    minimumCacheTTL: 60,
   },
 };
 

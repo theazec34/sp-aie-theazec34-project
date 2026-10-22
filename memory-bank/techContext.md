@@ -75,6 +75,7 @@
 - Analyze async: `POST /api/v1/incidents/analyze` → 202 `{task_id}`
 - Status: `GET /tasks/{task_id}` · DLQ: `celery_dead_letters`
 - Flower: `:5555` · worker proceso independiente
+- Compose: Redis `protected-mode no` + healthcheck (sin ports host); worker/flower esperan healthy
 - Docs: `docs/async-tasks/DEV-55.md`
 
 ## RFP Intake (Hito 9 · Parte 1)

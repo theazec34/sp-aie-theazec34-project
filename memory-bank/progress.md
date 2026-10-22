@@ -1,10 +1,13 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-22) — retoma
-- **`main`:** PRs **#1–#68** (incluye proxy Codespaces + doc IA/API keys).
-- **Hoy:** arranque Compose + uso puertos 3000/3001/8000/5555.
-- **BuildKit snapshot not found:** `docker builder prune -af` + `build --no-cache` (script `scripts/docker-rebuild-clean.sh`).
-- **Doc continuidad IA:** `docs/backoffice/IA-Y-API-KEYS.es.md`
+## Estado (2026-10-22) — candidaturas + Redis
+- **Causa «Enviando…» en /trabaja-con-nosotros:** rewrite Next → `backend:8000` colgaba; website usa Route Handler `/api-backend` + timeout 15s (igual que backoffice).
+- **Causa Flower/worker `Timeout connecting to redis`:** Redis con `--protected-mode yes` sin password rechaza clientes de otros contenedores → `protected-mode no` + healthcheck; worker/flower esperan `service_healthy`.
+- **Website:** sin Google Fonts (stacks locales); evita reintentos a fonts.googleapis.com en Docker.
+- **Hydration `bis_skin_checked`:** extensión del navegador muta el DOM; `suppressHydrationWarning` en html/body (website + backoffice). No es bug de Brasaland.
+- **Favicon:** icono brasa/parrilla (terracotta sobre carbón) en website y backoffice.
+- **BuildKit / disco:** `docker builder prune -af` + `scripts/docker-rebuild-clean.sh`.
+- **Doc IA:** `docs/backoffice/IA-Y-API-KEYS.es.md`
 - **Fuera de alcance:** `hito-3` Talent Pipeline / `3.5`.
 
 ## Continuidad (login Codespaces)
@@ -31,10 +34,15 @@
 
 ## Public intake (actual)
 - API: `POST/GET /reservations`, `POST/GET /careers` (TinyDB `public_intake.json`).
-- Website: formularios POST vía `/api-backend` (rewrite → `INTERNAL_API_URL`).
+- Website: formularios POST vía Route Handler `uis/website/src/app/api-backend/[...path]/route.ts` → `INTERNAL_API_URL` (sin rewrite).
 - Backoffice: `/web-reservations`, `/careers` (JWT).
 - Mensajes honestos: solicitud **recibida**, no mesa/contrato confirmados.
 - Tests: `services/api/tests/test_public_intake.py`.
+
+## Redis / Celery (actual)
+- Compose: Redis sin puertos públicos; `protected-mode no` en red interna; healthcheck `redis-cli ping`.
+- Worker/Flower: `depends_on` redis healthy. Flower loopback `:5555`.
+- Nota: candidaturas/reservas **no** usan Celery; el hang del form era el proxy web, no Redis.
 
 ## Rediseño website (#55)
 - Rutas multi-página, hero, carta, legales, E2E.
