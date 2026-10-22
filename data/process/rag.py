@@ -169,7 +169,16 @@ def get_qdrant_client():
 
     url = _qdrant_url()
     if url:
-        return QdrantClient(url=url, timeout=60)
+        # check_compatibility=False: evita warnings/lentitud si el REST tarda
+        # timeout corto + mensaje claro si qdrant no está en la red Compose
+        try:
+            return QdrantClient(
+                url=url,
+                timeout=15,
+                check_compatibility=False,
+            )
+        except TypeError:
+            return QdrantClient(url=url, timeout=15)
     if os.getenv("QDRANT_MEMORY", "").strip().lower() in {"1", "true", "yes"}:
         return QdrantClient(":memory:")
     path = _qdrant_path()
