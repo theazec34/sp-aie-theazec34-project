@@ -22,6 +22,21 @@ Desde la **raíz** del monorepo (donde está `docker-compose.yml`):
 docker compose up --build
 ```
 
+### Error BuildKit: `parent snapshot … does not exist: not found`
+
+Caché corrupta del builder (frecuente en Codespaces). **No es un fallo del Dockerfile.** Limpia y reconstruye:
+
+```bash
+docker compose down
+docker builder prune -af
+docker compose build --no-cache
+docker compose up
+```
+
+Atajo: `bash scripts/docker-rebuild-clean.sh`
+
+Si sigue fallando: `DOCKER_BUILDKIT=0 docker compose build --no-cache && docker compose up`.
+
 El `.dockerignore` de raíz **debe** dejar pasar `data/`, `docs/company-knowledge-base/` y `docs/rfp/` (el `Dockerfile` hace `COPY` de esas rutas). Si el build falla con `"/docs/rfp": not found`, actualiza `main` o revisa que no hayas excluido `docs` enteros en `.dockerignore`.
 
 | Servicio | Contenedor | URL en el host |
