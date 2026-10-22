@@ -18,12 +18,21 @@ const CATEGORIES = [
 
 type SupplierStatus = "active" | "suspended";
 
+type Country = "España" | "Colombia" | "USA";
+type Currency = "EUR" | "COP" | "USD";
+
+const CURRENCY_BY_COUNTRY: Record<Country, Currency> = {
+  España: "EUR",
+  Colombia: "COP",
+  USA: "USD",
+};
+
 type FormState = {
   name: string;
-  country: "Colombia" | "USA";
+  country: Country;
   categories: string[];
   rate_per_unit: string;
-  currency: "EUR";
+  currency: Currency;
   status: SupplierStatus;
   contact_email: string;
   notes: string;
@@ -31,7 +40,7 @@ type FormState = {
 
 const emptyForm: FormState = {
   name: "",
-  country: "Colombia",
+  country: "España",
   categories: ["carne"],
   rate_per_unit: "",
   currency: "EUR",
@@ -53,11 +62,11 @@ type Props = {
 export default function SupplierCreateForm({ onCreated, onError, onMessage }: Props) {
   const [form, setForm] = useState(emptyForm);
 
-  function onCountryChange(country: "Colombia" | "USA") {
+  function onCountryChange(country: Country) {
     setForm((prev) => ({
       ...prev,
       country,
-      currency: "EUR",
+      currency: CURRENCY_BY_COUNTRY[country],
     }));
   }
 
@@ -80,7 +89,7 @@ export default function SupplierCreateForm({ onCreated, onError, onMessage }: Pr
       country: form.country,
       categories: form.categories,
       rate_per_unit: Number(form.rate_per_unit),
-      currency: "EUR",
+      currency: form.currency,
       status: form.status,
       contact_email: form.contact_email.trim() || null,
       notes: form.notes.trim() || null,
@@ -99,7 +108,7 @@ export default function SupplierCreateForm({ onCreated, onError, onMessage }: Pr
       setForm({
         ...emptyForm,
         country: form.country,
-        currency: "EUR",
+        currency: CURRENCY_BY_COUNTRY[form.country],
       });
       onMessage("Proveedor registrado correctamente.");
       await onCreated();
@@ -125,11 +134,12 @@ export default function SupplierCreateForm({ onCreated, onError, onMessage }: Pr
           <select
             value={form.country}
             onChange={(event) =>
-              onCountryChange(event.target.value as "Colombia" | "USA")
+              onCountryChange(event.target.value as Country)
             }
           >
-            <option value="Colombia">Colombia</option>
-            <option value="USA">USA</option>
+            <option value="España">España (€)</option>
+            <option value="Colombia">Colombia (COP)</option>
+            <option value="USA">USA (USD)</option>
           </select>
         </label>
         <label className="bo-field">

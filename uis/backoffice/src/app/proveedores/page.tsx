@@ -13,10 +13,10 @@ type SupplierStatus = "active" | "suspended";
 type Supplier = {
   id: number;
   name: string;
-  country: "Colombia" | "USA";
+  country: "España" | "Colombia" | "USA";
   categories: string[];
   rate_per_unit: number;
-  currency: "COP" | "USD";
+  currency: "EUR" | "COP" | "USD";
   status: SupplierStatus;
   contact_email?: string | null;
   notes?: string | null;
@@ -162,8 +162,9 @@ export default function ProveedoresPage() {
                 onChange={(event) => setCountryFilter(event.target.value)}
               >
                 <option value="">Todos</option>
-                <option value="Colombia">Colombia</option>
-                <option value="USA">USA</option>
+                <option value="España">España (€)</option>
+                <option value="Colombia">Colombia (COP)</option>
+                <option value="USA">USA (USD)</option>
               </select>
             </label>
             <label>
@@ -184,6 +185,10 @@ export default function ProveedoresPage() {
               Actualizar
             </button>
           </div>
+          <p className="bo-soft">
+            Moneda por país: <strong>España → EUR (€)</strong>, Colombia → COP
+            (peso colombiano), USA → USD. No se convierte entre monedas.
+          </p>
           {loading ? <p className="bo-soft">Cargando…</p> : null}
           {error ? (
             <div className="bo-alert bo-alert-error">

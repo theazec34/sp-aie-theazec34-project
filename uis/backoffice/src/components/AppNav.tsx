@@ -21,8 +21,7 @@ type Props = {
     | "inventory-inbound"
     | "inventory-outbound"
     | "inventory-orders"
-    | "profile"
-    | "password";
+    | "profile";
 };
 
 /** Same order as the dashboard module cards on `/`. */
@@ -48,7 +47,6 @@ const NAV_ITEMS: Array<{
   { href: "/inventory/orders/outbound", label: "Salida inventario", active: "inventory-outbound" },
   { href: "/inventory/orders", label: "Historial inventario", active: "inventory-orders" },
   { href: "/account/profile", label: "Mi cuenta", active: "profile" },
-  { href: "/account/change-password", label: "Cambiar contraseña", active: "password" },
 ];
 
 export default function AppNav({ active }: Props) {

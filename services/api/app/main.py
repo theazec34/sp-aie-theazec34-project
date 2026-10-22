@@ -8,6 +8,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.env_aliases import apply_llm_env_aliases
+
+apply_llm_env_aliases()
+
 from app.analyzer import analyze_text, export_to_csv_text
 from app.auth.deps import get_current_user
 from app.auth.router import router as auth_router

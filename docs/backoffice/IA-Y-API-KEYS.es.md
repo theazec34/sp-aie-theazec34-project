@@ -14,18 +14,26 @@ Documento de continuidad: cómo encaja la IA que ya programamos y qué variables
 
 ## Variables de generación (chat / LLM)
 
-En `.env` (raíz). **No uses `LLM_*`** — el runtime espera `GENERATION_*`:
+En `.env` (raíz). Preferido: `GENERATION_*`. También se aceptan alias `LLM_*`
+(`LLM_BASE_URL` → `GENERATION_BASE_URL`, `LLM_MODEL` → `GENERATION_MODEL_ID`, etc.).
 
 ```bash
 # Sin clave: modo grounded (solo texto recuperado del RAG, sin LLM externo)
 GENERATION_PROVIDER=grounded
 
-# Con portal OpenAI-compatible (p. ej. 4Geeks / OpenRouter):
-# GENERATION_PROVIDER=openai
-# GENERATION_BASE_URL=https://<tu-gateway>
-# GENERATION_API_KEY=sk-...
-# GENERATION_MODEL_ID=downtown-miami/openrouter/deepseek/deepseek-v4-flash
+# Con portal OpenAI-compatible (4Geeks):
+GENERATION_PROVIDER=openai
+GENERATION_BASE_URL=https://llm.4geeks.ai/v1
+GENERATION_API_KEY=   # pégala solo en .env, nunca en el chat
+GENERATION_MODEL_ID=madrid-spain/opnerouter/openai/gpt-6-luna
+
+# Equivalente con alias:
+# LLM_BASE_URL=https://llm.4geeks.ai/v1
+# LLM_API_KEY=...
+# LLM_MODEL=madrid-spain/opnerouter/openai/gpt-6-luna
 ```
+
+Tras editar `.env`: `docker compose up -d --force-recreate backend`
 
 ## Variables de embedding (RAG)
 

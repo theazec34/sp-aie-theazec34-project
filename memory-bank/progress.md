@@ -1,6 +1,13 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-22) — candidaturas + Redis
+## Estado (2026-10-22) — demo módulos backoffice
+- Doc `docs/backoffice/DEMO-MODULOS.es.md` (RFP PDF, IA, costo/merma, COP, inventario).
+- Alias `LLM_*` → `GENERATION_*` (portal 4Geeks).
+- Proveedores: país **España / EUR (€)** en seed; COP = peso colombiano.
+- Cambiar contraseña solo desde **Mi cuenta** (fuera del menú lateral).
+- Entrypoint: `seed_telemetry.py` en background.
+
+## Estado previo — candidaturas + Redis
 - **Causa «Enviando…» en /trabaja-con-nosotros:** rewrite Next → `backend:8000` colgaba; website usa Route Handler `/api-backend` + timeout 15s (igual que backoffice).
 - **Causa Flower/worker `Timeout connecting to redis`:** Redis con `--protected-mode yes` sin password rechaza clientes de otros contenedores → `protected-mode no` + healthcheck; worker/flower esperan `service_healthy`.
 - **Website:** sin Google Fonts (stacks locales); evita reintentos a fonts.googleapis.com en Docker.

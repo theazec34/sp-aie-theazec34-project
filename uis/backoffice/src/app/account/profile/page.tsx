@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AppNav from "../../../components/AppNav";
 import RequireAuth from "../../../components/RequireAuth";
@@ -107,7 +108,12 @@ export default function AccountProfilePage() {
               <p className="bo-kicker">Cuenta</p>
               <h1>Mi perfil</h1>
             </div>
-            <span className="bo-status">{role || "…"}</span>
+            <div className="bo-topbar-actions">
+              <Link className="bo-btn bo-btn-small" href="/account/change-password">
+                Cambiar contraseña
+              </Link>
+              <span className="bo-status">{role || "…"}</span>
+            </div>
           </header>
 
           <section className="bo-panel">

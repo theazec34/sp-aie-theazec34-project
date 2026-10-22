@@ -10,12 +10,14 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class Country(str, Enum):
+    SPAIN = "España"
     COLOMBIA = "Colombia"
     USA = "USA"
 
 
 class Currency(str, Enum):
-    COP = "COP"
+    EUR = "EUR"
+    COP = "COP"  # peso colombiano (locales LatAm históricos)
     USD = "USD"
 
 
@@ -37,6 +39,7 @@ class ProductCategory(str, Enum):
 
 VALID_CATEGORIES = {c.value for c in ProductCategory}
 COUNTRY_CURRENCY = {
+    Country.SPAIN: Currency.EUR,
     Country.COLOMBIA: Currency.COP,
     Country.USA: Currency.USD,
 }
