@@ -158,32 +158,67 @@ def _qdrant_url() -> str:
 
 
 def _qdrant_path() -> str:
-    """Local embedded storage when no Qdrant server URL is set."""
-    default = Path(__file__).resolve().parents[2] / ".qdrant_storage"
-    return os.getenv("QDRANT_PATH", str(default)).strip() or str(default)
+    """Local embedded storage when no Qdrant server URL is set / unreachable."""
+    # Prefer writable Docker volume (services/api/data); repo /app/data is often :ro
+    for candidate in (
+        os.getenv("QDRANT_PATH", "").strip(),
+        "/app/api/data/qdrant_local",
+        str(Path(__file__).resolve().parents[2] / ".qdrant_storage"),
+    ):
+        if candidate:
+            return candidate
+    return "/tmp/brasaland_qdrant"
 
 
-def get_qdrant_client():
-    """Qdrant client: URL server, else local path (no Docker required)."""
+def _local_qdrant_client():
     from qdrant_client import QdrantClient
 
-    url = _qdrant_url()
-    if url:
-        # check_compatibility=False: evita warnings/lentitud si el REST tarda
-        # timeout corto + mensaje claro si qdrant no está en la red Compose
-        try:
-            return QdrantClient(
-                url=url,
-                timeout=15,
-                check_compatibility=False,
-            )
-        except TypeError:
-            return QdrantClient(url=url, timeout=15)
     if os.getenv("QDRANT_MEMORY", "").strip().lower() in {"1", "true", "yes"}:
         return QdrantClient(":memory:")
     path = _qdrant_path()
     Path(path).mkdir(parents=True, exist_ok=True)
+    logger.warning("Using local Qdrant storage at %s", path)
     return QdrantClient(path=path)
+
+
+def get_qdrant_client():
+    """Qdrant client: URL server, else local path (no Docker required).
+
+    If the Compose service ``qdrant`` is up but not answering (common after
+    disk-full corruption), fall back to on-disk storage so BrasAI can demo.
+    """
+    from qdrant_client import QdrantClient
+
+    url = _qdrant_url()
+    force_local = os.getenv("QDRANT_FORCE_LOCAL", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+    if force_local or not url:
+        return _local_qdrant_client()
+
+    try:
+        try:
+            client = QdrantClient(
+                url=url,
+                timeout=8,
+                check_compatibility=False,
+            )
+        except TypeError:
+            client = QdrantClient(url=url, timeout=8)
+        # Probe — ConnectTimeout here if storage is wedged
+        client.get_collections()
+        return client
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "Qdrant URL %s unreachable (%s) — falling back to local storage. "
+            "Fix with: docker compose up -d --force-recreate qdrant "
+            "(or docker volume rm …_qdrant_data).",
+            url,
+            exc,
+        )
+        return _local_qdrant_client()
 
 
 def _embedding_provider() -> str:
