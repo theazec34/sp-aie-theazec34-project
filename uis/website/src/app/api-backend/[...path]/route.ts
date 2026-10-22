@@ -31,6 +31,7 @@ function upstreamCandidates(): string[] {
   ).replace(/\/$/, "");
   const alts = [
     primary,
+    "http://host.docker.internal:8000",
     "http://backend:8000",
     "http://brasaland-backend:8000",
     "http://127.0.0.1:8000",
