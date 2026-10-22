@@ -1,11 +1,10 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-22) — demo módulos backoffice
-- Doc `docs/backoffice/DEMO-MODULOS.es.md` (RFP PDF, IA, costo/merma, COP, inventario).
-- Alias `LLM_*` → `GENERATION_*` (portal 4Geeks).
-- Proveedores: país **España / EUR (€)** en seed; COP = peso colombiano.
-- Cambiar contraseña solo desde **Mi cuenta** (fuera del menú lateral).
-- Entrypoint: `seed_telemetry.py` en background.
+## Estado (2026-10-22) — BrasAI + RFP + EUR
+- **BrasAI** (ex Base de conocimiento); timeout UI + fallback grounded si falla el LLM.
+- RFP: `markitdown[pdf]` en `services/api/requirements.txt` (faltaba en la imagen Docker).
+- Proveedores: **todo en EUR (€)** con conversión COP/USD al validar/sembrar; `seed.py --force`.
+- Alias `LLM_*` → `GENERATION_*`; Cambiar contraseña en Mi cuenta.
 
 ## Estado previo — candidaturas + Redis
 - **Causa «Enviando…» en /trabaja-con-nosotros:** rewrite Next → `backend:8000` colgaba; website usa Route Handler `/api-backend` + timeout 15s (igual que backoffice).

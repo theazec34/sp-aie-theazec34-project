@@ -34,7 +34,7 @@ const NAV_ITEMS: Array<{
   { href: "/web-reservations", label: "Reservas web", active: "web-reservations" },
   { href: "/careers", label: "Candidaturas", active: "careers" },
   { href: "/rfp", label: "Recepción RFP", active: "rfp" },
-  { href: "/knowledge", label: "Base de conocimiento", active: "knowledge" },
+  { href: "/knowledge", label: "BrasAI", active: "knowledge" },
   { href: "/agent", label: "Agente soporte", active: "agent" },
   { href: "/reporting", label: "Costo y merma", active: "reporting" },
   { href: "/telemetry", label: "Telemetría", active: "telemetry" },

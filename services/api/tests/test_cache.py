@@ -67,7 +67,7 @@ def test_suppliers_list_cache_hit_and_invalidation(client, auth_header):
             "country": "USA",
             "categories": ["packaging"],
             "rate_per_unit": 3.5,
-            "currency": "USD",
+            "currency": "EUR",
             "status": "active",
         },
     )

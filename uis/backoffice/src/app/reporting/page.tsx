@@ -174,7 +174,8 @@ export default function ReportingDashboardPage() {
           <h1>Costo y merma por local</h1>
           <p className="bo-soft">
             Consolidado semanal de compra, merma, quiebres de stock y alertas de precio.
-            Los montos se muestran en la moneda de cada país (sin convertir COP↔USD).
+            Montos del reporting en la moneda de cada sede; proveedores del
+            directorio están unificados en <strong>euros (€)</strong>.
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

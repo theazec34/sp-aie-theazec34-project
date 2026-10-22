@@ -33,18 +33,38 @@ def test_suppliers_create_happy(client):
             "country": "Colombia",
             "categories": ["carbon_y_combustible"],
             "rate_per_unit": 12.5,
-            "currency": "COP",
+            "currency": "EUR",
             "status": "active",
         },
     )
     assert response.status_code == 201
     body = response.json()
     assert body["name"] == "Carbones Andinos"
-    assert body["currency"] == "COP"
+    assert body["currency"] == "EUR"
 
     listed = client.get("/suppliers", headers=headers)
     assert listed.status_code == 200
     assert len(listed.json()) == 1
+
+
+def test_suppliers_convert_cop_to_eur(client):
+    headers = _auth(client)
+    response = client.post(
+        "/suppliers",
+        headers=headers,
+        json={
+            "name": "Legacy COP",
+            "country": "Colombia",
+            "categories": ["carne"],
+            "rate_per_unit": 4300.0,
+            "currency": "COP",
+            "status": "active",
+        },
+    )
+    assert response.status_code == 201
+    body = response.json()
+    assert body["currency"] == "EUR"
+    assert abs(body["rate_per_unit"] - 1.0) < 0.01
 
 
 def test_suppliers_edge_filter_unknown_country_returns_empty(client):
@@ -57,30 +77,13 @@ def test_suppliers_edge_filter_unknown_country_returns_empty(client):
             "country": "USA",
             "categories": ["packaging"],
             "rate_per_unit": 3.0,
-            "currency": "USD",
+            "currency": "EUR",
             "status": "active",
         },
     )
     response = client.get("/suppliers", headers=headers, params={"country": "Colombia"})
     assert response.status_code == 200
     assert response.json() == []
-
-
-def test_suppliers_fail_invalid_currency_for_country(client):
-    headers = _auth(client)
-    response = client.post(
-        "/suppliers",
-        headers=headers,
-        json={
-            "name": "Malo",
-            "country": "Colombia",
-            "categories": ["carne"],
-            "rate_per_unit": 1.0,
-            "currency": "USD",  # debe ser COP
-            "status": "active",
-        },
-    )
-    assert response.status_code == 400
 
 
 def test_suppliers_fail_unauthorized(client):

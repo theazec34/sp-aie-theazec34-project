@@ -97,6 +97,14 @@ class SupplierRepository:
             inserted += 1
         return inserted, skipped
 
+    def replace_all(self, rows: list[dict[str, Any]]) -> int:
+        """Wipe table and insert seed rows (used to migrate demo → EUR)."""
+        self._table.truncate()
+        for row in rows:
+            create = SupplierCreate.model_validate(row)
+            self.create(create)
+        return len(rows)
+
     @staticmethod
     def _to_supplier(doc: dict[str, Any]) -> Supplier:
         payload = dict(doc)

@@ -87,12 +87,12 @@ SSE en vivo en la misma página (notificaciones de nuevos tickets).
 
 ---
 
-## 4. Base de conocimiento → `/knowledge`
+## 4. BrasAI → `/knowledge`
 
 | | |
 |---|---|
-| **Para qué** | Preguntas en lenguaje natural sobre docs Brasaland (RAG / Qdrant). |
-| **Cómo usar** | Escribe una pregunta y envía. Requiere Qdrant + colección indexada. |
+| **Para qué** | Asistente RAG (antes «Base de conocimiento») sobre docs Brasaland. |
+| **Cómo usar** | Escribe una pregunta y envía. Requiere Qdrant + colección indexada + `GENERATION_*` (o cae a grounded). |
 | **Archivo** | `consulta-rag-ejemplos.txt` |
 | **Nota** | Sin Qdrant/docs indexados la UI puede fallar o devolver vacío — no es “Failed to fetch” del login. |
 

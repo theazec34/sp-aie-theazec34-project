@@ -22,7 +22,8 @@ export SEED_ADMIN_EMAIL="${SEED_ADMIN_EMAIL:-admin@brasaland.com}"
 export SEED_ADMIN_PASSWORD="${SEED_ADMIN_PASSWORD:-ChangeMeLocalOnly12!}"
 export SEED_ADMIN_NAME="${SEED_ADMIN_NAME:-Admin Brasaland}"
 python seed_auth.py
-python seed.py
+# --force: unifica tarifas a EUR (€) aunque ya hubiera seed COP/USD
+SEED_SUPPLIERS_FORCE="${SEED_SUPPLIERS_FORCE:-1}" python seed.py --force
 python seed_public_intake.py || echo "[backend] WARN — seed_public_intake failed." >&2
 
 echo "[backend] Starting uvicorn on 0.0.0.0:8000 (--reload)"

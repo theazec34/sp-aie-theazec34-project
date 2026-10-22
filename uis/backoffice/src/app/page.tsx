@@ -26,8 +26,9 @@ const moduleCards = [
   },
   {
     id: "knowledge",
-    title: "Base de conocimiento",
-    description: "Consulta la documentación interna Brasaland (RAG sobre Qdrant).",
+    title: "BrasAI",
+    description:
+      "Asistente RAG sobre los manuales oficiales (Brasa Points, alérgenos, merma…).",
     href: "/knowledge",
   },
   {

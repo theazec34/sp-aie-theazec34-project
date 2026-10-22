@@ -10,6 +10,8 @@ type QueryResponse = {
   answer: string;
 };
 
+const QUERY_TIMEOUT_MS = 45_000;
+
 export default function KnowledgePage() {
   const [question, setQuestion] = useState(
     "¿Cuántos puntos necesito para el nivel Oro?",
@@ -34,6 +36,7 @@ export default function KnowledgePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: trimmed }),
+        signal: AbortSignal.timeout(QUERY_TIMEOUT_MS),
       });
       if (!response.ok) {
         const parsed = await readApiError(response);
@@ -45,7 +48,15 @@ export default function KnowledgePage() {
       }
       setAnswer(data.answer);
     } catch (err) {
-      setError(friendlyCatch(err, getApiBaseUrl()));
+      const name = err instanceof Error ? err.name : "";
+      if (name === "TimeoutError" || name === "AbortError") {
+        setError(
+          "BrasAI no respondió a tiempo. Revisa GENERATION_* / LLM_* en .env, " +
+            "puerto 8000 Public, y: docker compose logs backend | tail -50",
+        );
+      } else {
+        setError(friendlyCatch(err, getApiBaseUrl()));
+      }
       setAnswer("");
     } finally {
       setLoading(false);
@@ -57,10 +68,10 @@ export default function KnowledgePage() {
       <header className="bo-topbar">
         <div>
           <p className="bo-kicker">Operaciones · Marketing</p>
-          <h1>Base de conocimiento</h1>
+          <h1>BrasAI</h1>
           <p className="bo-soft">
-            Preguntas sobre Brasa Points, desperdicio, alérgenos y pedidos a
-            proveedores — respuestas generadas desde los manuales oficiales.
+            Asistente sobre Brasa Points, desperdicio, alérgenos y pedidos a
+            proveedores — respuestas desde los manuales oficiales.
           </p>
         </div>
       </header>
@@ -82,7 +93,7 @@ export default function KnowledgePage() {
             className="bo-btn bo-btn-primary"
             disabled={loading}
           >
-            {loading ? "Consultando…" : "Preguntar"}
+            {loading ? "Consultando…" : "Preguntar a BrasAI"}
           </button>
         </form>
       </section>
@@ -96,7 +107,7 @@ export default function KnowledgePage() {
 
       {loading ? (
         <section className="bo-panel" aria-live="polite">
-          <p className="bo-soft">Generando respuesta desde la base de conocimiento…</p>
+          <p className="bo-soft">BrasAI está generando la respuesta…</p>
         </section>
       ) : null}
 

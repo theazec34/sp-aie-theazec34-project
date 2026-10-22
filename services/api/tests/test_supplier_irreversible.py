@@ -31,7 +31,7 @@ def test_supplier_status_requires_confirm_and_admin(
             "country": "USA",
             "categories": ["packaging"],
             "rate_per_unit": 2.0,
-            "currency": "USD",
+            "currency": "EUR",
             "status": "active",
         },
     )
