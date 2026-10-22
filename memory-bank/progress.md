@@ -6,7 +6,7 @@
 - **Website:** sin Google Fonts (stacks locales); evita reintentos a fonts.googleapis.com en Docker.
 - **Hydration `bis_skin_checked`:** extensión del navegador muta el DOM; `suppressHydrationWarning` en html/body (website + backoffice). No es bug de Brasaland.
 - **Favicon:** icono brasa/parrilla (terracotta sobre carbón) en website y backoffice.
-- **BuildKit / disco:** `docker builder prune -af` + `scripts/docker-rebuild-clean.sh`.
+- **BuildKit / disco:** `scripts/codespace-free-disk.sh` (NO borrar `.md` ≈5MB); si sigue lleno → Rebuild container. También `scripts/docker-rebuild-clean.sh`.
 - **Doc IA:** `docs/backoffice/IA-Y-API-KEYS.es.md`
 - **Fuera de alcance:** `hito-3` Talent Pipeline / `3.5`.
 
