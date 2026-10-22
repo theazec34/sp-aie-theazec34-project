@@ -1,15 +1,15 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-21) — cierre de día
-- **`main`:** PRs **#1–#67** (website polish, proxy backoffice, login hang, URL input).
-- **Pendiente mañana:** acceso login en Codespaces (proxy) + explicación IA / `GENERATION_*` API keys.
+## Estado (2026-10-22) — retoma
+- **`main`:** PRs **#1–#68** (incluye proxy Codespaces + doc IA/API keys).
+- **Hoy:** arranque Compose + uso puertos 3000/3001/8000/5555.
 - **Doc continuidad IA:** `docs/backoffice/IA-Y-API-KEYS.es.md`
 - **Fuera de alcance:** `hito-3` Talent Pipeline / `3.5`.
 
-## Continuidad mañana
-1. Codespaces: puerto 8000 **Public**; login con auto-detect (`…-8000.app.github.dev`) si `/api-backend` timeout.
-2. Verificar proxy route-handler `uis/backoffice/src/app/api-backend/[...path]/route.ts`.
-3. Repasar IA: agente, RAG, RFP + variables `GENERATION_*` / `EMBEDDING_*` (ver doc arriba).
+## Continuidad (login Codespaces)
+1. Puerto **8000 Public**; login «Usar auto-detectada» → `…-8000.app.github.dev`.
+2. Proxy route-handler: `uis/backoffice/src/app/api-backend/[...path]/route.ts`.
+3. IA: agente / RAG / RFP + `GENERATION_*` / `EMBEDDING_*`.
 
 ## Backoffice API proxy (actual)
 - Mismo patrón que website: browser → `/api-backend/*` → rewrite `INTERNAL_API_URL`.
