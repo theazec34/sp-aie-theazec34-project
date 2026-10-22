@@ -1,9 +1,22 @@
 /**
- * Browser → API via same-origin proxy `/api-backend/*`
- * (Route Handler → INTERNAL_API_URL / backend).
- * Para forzar URL directa: NEXT_PUBLIC_API_DIRECT=1 + NEXT_PUBLIC_API_URL.
+ * Browser → API.
+ * - Codespaces (*.github.dev): URL pública del puerto 8000 (CORS *).
+ *   El proxy Next→backend:8000 a veces falla con "fetch failed" en Docker.
+ * - Local / Docker desktop: same-origin `/api-backend` (Route Handler).
+ * - Forzar: NEXT_PUBLIC_API_DIRECT=1 + NEXT_PUBLIC_API_URL.
  */
 export function getPublicApiBase(): string {
+  if (typeof window !== "undefined") {
+    const { protocol, hostname } = window.location;
+    if (
+      hostname.includes("github.dev") ||
+      hostname.includes("githubpreview.dev")
+    ) {
+      const apiHost = hostname.replace(/-\d+(?=\.)/, "-8000");
+      return `${protocol}//${apiHost}`;
+    }
+  }
+
   if (process.env.NEXT_PUBLIC_API_DIRECT === "1") {
     return (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").replace(
       /\/$/,
@@ -60,7 +73,8 @@ export async function postJson<T>(
       ok: false,
       status: 0,
       detail:
-        "No se pudo contactar con la API. Comprueba que el backend esté en marcha.",
+        "No se pudo contactar con la API. En Codespaces pon el puerto 8000 en Public " +
+        "y recarga la página. Comprueba: curl localhost:8000/health",
     };
   }
 }
