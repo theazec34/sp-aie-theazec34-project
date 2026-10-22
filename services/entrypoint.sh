@@ -42,12 +42,14 @@ until curl -sf http://127.0.0.1:8000/health >/dev/null 2>&1; do
 done
 echo "[backend] /health OK"
 
-# Inventory seed may talk to Supabase; never block login.
+# Inventory / telemetry seeds — never block login.
 (
   if command -v timeout >/dev/null 2>&1; then
     timeout 45 python seed_inventory.py || echo "[backend] WARN — seed_inventory timed out/failed." >&2
+    timeout 30 python seed_telemetry.py || echo "[backend] WARN — seed_telemetry failed." >&2
   else
     python seed_inventory.py || echo "[backend] WARN — seed_inventory failed." >&2
+    python seed_telemetry.py || echo "[backend] WARN — seed_telemetry failed." >&2
   fi
 ) &
 

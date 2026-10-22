@@ -54,19 +54,19 @@ export default function ChangePasswordPage() {
 
   return (
     <RequireAuth>
-      <div className="bo-layout">
-        <AppNav active="password" />
-        <main className="bo-main">
-          <header className="bo-header">
+      <main className="bo-shell">
+        <AppNav active="profile" />
+        <section className="bo-content">
+          <header className="bo-topbar">
             <div>
               <p className="bo-kicker">Cuenta</p>
               <h1>Cambiar contraseña</h1>
               <p className="bo-soft">
-                Introduce tu contraseña actual y la nueva. Deben coincidir la
-                nueva y la confirmación antes de llamar a la API.
+                Desde <Link href="/account/profile">Mi cuenta</Link>. Introduce
+                la contraseña actual y la nueva (mín. 8).
               </p>
             </div>
-            <Link href="/account/profile" className="bo-btn">
+            <Link href="/account/profile" className="bo-btn bo-btn-small">
               Volver al perfil
             </Link>
           </header>
@@ -116,8 +116,8 @@ export default function ChangePasswordPage() {
               </button>
             </form>
           </section>
-        </main>
-      </div>
+        </section>
+      </main>
     </RequireAuth>
   );
 }

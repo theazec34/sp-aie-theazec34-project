@@ -8,7 +8,8 @@ Panel interno Brasaland. Requiere **login JWT** (admin del seed: `SEED_ADMIN_EMA
 3. En login usa URL **`/api-backend`** («Usar auto-detectada»).
 4. El menú izquierdo sigue el mismo orden que las tarjetas del Panel.
 
-Archivos de ejemplo: [`data/samples/backoffice/`](../../data/samples/backoffice/) y RFP en [`rfp-requests/brasaland/`](../../rfp-requests/brasaland/).
+Archivos de ejemplo: [`data/samples/backoffice/`](../../data/samples/backoffice/) y RFP en [`rfp-requests/brasaland/`](../../rfp-requests/brasaland/).  
+Cheat-sheet demo: [`DEMO-MODULOS.es.md`](./DEMO-MODULOS.es.md).
 
 ---
 

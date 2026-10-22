@@ -80,17 +80,47 @@ class Chunk:
         }
 
 
+def _apply_llm_env_aliases() -> None:
+    """Accept LLM_* (portal 4Geeks) as aliases of GENERATION_*."""
+    aliases = (
+        ("LLM_BASE_URL", "GENERATION_BASE_URL"),
+        ("LLM_API_KEY", "GENERATION_API_KEY"),
+        ("LLM_MODEL", "GENERATION_MODEL_ID"),
+        ("LLM_MODEL_ID", "GENERATION_MODEL_ID"),
+        ("LLM_TIMEOUT_SECONDS", "GENERATION_TIMEOUT_SECONDS"),
+    )
+    for src, dest in aliases:
+        if os.getenv(dest, "").strip():
+            continue
+        val = os.getenv(src, "").strip()
+        if val:
+            os.environ[dest] = val
+    # If a chat gateway is configured via LLM_* / GENERATION_*, prefer openai
+    if not os.getenv("GENERATION_PROVIDER", "").strip():
+        if os.getenv("GENERATION_BASE_URL", "").strip() and (
+            os.getenv("GENERATION_MODEL_ID", "").strip()
+            or os.getenv("GENERATION_API_KEY", "").strip()
+        ):
+            os.environ["GENERATION_PROVIDER"] = "openai"
+
+
 def _load_env() -> None:
     try:
         from dotenv import load_dotenv
     except ImportError:
+        _apply_llm_env_aliases()
         return
     here = Path(__file__).resolve()
+    loaded = False
     for root in [here.parent, *here.parents]:
         candidate = root / ".env"
         if candidate.exists():
             load_dotenv(candidate)
-            return
+            loaded = True
+            break
+    _apply_llm_env_aliases()
+    if not loaded:
+        return
 
 
 def resolve_knowledge_base_dir() -> Path:
