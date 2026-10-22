@@ -1,6 +1,10 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-22) — embed offline + API proxy Codespaces
+## Estado (2026-10-22) — proxy BrasAI IPv4 + fallbacks
+- Error `Proxy /api-backend no alcanzó http://backend:8000 (fetch failed)` en BrasAI: undici `fetch` fallaba en Docker/Codespaces (DNS/IPv6). Backoffice alinea con website: `node:http` `family:4` + candidatos `backend` / `brasaland-backend` / `127.0.0.1`.
+- **No** es por poner el puerto 8000 Public/Private: eso solo afecta al navegador; el proxy es red interna Docker. Login sigue con **`/api-backend`**.
+
+## Estado previo — embed offline + API proxy Codespaces
 - FastEmbed falla sin DNS a HuggingFace → `EMBEDDING_PROVIDER=hash` (compose default) + fallback automático.
 - Backoffice Codespaces: API base **`/api-backend`** (ignora …-8000 guardado); WS agente sigue en puerto 8000 público.
 - BrasAI: reindex + timeout; RFP markitdown OK tras rebuild.
