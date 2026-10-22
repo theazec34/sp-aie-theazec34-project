@@ -40,7 +40,7 @@ services:
       - backend_data:/app/api/data
     depends_on:
       qdrant:
-        condition: service_started
+        condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
@@ -184,6 +184,12 @@ services:
     # Sin ports públicos — solo backend/worker vía brasaland-net
     volumes:
       - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333'"]
+      interval: 5s
+      timeout: 3s
+      retries: 18
+      start_period: 10s
     networks:
       - brasaland-net
     restart: unless-stopped
