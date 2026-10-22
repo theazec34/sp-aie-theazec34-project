@@ -18,6 +18,8 @@ services:
       # Forzar hostnames de la red Compose (ignora 127.0.0.1 del .env local)
       QDRANT_URL: http://qdrant:6333
       REDIS_URL: redis://redis:6379/0
+      # FastEmbed baja modelos de HuggingFace; en Codespaces a menudo no hay DNS → hash offline
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-hash}
       # Fallbacks locales si `.env` está incompleto (login JWT necesita SECRET_KEY)
       SECRET_KEY: ${SECRET_KEY:-dev-brasaland-change-me-in-production}
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@brasaland.com}

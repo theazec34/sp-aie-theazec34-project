@@ -38,13 +38,10 @@ export function detectApiBaseUrl(): string {
   if (typeof window === "undefined") {
     return envApiBaseUrl();
   }
-  const { protocol, hostname, port } = window.location;
-  // Codespaces: el proxy Docker→backend a veces no responde a tiempo desde
-  // el rewrite/Turbopack. La URL pública del puerto 8000 sí llega al API.
-  if (hostname.includes("github.dev") || hostname.includes("githubpreview.dev")) {
-    const apiHost = hostname.replace(/-\d+(?=\.)/, "-8000");
-    return `${protocol}//${apiHost}`;
-  }
+  const { port } = window.location;
+  // Codespaces / Docker: same-origin `/api-backend` (Route Handler → backend).
+  // La URL pública …-8000.app.github.dev falla a menudo (puerto Private / DNS).
+  // WebSocket del agente sigue usando getDirectApiBaseUrl() → puerto 8000.
   if (process.env.NEXT_PUBLIC_API_DIRECT === "1") {
     if (port === "8000") {
       return window.location.origin;
@@ -73,7 +70,7 @@ export function setStoredApiBaseUrl(url: string): void {
   }
 }
 
-/** Ignore stale overrides that break Codespaces (localhost o /api-backend). */
+/** Ignore stale overrides that break Codespaces (localhost o …-8000 públicos rotos). */
 function shouldIgnoreStored(url: string): boolean {
   if (typeof window === "undefined") return false;
   const host = window.location.hostname;
@@ -81,8 +78,14 @@ function shouldIgnoreStored(url: string): boolean {
     host.includes("github.dev") || host.includes("githubpreview.dev");
   if (!onCodespace) return false;
   const cleaned = url.replace(/\/$/, "");
-  if (cleaned === "/api-backend") return true;
-  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(url);
+  // Preferir siempre el proxy; ignorar overrides a localhost o al puerto 8000 público
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\/?$/i.test(cleaned)) {
+    return true;
+  }
+  if (/^https?:\/\/[^/]*-8000\.(app\.)?github(preview)?\.dev\/?$/i.test(cleaned)) {
+    return true;
+  }
+  return false;
 }
 
 export function getApiBaseUrl(): string {

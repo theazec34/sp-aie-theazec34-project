@@ -1,6 +1,11 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-22) — BrasAI + RFP + EUR
+## Estado (2026-10-22) — embed offline + API proxy Codespaces
+- FastEmbed falla sin DNS a HuggingFace → `EMBEDDING_PROVIDER=hash` (compose default) + fallback automático.
+- Backoffice Codespaces: API base **`/api-backend`** (ignora …-8000 guardado); WS agente sigue en puerto 8000 público.
+- BrasAI: reindex + timeout; RFP markitdown OK tras rebuild.
+
+## Estado previo — BrasAI + RFP + EUR
 - **BrasAI** (ex Base de conocimiento); timeout UI + fallback grounded si falla el LLM.
 - RFP: `markitdown[pdf]` en `services/api/requirements.txt` (faltaba en la imagen Docker).
 - Proveedores: **todo en EUR (€)** con conversión COP/USD al validar/sembrar; `seed.py --force`.
