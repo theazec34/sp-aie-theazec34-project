@@ -37,20 +37,19 @@ Atajo: `bash scripts/docker-rebuild-clean.sh`
 
 Si sigue fallando: `DOCKER_BUILDKIT=0 docker compose build --no-cache && docker compose up`.
 
-### Codespaces: `Could not resolve host: llm.4geeks.ai`
+### Codespaces: LLM / `llm.4geeks.ai`
 
-El host resuelve y la key da **200**, pero el contenedor no resuelve DNS (a veces ni con `dns: 8.8.8.8`).
-Compose añade `extra_hosts` con la IP de `llm.4geeks.ai` (override `LLM_4GEEKS_IP` en `.env`).
+Dos fallos distintos en el contenedor `backend`:
+
+1. **DNS** — `getent hosts llm.4geeks.ai` vacío → `extra_hosts` / `scripts/codespace-fix-llm-dns.sh`
+2. **Egress TCP** — DNS OK pero `curl …:443` hace **timeout** (el host sí da 200) → el bridge no sale a internet.
+
+Para (2) usa el proxy en red del host (`llm-proxy` → `:18080`):
 
 ```bash
-# Tras pull / cambio de IP:
-getent hosts llm.4geeks.ai   # anota la IP
-# opcional en .env: LLM_4GEEKS_IP=68.183.63.85
-docker compose up -d --force-recreate backend worker
-docker compose exec -T backend getent hosts llm.4geeks.ai
-
-# Sin recrear contenedores:
-bash scripts/codespace-fix-llm-dns.sh
+bash scripts/codespace-enable-llm-proxy.sh
+# deja GENERATION_BASE_URL / EMBEDDING_BASE_URL = http://host.docker.internal:18080/v1
+docker compose exec -T backend python -c "from data.process.rag import setup; print(setup(recreate=True))"
 ```
 
 El `.dockerignore` de raíz **debe** dejar pasar `data/`, `docs/company-knowledge-base/` y `docs/rfp/` (el `Dockerfile` hace `COPY` de esas rutas). Si el build falla con `"/docs/rfp": not found`, actualiza `main` o revisa que no hayas excluido `docs` enteros en `.dockerignore`.
