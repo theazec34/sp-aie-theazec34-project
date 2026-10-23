@@ -37,21 +37,18 @@ Atajo: `bash scripts/docker-rebuild-clean.sh`
 
 Si sigue fallando: `DOCKER_BUILDKIT=0 docker compose build --no-cache && docker compose up`.
 
-### Agente: «No pude leer el directorio…» / `No module named 'fastmcp'`
+### Agente: `No module named 'fastmcp'` (contenedor sin PyPI)
 
-1. Compose monta `./mcps` (código MCP al día).
-2. La imagen debe instalar `fastmcp` / `mcpauth` (`services/api/requirements.txt`).
+En Codespaces el bridge a menudo **no resuelve DNS** → no se puede
+`pip install` dentro del backend. El agente in-process usa
+`mcps/brasaland_tools/inprocess_tools.py` (sin FastMCP).
 
 ```bash
-# Rápido (sin rebuild):
-docker compose exec -T backend uv pip install --system \
-  'fastmcp>=4.0.10' 'mcpauth>=0.1.1' 'langchain-mcp-adapters>=0.3.1' 'PyJWT>=2.8.0'
-
-# Permanente:
-docker compose build backend && docker compose up -d backend
-
+git pull   # rama con inprocess_tools
+docker compose up -d --force-recreate backend   # volume ./mcps montado
 docker compose exec -T backend python -c \
   "from agent.tools.mcp_client import query_suppliers_via_mcp; print(query_suppliers_via_mcp(action='top_rate', limit=3))"
+# ok: True sin instalar fastmcp
 ```
 
 ### BrasAI: HTTP 504 al «Reindexar manuales»

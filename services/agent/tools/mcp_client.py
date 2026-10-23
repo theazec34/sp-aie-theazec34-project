@@ -154,12 +154,34 @@ def invoke_mcp_tool(
 
 def _invoke_inprocess(tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     """
-    Invoke MCP tool callables in-process with a valid mcpauth AuthInfo context.
+    Invoke MCP tool handlers in-process.
 
-    Used by CI/evals so we exercise the *same* tool functions the HTTP server
-    exposes, without requiring a separate uvicorn process. This is still MCP
-    tool surface — not a direct IncidentRepository path from the agent.
+    Prefer ``inprocess_tools`` (no FastMCP/mcpauth) so Codespaces Docker sin
+    egress a PyPI sigue pudiendo usar el agente. Sigue siendo superficie MCP
+    vía ``backend.py``, no ORM/repos directos desde el agente.
     """
+    # 1) Path sin fastmcp (recomendado en Docker / Codespaces)
+    try:
+        from mcps.brasaland_tools.inprocess_tools import TOOL_HANDLERS
+
+        fn = TOOL_HANDLERS.get(tool_name)
+        if fn is not None:
+            result = fn(**arguments)
+            if isinstance(result, dict):
+                return result
+            return {"ok": True, "data": result}
+    except ModuleNotFoundError as exc:
+        # Solo fallar duro si falta backend/tinydb; si falta inprocess_tools, seguir
+        if exc.name and exc.name.startswith("mcps.brasaland_tools.inprocess"):
+            logger.warning("inprocess_tools missing (%s); trying server module", exc)
+        else:
+            return {
+                "ok": False,
+                "error": f"MCP inprocess deps: {exc}",
+                "error_code": "MCP_DEPS_MISSING",
+            }
+
+    # 2) Fallback: server.py + mcpauth (requiere fastmcp en la imagen)
     import importlib
 
     try:
@@ -169,47 +191,31 @@ def _invoke_inprocess(tool_name: str, arguments: dict[str, Any]) -> dict[str, An
         return {
             "ok": False,
             "error": (
-                f"Falta dependencia MCP en la imagen ({missing}). "
-                "En el backend: "
-                "uv pip install --system 'fastmcp>=4.0.10' 'mcpauth>=0.1.1' "
-                "'langchain-mcp-adapters>=0.3.1' "
-                "o rebuild: docker compose build --no-cache backend && "
-                "docker compose up -d backend"
+                f"Falta dependencia MCP ({missing}). "
+                "Con MCP_INPROCESS=1 debería bastar inprocess_tools "
+                "(sin fastmcp). Asegura volume ./mcps:/app/mcps y recreate."
             ),
             "error_code": "MCP_DEPS_MISSING",
         }
 
-    from mcps.brasaland_tools.auth import issue_dev_token, verify_dev_access_token
+    try:
+        from mcps.brasaland_tools.auth import issue_dev_token, verify_dev_access_token
 
-    token = _bearer_token() if os.getenv("MCP_ACCESS_TOKEN") else issue_dev_token(
-        client_id="brasaland-langgraph-agent"
-    )
-    auth_info = verify_dev_access_token(token)
-    # Populate mcpauth ContextVar the same way Bearer middleware does.
-    mcp_server.mcp_auth._context_var.set(auth_info)  # noqa: SLF001
+        token = (
+            _bearer_token()
+            if os.getenv("MCP_ACCESS_TOKEN")
+            else issue_dev_token(client_id="brasaland-langgraph-agent")
+        )
+        auth_info = verify_dev_access_token(token)
+        mcp_server.mcp_auth._context_var.set(auth_info)  # noqa: SLF001
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("MCP auth context skipped: %s", exc)
 
-    tool_map = {}
-    for name in (
-        "manage_incidents",
-        "query_inventory",
-        "query_inventory_ops",
-        "query_suppliers",
-        "query_front_ops",
-        "mutate_inventory",
-    ):
-        fn_candidate = getattr(mcp_server, name, None)
-        if fn_candidate is not None:
-            tool_map[name] = fn_candidate
-    fn = tool_map.get(tool_name)
+    fn = getattr(mcp_server, tool_name, None)
     if fn is None:
         return {
             "ok": False,
-            "error": (
-                f"Unknown MCP tool {tool_name}; "
-                f"available_on_server={sorted(tool_map)}. "
-                "Si falta query_*: monta ./mcps o rebuild backend "
-                "(docker compose up -d --build backend)."
-            ),
+            "error": f"Unknown MCP tool {tool_name}",
             "error_code": "MCP_TOOL_NOT_FOUND",
         }
     result = fn(**arguments)

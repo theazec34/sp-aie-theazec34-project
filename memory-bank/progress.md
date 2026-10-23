@@ -1,10 +1,12 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-23) — Agente: fastmcp en imagen Docker
-- Tras montar `./mcps`: `ModuleNotFoundError: fastmcp` (deps solo en
-  `pyproject.toml` / uv, no en `services/api/requirements.txt` de la imagen).
-- Fix: `fastmcp` + `mcpauth` + `langchain-mcp-adapters` + PyJWT en
-  requirements de la API; `__init__` MCP lazy; error con hint de install.
+## Estado (2026-10-23) — Agente inprocess sin fastmcp
+- Contenedor sin DNS a PyPI → no se puede instalar fastmcp.
+- Fix: `mcps/.../inprocess_tools.py` (handlers vía backend.py); el agente
+  con `MCP_INPROCESS=1` ya no importa FastMCP.
+
+## Estado previo — Agente: fastmcp en imagen Docker
+- Deps MCP en `services/api/requirements.txt` (para rebuild con red).
 
 ## Estado previo — Agente proveedores: montar ./mcps
 - Volume `./mcps:/app/mcps` en backend/worker.
