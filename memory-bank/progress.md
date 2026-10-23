@@ -1,6 +1,13 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-23) — Flower ve workers (eventos Celery)
+## Estado (2026-10-23) — Redis Celery vía host-gateway (Codespaces)
+- Worker Up pero `Timeout connecting to redis://redis:6379` → Flower 0
+  workers y `POST /incidents/analyze` → 504.
+- Mismo patrón bridge TCP que interfaces→backend: publicar Redis `:6379`
+  (Private en Ports) y `REDIS_URL=redis://host.docker.internal:6379/0`
+  en backend/worker/flower; quitar `dns:` públicos del worker.
+
+## Estado previo — Flower ve workers (eventos Celery)
 - Contenedor `worker` Up pero Flower «No workers»: faltaba `-E` / eventos.
 - Fix: worker Compose con `-E`; `worker_send_task_events` +
   `task_send_sent_event`; timeouts cortos al broker (evita 504 en analyze).
