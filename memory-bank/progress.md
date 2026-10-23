@@ -1,6 +1,12 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-23) — Reporting recalcular + UI sin textos de entorno
+## Estado (2026-10-23) — Recalcular semana sin Prefect efímero
+- Tras fix :ro, el 500 seguía: `@flow` levantaba servidor temporal Prefect
+  en el contenedor → fallo opaco.
+- Fix: `run_weekly_location_performance_etl` (tasks `.fn`) para el API;
+  CLI sigue con `weekly_location_performance_flow`. `PREFECT_HOME=/tmp`.
+
+## Estado previo — Reporting recalcular + UI sin textos de entorno
 - «Recalcular semana» → 500: Compose monta `./data` **:ro** y el pipeline
   escribía CSV en `/app/data/raw` → OSError.
 - Fix: `pipeline_artifact_dir` escribe en `/app/api/data/pipeline` (volumen

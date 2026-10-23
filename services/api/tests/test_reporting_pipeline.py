@@ -167,3 +167,37 @@ def test_pipeline_artifact_dir_skips_readonly(tmp_path, monkeypatch):
     probe.write_text("yes", encoding="utf-8")
     assert probe.read_text(encoding="utf-8") == "yes"
     ro.chmod(0o755)
+
+
+def test_api_trigger_uses_plain_etl_not_prefect_flow(client, auth_header, monkeypatch):
+    """Recalcular semana no debe levantar el servidor efímero de Prefect."""
+    from data.pipelines import pipeline as pipe
+
+    calls: list[str] = []
+
+    def _etl(**kwargs):
+        calls.append("etl")
+        return {
+            "run_id": "run-test",
+            "status": "completed",
+            "week_start": "2026-10-19",
+            "rows_extracted": 0,
+            "rows_upserted": 0,
+        }
+
+    def _boom_flow(**kwargs):
+        calls.append("flow")
+        raise AssertionError("Prefect flow no debe usarse desde el API")
+
+    monkeypatch.setattr(pipe, "run_weekly_location_performance_etl", _etl)
+    monkeypatch.setattr(pipe, "weekly_location_performance_flow", _boom_flow)
+
+    week_start = _seed_week_events()
+    res = client.post(
+        "/reporting/pipeline-runs",
+        headers=auth_header,
+        json={"week_start": week_start.isoformat()},
+    )
+    assert res.status_code == 200
+    assert res.json()["status"] == "completed"
+    assert calls == ["etl"]
