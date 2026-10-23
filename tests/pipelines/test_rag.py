@@ -86,3 +86,50 @@ def test_generate_answer_composable_without_retrieve(
     answer = rag_pipeline.generate_answer("¿Nivel Oro?", context)
     assert "50+" in answer or "15%" in answer
     assert "manuales" in answer.lower() or "Oro" in answer
+
+
+def test_retrieve_keyword_fallback_when_vector_empty(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(rag_pipeline, "embed", lambda _q: [0.0])
+    monkeypatch.setattr(rag_pipeline, "_search", lambda **_kw: [])
+    monkeypatch.setattr(
+        rag_pipeline,
+        "_scroll_all_payloads",
+        lambda *_a, **_k: [
+            {
+                "text": "Brasa Points es el programa de fidelización de Brasaland.",
+                "source_document": "loyalty-program",
+            },
+            {
+                "text": "Protocolo de desperdicio y merma en cocina.",
+                "source_document": "waste-protocol",
+            },
+        ],
+    )
+    result = rag_pipeline.retrieve("Que son los Brasa Points?", k=3, min_score=0.9)
+    assert result
+    assert "Brasa Points" in result[0]["text"]
+
+
+def test_generate_defaults_to_grounded_without_llm_flag(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("GENERATION_PROVIDER", "openai")
+    monkeypatch.delenv("GENERATION_USE_LLM", raising=False)
+
+    def _boom(*_a, **_k):
+        raise AssertionError("LLM must not run unless GENERATION_USE_LLM=1")
+
+    monkeypatch.setattr(rag_pipeline, "_openai_generate", _boom)
+    answer = rag_pipeline.generate_answer(
+        "¿Qué son Brasa Points?",
+        [
+            {
+                "text": "Brasa Points es el programa de fidelización.",
+                "source_document": "loyalty-program",
+            }
+        ],
+    )
+    assert "Brasa Points" in answer
+    assert "manuales" in answer.lower()

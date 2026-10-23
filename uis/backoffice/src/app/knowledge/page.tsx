@@ -105,7 +105,9 @@ export default function KnowledgePage() {
           <p className="bo-soft">
             Responde solo con los <strong>manuales oficiales</strong> indexados
             (RAG). No consulta reservas, candidaturas ni stock en vivo — eso es
-            el <strong>Agente soporte</strong>.
+            el <strong>Agente soporte</strong>. Si dice que no hay información,
+            pulsa <strong>Reindexar manuales</strong> (no suele ser la API key:
+            por defecto responde desde el texto del manual, sin LLM lento).
           </p>
         </div>
         <button
@@ -166,8 +168,7 @@ export default function KnowledgePage() {
       {loading ? (
         <section className="bo-panel" aria-live="polite">
           <p className="bo-soft">
-            BrasAI está generando la respuesta (embeddings + LLM; la primera
-            vez puede tardar más de un minuto)…
+            BrasAI está buscando en los manuales indexados…
           </p>
         </section>
       ) : null}
