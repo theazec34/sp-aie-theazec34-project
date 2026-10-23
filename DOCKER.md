@@ -37,6 +37,16 @@ Atajo: `bash scripts/docker-rebuild-clean.sh`
 
 Si sigue fallando: `DOCKER_BUILDKIT=0 docker compose build --no-cache && docker compose up`.
 
+### Codespaces: `Could not resolve host: llm.4geeks.ai`
+
+El host resuelve y la key da **200**, pero `docker compose exec backend getent hosts llm.4geeks.ai` falla.
+Causa: DNS del daemon Docker, no la API key. Compose fija `dns: 8.8.8.8` / `1.1.1.1` en `backend` y `worker`.
+
+```bash
+docker compose up -d --force-recreate backend worker
+docker compose exec -T backend getent hosts llm.4geeks.ai
+```
+
 El `.dockerignore` de raíz **debe** dejar pasar `data/`, `docs/company-knowledge-base/` y `docs/rfp/` (el `Dockerfile` hace `COPY` de esas rutas). Si el build falla con `"/docs/rfp": not found`, actualiza `main` o revisa que no hayas excluido `docs` enteros en `.dockerignore`.
 
 | Servicio | Contenedor | URL en el host |

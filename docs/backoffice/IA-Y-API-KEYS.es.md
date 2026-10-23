@@ -35,6 +35,21 @@ GENERATION_MODEL_ID=madrid-spain/opnerouter/openai/gpt-6-luna
 
 Tras editar `.env`: `docker compose up -d --force-recreate backend`
 
+### Codespaces: DNS del contenedor vs host
+
+Si en el **host** `curl https://llm.4geeks.ai/v1/models` da **200** pero dentro del
+backend `getent hosts llm.4geeks.ai` no resuelve (`Could not resolve host`),
+no es la API key: es el DNS de Docker. `docker-compose.yml` fija DNS públicos
+(`8.8.8.8`, `1.1.1.1`) en `backend` y `worker`. Tras pull:
+
+```bash
+docker compose up -d --force-recreate backend worker
+docker compose exec -T backend getent hosts llm.4geeks.ai
+```
+
+Parche inmediato sin pull: `docker compose exec backend sh -c 'echo "68.183.63.85 llm.4geeks.ai" >> /etc/hosts'`
+(la IP puede cambiar; mejor el fix de DNS en compose).
+
 ## Variables de embedding (RAG)
 
 ```bash

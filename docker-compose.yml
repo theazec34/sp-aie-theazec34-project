@@ -51,6 +51,11 @@ services:
       timeout: 5s
       retries: 36
       start_period: 20s
+    # Codespaces: el DNS interno de Docker a menudo no resuelve internet
+    # (llm.4geeks.ai → "Could not resolve host"). DNS públicos arreglan egress.
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     networks:
       - brasaland-net
     restart: unless-stopped
@@ -79,6 +84,9 @@ services:
         condition: service_healthy
       backend:
         condition: service_started
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     networks:
       - brasaland-net
     restart: unless-stopped

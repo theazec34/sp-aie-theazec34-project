@@ -1,6 +1,12 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-23) — sinónimos fidelización + .env (no export)
+## Estado (2026-10-23) — DNS egress backend → llm.4geeks.ai
+- Diagnóstico: API key OK en host (HTTP 200 a `/v1/models`); contenedor
+  `backend` no resolvía `llm.4geeks.ai` (`Temporary failure in name resolution`).
+- Fix: `dns: [8.8.8.8, 1.1.1.1]` en `backend` y `worker` (`docker-compose.yml`).
+- Doc: `docs/backoffice/IA-Y-API-KEYS.es.md` (sección Codespaces DNS).
+
+## Estado previo — sinónimos fidelización + .env (no export)
 - `export` en shell **no** basta: Docker Compose lee el fichero `.env`. Tras cambiar LLM, verificar `docker compose exec backend printenv EMBEDDING_PROVIDER`.
 - Keyword RAG: sinónimos (`fidelización`→loyalty/puntos/oro) para no devolver supplier-ordering.
 
