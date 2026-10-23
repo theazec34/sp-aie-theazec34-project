@@ -1,6 +1,14 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-23) — Agente inprocess sin fastmcp
+## Estado (2026-10-23) — Agente respeta Local/sede + indicador en vivo
+- Bug: al cambiar el desplegable «Local / sede», la sesión WS reutilizaba
+  `session_id` y **no actualizaba** `location_id` (quedaba `miami_doral`).
+- Fix backend: `ChatSessionStore.get_or_create` siempre pisa `location_id`.
+- Fix UI: al cambiar sede → `freshSession` (nuevo chat) + muestra «Sede
+  activa»; badge verde «En vivo (WebSocket)» = canal WS abierto.
+- Tests: `test_agent_chat_ws` (store + reconnect con sede nueva).
+
+## Estado previo — Agente inprocess sin fastmcp
 - Contenedor sin DNS a PyPI → no se puede instalar fastmcp.
 - Fix: `mcps/.../inprocess_tools.py` (handlers vía backend.py); el agente
   con `MCP_INPROCESS=1` ya no importa FastMCP.

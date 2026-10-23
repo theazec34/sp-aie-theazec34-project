@@ -5,7 +5,7 @@ import AuthenticatedShell from "../../components/AuthenticatedShell";
 import { apiFetch } from "../../lib/api";
 import { getApiBaseUrl } from "../../lib/auth";
 import { friendlyCatch, readApiError } from "../../lib/errors";
-import { INCIDENT_BRANCHES } from "../../lib/incidents";
+import { INCIDENT_BRANCHES, labelFor } from "../../lib/incidents";
 import {
   connectAgentChat,
   type AgentChatController,
@@ -33,17 +33,31 @@ export default function AgentChatPage() {
   const [conn, setConn] = useState<Conn>("connecting");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [locationId, setLocationId] = useState("miami_doral");
+  const [activeLocationId, setActiveLocationId] = useState<string | null>(null);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const ctrlRef = useRef<AgentChatController | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const connRef = useRef<Conn>("connecting");
+  const prevLocationRef = useRef<string | null>(null);
 
   useEffect(() => {
     connRef.current = conn;
   }, [conn]);
 
   useEffect(() => {
+    // Al cambiar sede: sesión nueva (no rehidratar chat de otra local).
+    const sedeChanged =
+      prevLocationRef.current !== null && prevLocationRef.current !== locationId;
+    prevLocationRef.current = locationId;
+    if (sedeChanged) {
+      setMessages([]);
+      setSessionId(null);
+      setActiveLocationId(null);
+      setStreaming(false);
+      setError(null);
+    }
+
     const ctrl = connectAgentChat(
       {
         onConnectionChange: setConn,
@@ -53,6 +67,7 @@ export default function AgentChatPage() {
         },
         onSnapshot: (data) => {
           setSessionId(data.session_id);
+          setActiveLocationId(data.location_id ?? locationId);
           setMessages(data.messages || []);
           setStreaming(false);
           setError(null);
@@ -118,7 +133,7 @@ export default function AgentChatPage() {
           );
         },
       },
-      { locationId },
+      { locationId, freshSession: sedeChanged },
     );
     ctrlRef.current = ctrl;
     return () => ctrl.stop();
@@ -221,16 +236,32 @@ export default function AgentChatPage() {
             <code>{sessionId || "…"}</code>
           </p>
         </div>
-        <span className={`bo-sse-status bo-sse-status-${conn}`}>{connLabel(conn)}</span>
+        <span
+          className={`bo-sse-status bo-sse-status-${conn}`}
+          title={
+            conn === "open"
+              ? "Canal WebSocket abierto: el chat habla en directo con el API :8000"
+              : "Sin WebSocket: las preguntas van por HTTP (POST /agent/query)"
+          }
+        >
+          {connLabel(conn)}
+        </span>
       </div>
 
-      {conn !== "open" ? (
+      {conn === "open" ? (
+        <p className="bo-soft" style={{ marginBottom: "0.75rem" }}>
+          Canal en vivo: la etiqueta verde «En vivo (WebSocket)» confirma que el
+          chat está conectado al API. Si cambia a «HTTP» o «Conectando…», no hay
+          WS (en Codespaces pon el puerto <strong>8000 en Public</strong>).
+        </p>
+      ) : (
         <p className="bo-soft" style={{ marginBottom: "0.75rem" }}>
           WebSocket no conectado (en Codespaces pon el puerto <strong>8000 en
           Public</strong>). Mientras tanto el chat usa{" "}
-          <code>POST /agent/query</code> vía <code>/api-backend</code>.
+          <code>POST /agent/query</code> vía <code>/api-backend</code> — sigue
+          filtrando por la sede elegida abajo.
         </p>
-      ) : null}
+      )}
 
       <div className="bo-card" style={{ marginBottom: "1rem" }}>
         <label className="bo-field" htmlFor="agent-location">
@@ -247,6 +278,14 @@ export default function AgentChatPage() {
             ))}
           </select>
         </label>
+        <p className="bo-muted" style={{ marginTop: "0.5rem", marginBottom: 0 }}>
+          Sede activa en la sesión:{" "}
+          <strong>
+            {labelFor(INCIDENT_BRANCHES, activeLocationId || locationId)}
+          </strong>{" "}
+          (<code>{activeLocationId || locationId}</code>). Al cambiar de local se
+          abre un chat nuevo con ese filtro.
+        </p>
       </div>
 
       {error ? (
