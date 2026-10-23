@@ -124,10 +124,12 @@ export default function KnowledgePage() {
       <section className="bo-panel">
         <h3>Qué puede responder</h3>
         <ul className="bo-soft" style={{ margin: "0.5rem 0 0", paddingLeft: "1.2rem" }}>
-          <li>Brasa Points / niveles de fidelización (Plata, Oro, Platino)</li>
-          <li>Alérgenos y carta (p. ej. Costilla BBQ, paellas)</li>
+          <li>Brasa Points / niveles (Bronce, Plata, Oro, Platino)</li>
+          <li>Alérgenos y carta (Costilla BBQ, paella, postres, bebidas)</li>
           <li>Protocolo de desperdicio y merma</li>
-          <li>Procedimiento de pedidos a proveedores (manual, no datos en vivo)</li>
+          <li>Procedimiento de pedidos a proveedores (manual, no tarifas en vivo)</li>
+          <li>Horarios de servicio por sede (CO / FL)</li>
+          <li>Política de reservas, sala y experiencia de cliente</li>
         </ul>
       </section>
 

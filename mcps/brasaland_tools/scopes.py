@@ -15,12 +15,16 @@ SCOPE_INVENTORY_READ = "inventory:read"
 # Suppliers directory — read only via MCP.
 SCOPE_SUPPLIERS_READ = "suppliers:read"
 
+# Reservas / candidaturas (intake público) — read only.
+SCOPE_INTAKE_READ = "intake:read"
+
 ALL_SCOPES: list[str] = [
     SCOPE_TOOLS,
     SCOPE_INCIDENTS_READ,
     SCOPE_INCIDENTS_WRITE,
     SCOPE_INVENTORY_READ,
     SCOPE_SUPPLIERS_READ,
+    SCOPE_INTAKE_READ,
 ]
 
 TOOL_REQUIRED_SCOPES: dict[str, list[str]] = {
@@ -28,6 +32,7 @@ TOOL_REQUIRED_SCOPES: dict[str, list[str]] = {
     "query_inventory": [SCOPE_TOOLS, SCOPE_INVENTORY_READ],
     "query_inventory_ops": [SCOPE_TOOLS, SCOPE_INVENTORY_READ],
     "query_suppliers": [SCOPE_TOOLS, SCOPE_SUPPLIERS_READ],
+    "query_front_ops": [SCOPE_TOOLS, SCOPE_INTAKE_READ],
     "mutate_inventory": [SCOPE_TOOLS, SCOPE_INVENTORY_READ],
 }
 

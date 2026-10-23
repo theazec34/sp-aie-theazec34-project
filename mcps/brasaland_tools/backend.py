@@ -220,13 +220,18 @@ def _ingredient_dict(ingredient: Any, stock: float) -> dict[str, Any]:
 def list_suppliers(
     *,
     name_query: str | None = None,
+    branch: str | None = None,
     limit: int = 50,
 ) -> list[dict[str, Any]]:
     if DATA_MODE == "direct":
         from app.suppliers.repository import SupplierRepository
+        from app.suppliers.seed_data import SUPPLIERS_SEED
 
         repo = SupplierRepository()
         try:
+            # Codespaces: volumen vacío / seed fallido → rehidratar directorio base
+            if repo.count() == 0:
+                repo.seed_if_empty(SUPPLIERS_SEED)
             items = [s.model_dump(mode="json") for s in repo.list()]
         finally:
             repo.close()
@@ -249,6 +254,18 @@ def list_suppliers(
             if q in str(s.get("name", "")).lower()
             or q in str(s.get("contact_email") or "").lower()
         ]
+    if branch:
+        b = branch.strip().lower()
+        marker = f"branch={b}"
+        filtered = [
+            s
+            for s in items
+            if marker in str(s.get("notes") or "").lower()
+            or b in str(s.get("notes") or "").lower()
+        ]
+        # Si no hay fichas por sede, devolver directorio global (seed base)
+        if filtered:
+            items = filtered
     return items[:limit]
 
 
@@ -436,6 +453,91 @@ def inventory_ops_summary(*, limit: int = 10) -> dict[str, Any]:
         "highest_tariff_supplier": supplier_directory_summary(limit=1).get(
             "highest_rate_active"
         ),
+    }
+
+
+def list_reservations_ops(
+    *,
+    branch: str | None = None,
+    day: str | None = None,
+    limit: int = 30,
+) -> list[dict[str, Any]]:
+    """Reservas del intake público (filtrable por sede en notes y por día)."""
+    from datetime import date as date_cls
+
+    from app.public_intake.repository import PublicIntakeRepository
+
+    repo = PublicIntakeRepository()
+    try:
+        rows = [r.model_dump(mode="json") for r in repo.list_reservations()]
+    finally:
+        repo.close()
+
+    if day in {"today", "hoy"}:
+        target = date_cls.today().isoformat()
+        rows = [r for r in rows if str(r.get("date") or "")[:10] == target]
+    elif day in {"tomorrow", "manana", "mañana"}:
+        from datetime import timedelta
+
+        target = (date_cls.today() + timedelta(days=1)).isoformat()
+        rows = [r for r in rows if str(r.get("date") or "")[:10] == target]
+
+    if branch:
+        b = branch.strip().lower()
+        marker = f"[sede:{b}]"
+        rows = [
+            r
+            for r in rows
+            if marker in str(r.get("notes") or "").lower()
+            or b in str(r.get("notes") or "").lower()
+        ]
+    rows.sort(key=lambda r: (str(r.get("date") or ""), str(r.get("time") or "")))
+    return rows[:limit]
+
+
+def list_careers_ops(
+    *,
+    branch: str | None = None,
+    limit: int = 30,
+) -> list[dict[str, Any]]:
+    """Candidaturas web (filtro blando por sede en message/email)."""
+    from app.public_intake.repository import PublicIntakeRepository
+
+    repo = PublicIntakeRepository()
+    try:
+        rows = [c.model_dump(mode="json") for c in repo.list_careers()]
+    finally:
+        repo.close()
+
+    if branch:
+        b = branch.strip().lower()
+        rows = [
+            r
+            for r in rows
+            if b in str(r.get("message") or "").lower()
+            or b in str(r.get("email") or "").lower()
+            or b in str(r.get("name") or "").lower()
+        ]
+    rows.sort(key=lambda r: str(r.get("created_at") or ""), reverse=True)
+    return rows[:limit]
+
+
+def front_ops_summary(
+    *,
+    branch: str | None = None,
+) -> dict[str, Any]:
+    res_today = list_reservations_ops(branch=branch, day="today", limit=100)
+    res_tomorrow = list_reservations_ops(branch=branch, day="tomorrow", limit=100)
+    careers = list_careers_ops(branch=branch, limit=100)
+    guests_today = sum(int(r.get("guests") or 0) for r in res_today)
+    return {
+        "branch": branch,
+        "reservations_today": len(res_today),
+        "guests_today": guests_today,
+        "reservations_tomorrow": len(res_tomorrow),
+        "careers_total": len(careers),
+        "sample_reservations_today": res_today[:8],
+        "sample_careers": careers[:8],
     }
 
 

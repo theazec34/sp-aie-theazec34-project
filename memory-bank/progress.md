@@ -1,6 +1,12 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-23) — LLM vía host proxy (Codespaces)
+## Estado (2026-10-23) — BrasAI manuales + agente front_ops
+- Manuales ampliados + nuevos: `service-hours`, `customer-experience`.
+- Agente: `query_front_ops` (reservas/candidaturas); proveedores no caen a
+  fallback si el directorio viene vacío; `location_id` llega al grafo.
+- MCP rehidrata suppliers si TinyDB vacío; scope `intake:read`.
+
+## Estado previo — LLM vía host proxy (Codespaces)
 - Tras `extra_hosts`, DNS OK pero `curl :443` desde backend → **timeout**
   (host sí 200). Bridge sin egress TCP.
 - Fix: servicio `llm-proxy` (nginx `network_mode: host` :18080) +

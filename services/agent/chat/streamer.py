@@ -110,6 +110,7 @@ async def run_streaming_turn(
             session_id=session_id,
             user_id=user_id,
             run_id=generation_id,
+            location_id=session.location_id,
         )
     except Exception as exc:  # noqa: BLE001
         logger.exception("agent turn failed session=%s", session_id)

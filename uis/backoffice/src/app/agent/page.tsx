@@ -149,6 +149,7 @@ export default function AgentChatPage() {
         body: JSON.stringify({
           question: text,
           session_id: sessionId || undefined,
+          location_id: locationId || undefined,
         }),
         signal: AbortSignal.timeout(90_000),
       });
@@ -260,10 +261,10 @@ export default function AgentChatPage() {
             <p>Prueba preguntas como:</p>
             <ul style={{ margin: "0.35rem 0 0", paddingLeft: "1.2rem" }}>
               <li>¿Cuál es el proveedor con la tarifa más alta en €?</li>
+              <li>¿Qué reservas tengo hoy en esta sede?</li>
+              <li>¿Cuántas candidaturas hay?</li>
               <li>¿Qué stock tenemos ahora de cada ingrediente?</li>
-              <li>¿Cuáles fueron las últimas salidas de inventario?</li>
               <li>¿Qué proveedor nos ha enviado más kg?</li>
-              <li>¿Estado de la incidencia en Miami Doral?</li>
             </ul>
             <p style={{ marginTop: "0.5rem" }}>
               Tras <code>seed_demo_ops</code> hay proveedores/reservas/candidaturas
