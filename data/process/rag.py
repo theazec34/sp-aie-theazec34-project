@@ -368,9 +368,17 @@ def _hash_embed(text: str, dim: int = HASH_EMBED_DIM) -> list[float]:
 
 def embed(text: str) -> list[float]:
     """Generate a vector with the dedicated embedding model (not generation)."""
-    if not text or not text.strip():
-        raise ValueError("embed() requires non-empty text")
-    cleaned = text.strip()
+    vectors = embed_many([text])
+    return vectors[0]
+
+
+def embed_many(texts: list[str]) -> list[list[float]]:
+    """Batch embed — fewer round-trips to 4Geeks (critical under llm-proxy)."""
+    if not texts:
+        return []
+    cleaned = [t.strip() for t in texts]
+    if any(not t for t in cleaned):
+        raise ValueError("embed_many() requires non-empty texts")
     provider = _embedding_provider()
 
     if provider == "openai":
@@ -382,25 +390,33 @@ def embed(text: str) -> list[float]:
                 "EMBEDDING_BASE_URL and EMBEDDING_MODEL_ID required for "
                 "EMBEDDING_PROVIDER=openai (4Geeks student portal)."
             )
-        client = OpenAI(base_url=base_url, api_key=api_key)
-        response = client.embeddings.create(model=model_id, input=cleaned)
-        return list(response.data[0].embedding)
+        client = OpenAI(base_url=base_url, api_key=api_key, timeout=120.0)
+        out: list[list[float]] = []
+        # Portal limits batch size — chunk to stay under timeouts
+        batch_size = int(os.getenv("EMBEDDING_BATCH_SIZE", "16") or "16")
+        batch_size = max(1, min(batch_size, 64))
+        for i in range(0, len(cleaned), batch_size):
+            batch = cleaned[i : i + batch_size]
+            response = client.embeddings.create(model=model_id, input=batch)
+            ordered = sorted(response.data, key=lambda row: row.index)
+            out.extend(list(row.embedding) for row in ordered)
+        return out
 
     if provider in {"hash", "offline", "local"}:
-        return _hash_embed(cleaned)
+        return [_hash_embed(t) for t in cleaned]
 
     if provider == "fastembed":
         try:
             model = _get_fastembed()
-            vectors = list(model.embed([cleaned]))
-            return [float(x) for x in vectors[0].tolist()]
+            vectors = list(model.embed(cleaned))
+            return [[float(x) for x in vec.tolist()] for vec in vectors]
         except Exception as exc:  # noqa: BLE001
             logger.warning(
                 "FastEmbed unavailable (%s) — using offline hash embeddings. "
                 "Set EMBEDDING_PROVIDER=hash to silence this, or fix egress to HuggingFace.",
                 exc,
             )
-            return _hash_embed(cleaned)
+            return [_hash_embed(t) for t in cleaned]
 
     raise RuntimeError(f"Unknown EMBEDDING_PROVIDER={provider!r}")
 
@@ -614,16 +630,15 @@ def setup(*, recreate: bool = False) -> dict[str, Any]:
 
     _ensure_collection(client, dim)
 
-    points = []
-    for chunk in chunks:
-        vector = embed(chunk.text)
-        points.append(
-            qmodels.PointStruct(
-                id=chunk.point_id(),
-                vector=vector,
-                payload=chunk.payload(),
-            )
+    vectors = embed_many([chunk.text for chunk in chunks])
+    points = [
+        qmodels.PointStruct(
+            id=chunk.point_id(),
+            vector=vector,
+            payload=chunk.payload(),
         )
+        for chunk, vector in zip(chunks, vectors, strict=True)
+    ]
 
     client.upsert(collection_name=name, points=points)
     by_source: dict[str, int] = {}

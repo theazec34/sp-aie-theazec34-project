@@ -1,10 +1,12 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-23) — Qdrant local lock BrasAI
-- Error UI: `qdrant_local is already accessed by another instance`.
-- Causa: `QDRANT_FORCE_LOCAL=1` + varios `QdrantClient(path=…)` (reload).
-- Fix: cliente cacheado por proceso; si el path está locked → servidor;
-  `.env` / docs → `QDRANT_FORCE_LOCAL=0` con Compose.
+## Estado (2026-10-23) — BrasAI reindex async (HTTP 504)
+- Reindex sync con embeddings 4Geeks superaba el proxy → **HTTP 504**.
+- Fix: `POST /knowledge/reindex` en background + `GET …/status`; UI hace poll;
+  `embed_many` por lotes; volume `services/knowledge` montado en compose.
+
+## Estado previo — Qdrant local lock BrasAI
+- Cliente Qdrant cacheado; `QDRANT_FORCE_LOCAL=0` con Compose.
 
 ## Estado previo — BrasAI manuales + agente front_ops
 - Manuales ampliados + nuevos: `service-hours`, `customer-experience`.

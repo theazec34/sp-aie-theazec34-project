@@ -10,9 +10,24 @@ type QueryResponse = {
   answer: string;
 };
 
+type ReindexStatus = {
+  status?: string;
+  chunks_indexed?: number;
+  collection?: string;
+  message?: string;
+  error?: string;
+};
+
 /** Primera carga: FastEmbed puede bajar el modelo; luego LLM 4Geeks. */
 const QUERY_TIMEOUT_MS = 120_000;
-const REINDEX_TIMEOUT_MS = 180_000;
+const REINDEX_START_MS = 30_000;
+const REINDEX_POLL_MS = 15_000;
+const REINDEX_POLL_EVERY_MS = 2_500;
+const REINDEX_MAX_WAIT_MS = 240_000;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export default function KnowledgePage() {
   const [question, setQuestion] = useState("");
@@ -71,22 +86,58 @@ export default function KnowledgePage() {
   async function onReindex() {
     setReindexing(true);
     setError("");
-    setInfo("Indexando manuales en Qdrant (puede tardar 1–3 min)…");
+    setInfo("Arrancando reindexación en segundo plano…");
     try {
-      const response = await apiFetch("/knowledge/reindex", {
+      const start = await apiFetch("/knowledge/reindex", {
         method: "POST",
-        signal: AbortSignal.timeout(REINDEX_TIMEOUT_MS),
+        signal: AbortSignal.timeout(REINDEX_START_MS),
       });
-      if (!response.ok) {
-        const parsed = await readApiError(response);
+      if (!start.ok) {
+        const parsed = await readApiError(start);
         throw new Error(parsed.message);
       }
-      const data = (await response.json()) as {
-        chunks_indexed?: number;
-        collection?: string;
-      };
+      const started = (await start.json()) as ReindexStatus;
       setInfo(
-        `Listo: ${data.chunks_indexed ?? "?"} fragmentos en «${data.collection ?? "brasaland_knowledge"}». Ya puedes preguntar.`,
+        started.message ||
+          "Reindexación en curso (embeddings + Qdrant). Esperando…",
+      );
+
+      const deadline = Date.now() + REINDEX_MAX_WAIT_MS;
+      while (Date.now() < deadline) {
+        await sleep(REINDEX_POLL_EVERY_MS);
+        const poll = await apiFetch("/knowledge/reindex/status", {
+          method: "GET",
+          signal: AbortSignal.timeout(REINDEX_POLL_MS),
+        });
+        if (!poll.ok) {
+          const parsed = await readApiError(poll);
+          throw new Error(parsed.message);
+        }
+        const data = (await poll.json()) as ReindexStatus;
+        if (data.status === "done") {
+          setInfo(
+            data.message ||
+              `Listo: ${data.chunks_indexed ?? "?"} fragmentos en «${
+                data.collection ?? "brasaland_knowledge"
+              }». Ya puedes preguntar.`,
+          );
+          return;
+        }
+        if (data.status === "error") {
+          throw new Error(
+            data.error ||
+              data.message ||
+              "Falló la reindexación. Prueba por CLI: docker compose exec backend python -c \"from data.process.rag import setup; print(setup(recreate=True))\"",
+          );
+        }
+        setInfo(
+          data.message ||
+            "Indexando… (puede tardar 1–3 min con embeddings 4Geeks).",
+        );
+      }
+      throw new Error(
+        "La reindexación sigue en curso tras 4 min. Espera un poco y pregunta, " +
+          "o revisa: docker compose logs backend | tail -80",
       );
     } catch (err) {
       setInfo("");
@@ -105,10 +156,10 @@ export default function KnowledgePage() {
           <p className="bo-soft">
             Responde solo con los <strong>manuales oficiales</strong> indexados
             (RAG). No consulta reservas, candidaturas ni stock en vivo — eso es
-            el <strong>Agente soporte</strong>.             Si dice que no hay información, pulsa{" "}
-            <strong>Reindexar manuales</strong>. Con{" "}
-            <code>GENERATION_USE_LLM=1</code> + API key razona con el LLM; si el
-            gateway falla, usa el texto del manual.
+            el <strong>Agente soporte</strong>. Si dice que no hay información,
+            pulsa <strong>Reindexar manuales</strong> (corre en segundo plano;
+            evita HTTP 504). Con <code>GENERATION_USE_LLM=1</code> + API key
+            razona con el LLM; si el gateway falla, usa el texto del manual.
           </p>
         </div>
         <button

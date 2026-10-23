@@ -37,6 +37,16 @@ Atajo: `bash scripts/docker-rebuild-clean.sh`
 
 Si sigue fallando: `DOCKER_BUILDKIT=0 docker compose build --no-cache && docker compose up`.
 
+### BrasAI: HTTP 504 al «Reindexar manuales»
+
+El reindex con embeddings 4Geeks puede superar el timeout del proxy. La UI
+lanza el job en segundo plano (`POST /knowledge/reindex` + poll
+`/knowledge/reindex/status`). Si la UI falla, por CLI:
+
+```bash
+docker compose exec -T backend python -c "from data.process.rag import setup; print(setup(recreate=True))"
+```
+
 ### BrasAI: `Storage folder … qdrant_local is already accessed`
 
 Qdrant **local** (fichero) no admite dos clientes a la vez. Con

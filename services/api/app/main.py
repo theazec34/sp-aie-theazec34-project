@@ -170,6 +170,7 @@ def api_info() -> dict[str, object]:
         "knowledge": {
             "query": "/knowledge/query",
             "reindex": "/knowledge/reindex",
+            "reindex_status": "/knowledge/reindex/status",
             "auth_required": True,
         },
         "agent": {
