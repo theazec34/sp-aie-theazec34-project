@@ -45,7 +45,17 @@ celery.conf.update(
     task_reject_on_worker_lost=True,
     worker_prefetch_multiplier=1,
     broker_connection_retry_on_startup=True,
+    # Timeouts cortos: si Redis no responde, la API no se cuelga hasta un 504
+    broker_connection_timeout=5,
+    broker_transport_options={"socket_connect_timeout": 5, "socket_timeout": 5},
+    result_backend_transport_options={
+        "socket_connect_timeout": 5,
+        "socket_timeout": 5,
+    },
     result_expires=86400,
+    # Flower descubre workers vía eventos (compose arranca worker con -E)
+    worker_send_task_events=True,
+    task_send_sent_event=True,
     # Soft/hard limits prevent hung workers from blocking the pool
     task_soft_time_limit=int(os.getenv("CELERY_SOFT_TIME_LIMIT", "120")),
     task_time_limit=int(os.getenv("CELERY_TIME_LIMIT", "180")),

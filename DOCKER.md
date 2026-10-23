@@ -151,7 +151,7 @@ cd services/api && uv run uvicorn app.main:app --reload --port 8000
 
 # Terminal C — worker (desde la carpeta services/)
 cd services
-PYTHONPATH=. uv run celery -A celery_app.celery worker --loglevel=INFO
+PYTHONPATH=. uv run celery -A celery_app.celery worker --loglevel=INFO -E
 
 # Terminal D — Flower (opcional)
 cd services
@@ -162,6 +162,10 @@ Parar worker: `Ctrl+C` en su terminal (o `docker compose stop worker`).
 
 `POST /api/v1/incidents/analyze` responde **202** + `task_id`; el resultado se
 consulta en `GET /tasks/{task_id}`. Flower: http://localhost:5555
+
+Si Flower muestra **Online workers: 0** con el contenedor `worker` en Up,
+recrea con eventos: `docker compose up -d --force-recreate worker flower`.
+Comprueba: `docker compose exec worker celery -A celery_app.celery inspect ping`.
 
 ## Parar
 

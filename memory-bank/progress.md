@@ -1,6 +1,11 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-23) — Agente respeta Local/sede + indicador en vivo
+## Estado (2026-10-23) — Flower ve workers (eventos Celery)
+- Contenedor `worker` Up pero Flower «No workers»: faltaba `-E` / eventos.
+- Fix: worker Compose con `-E`; `worker_send_task_events` +
+  `task_send_sent_event`; timeouts cortos al broker (evita 504 en analyze).
+
+## Estado previo — Agente respeta Local/sede + indicador en vivo
 - Bug: al cambiar el desplegable «Local / sede», la sesión WS reutilizaba
   `session_id` y **no actualizaba** `location_id` (quedaba `miami_doral`).
 - Fix backend: `ChatSessionStore.get_or_create` siempre pisa `location_id`.
