@@ -10,10 +10,12 @@ from langgraph.graph import END, START, StateGraph
 
 from agent.nodes import (
     answer_from_inventory,
+    answer_from_supplier,
     answer_from_ticket,
     emit_guard_response,
     generate_response,
     lookup_inventory,
+    lookup_supplier,
     lookup_ticket,
     receive_question,
     refuse_honestly,
@@ -28,7 +30,9 @@ from agent.state import (
     RouteAfterTool,
 )
 
-RouteAfterMemory = Literal["end", "retrieve", "ticket", "inventory", "refuse"]
+RouteAfterMemory = Literal[
+    "end", "retrieve", "ticket", "inventory", "supplier", "refuse"
+]
 
 
 def route_after_receive(state: AgentState) -> RouteAfterReceive:
@@ -45,6 +49,8 @@ def route_after_receive(state: AgentState) -> RouteAfterReceive:
         return "ticket"
     if intent == "inventory":
         return "inventory"
+    if intent == "supplier":
+        return "supplier"
     return "retrieve"
 
 
@@ -73,6 +79,8 @@ def route_after_memory(state: AgentState) -> RouteAfterMemory:
             return "ticket"
         if intent == "inventory":
             return "inventory"
+        if intent == "supplier":
+            return "supplier"
         if intent == "memory_confirm":
             return "end"
         return "retrieve"
@@ -93,6 +101,8 @@ def build_agent_graph(*, checkpointer: MemorySaver | None = None):
     builder.add_node("answer_from_ticket", answer_from_ticket)
     builder.add_node("lookup_inventory", lookup_inventory)
     builder.add_node("answer_from_inventory", answer_from_inventory)
+    builder.add_node("lookup_supplier", lookup_supplier)
+    builder.add_node("answer_from_supplier", answer_from_supplier)
     builder.add_node("tool_fallback", tool_fallback)
 
     builder.add_edge(START, "receive_question")
@@ -103,6 +113,7 @@ def build_agent_graph(*, checkpointer: MemorySaver | None = None):
             "retrieve": "retrieve_knowledge",
             "ticket": "lookup_ticket",
             "inventory": "lookup_inventory",
+            "supplier": "lookup_supplier",
             "refuse": "refuse_honestly",
             "memory_confirm": "resolve_memory_confirm",
             "guard_block": "emit_guard_response",
@@ -118,6 +129,7 @@ def build_agent_graph(*, checkpointer: MemorySaver | None = None):
             "retrieve": "retrieve_knowledge",
             "ticket": "lookup_ticket",
             "inventory": "lookup_inventory",
+            "supplier": "lookup_supplier",
             "refuse": "refuse_honestly",
         },
     )
@@ -136,10 +148,16 @@ def build_agent_graph(*, checkpointer: MemorySaver | None = None):
         route_after_tool,
         {"answer": "answer_from_inventory", "fallback": "tool_fallback"},
     )
+    builder.add_conditional_edges(
+        "lookup_supplier",
+        route_after_tool,
+        {"answer": "answer_from_supplier", "fallback": "tool_fallback"},
+    )
     builder.add_edge("generate_response", END)
     builder.add_edge("refuse_honestly", END)
     builder.add_edge("answer_from_ticket", END)
     builder.add_edge("answer_from_inventory", END)
+    builder.add_edge("answer_from_supplier", END)
     builder.add_edge("tool_fallback", END)
 
     saver = checkpointer if checkpointer is not None else MemorySaver()

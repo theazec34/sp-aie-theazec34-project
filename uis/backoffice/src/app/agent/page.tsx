@@ -136,8 +136,8 @@ export default function AgentChatPage() {
           <p className="bo-kicker">Operaciones · Felipe Guerrero</p>
           <h1>Agente de soporte para encargados</h1>
           <p className="bo-muted">
-            Conversación en vivo: la respuesta llega token a token y puedes
-            interrumpir si el agente se desvía. Sesión:{" "}
+            Datos operativos en vivo: proveedores (€), existencias, entradas/
+            salidas e historial de inventario, e incidencias. Sesión:{" "}
             <code>{sessionId || "…"}</code>
           </p>
         </div>
@@ -163,7 +163,15 @@ export default function AgentChatPage() {
 
       <section className="bo-card bo-agent-chat-log" aria-live="polite">
         {messages.length === 0 ? (
-          <p className="bo-muted">Escribe una pregunta operativa del local.</p>
+          <div className="bo-muted">
+            <p>Prueba preguntas como:</p>
+            <ul style={{ margin: "0.35rem 0 0", paddingLeft: "1.2rem" }}>
+              <li>¿Cuál es el proveedor con la tarifa más alta en €?</li>
+              <li>¿Qué stock tenemos ahora de cada ingrediente?</li>
+              <li>¿Cuáles fueron las últimas salidas de inventario?</li>
+              <li>¿Qué proveedor nos ha enviado más kg?</li>
+            </ul>
+          </div>
         ) : null}
         {messages.map((m) => (
           <article
@@ -195,7 +203,7 @@ export default function AgentChatPage() {
           placeholder={
             streaming
               ? "Escribe para interrumpir y redirigir…"
-              : "Ej. ¿Horario de proveedores en Miami Doral?"
+              : "Ej. ¿Cuál es el mayor proveedor en € y cuántos kg hemos recibido?"
           }
         />
         <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>

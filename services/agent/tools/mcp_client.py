@@ -173,6 +173,8 @@ def _invoke_inprocess(tool_name: str, arguments: dict[str, Any]) -> dict[str, An
     fn = {
         "manage_incidents": mcp_server.manage_incidents,
         "query_inventory": mcp_server.query_inventory,
+        "query_inventory_ops": mcp_server.query_inventory_ops,
+        "query_suppliers": mcp_server.query_suppliers,
         "mutate_inventory": mcp_server.mutate_inventory,
     }.get(tool_name)
     if fn is None:
@@ -193,3 +195,11 @@ def manage_incidents_via_mcp(**kwargs: Any) -> dict[str, Any]:
 
 def query_inventory_via_mcp(**kwargs: Any) -> dict[str, Any]:
     return invoke_mcp_tool("query_inventory", kwargs)
+
+
+def query_inventory_ops_via_mcp(**kwargs: Any) -> dict[str, Any]:
+    return invoke_mcp_tool("query_inventory_ops", kwargs)
+
+
+def query_suppliers_via_mcp(**kwargs: Any) -> dict[str, Any]:
+    return invoke_mcp_tool("query_suppliers", kwargs)

@@ -148,6 +148,10 @@ def test_query_inventory_and_write_rejected(mcp_env, token, caplog):
     assert listed["ok"] is True
     assert "products" in listed
 
+    ops = mcp_env.query_inventory_ops(view="summary", limit=5)
+    assert ops["ok"] is True
+    assert "summary" in ops
+
     with caplog.at_level(logging.INFO, logger="mcps.brasaland_tools"):
         denied = mcp_env.mutate_inventory(operation="create", product_id=1, payload={"x": 1})
     assert denied["ok"] is False
@@ -156,9 +160,37 @@ def test_query_inventory_and_write_rejected(mcp_env, token, caplog):
     assert any("mutate_inventory" in r.message for r in caplog.records)
 
 
+def test_query_suppliers_directory(mcp_env, token):
+    from mcps.brasaland_tools.auth import verify_dev_access_token
+
+    mcp_env.mcp_auth._context_var.set(verify_dev_access_token(token))
+    from app.suppliers.repository import SupplierRepository
+    from app.suppliers.seed_data import SUPPLIERS_SEED
+
+    repo = SupplierRepository()
+    try:
+        repo.seed_if_empty(SUPPLIERS_SEED)
+    finally:
+        repo.close()
+
+    listed = mcp_env.query_suppliers(action="top_rate", limit=5)
+    assert listed["ok"] is True
+    assert listed.get("currency") == "EUR"
+    assert listed.get("count", 0) >= 1
+    summary = mcp_env.query_suppliers(action="summary", limit=5)
+    assert summary["ok"] is True
+    assert "summary" in summary
+
+
 def test_tool_discovery_schemas(mcp_env):
     """Discovery: tool names + descriptions available without reading source."""
-    names = {"manage_incidents", "query_inventory", "mutate_inventory"}
+    names = {
+        "manage_incidents",
+        "query_inventory",
+        "query_inventory_ops",
+        "query_suppliers",
+        "mutate_inventory",
+    }
     for name in names:
         assert hasattr(mcp_env, name)
     doc = (mcp_env.manage_incidents.__doc__ or "") + str(

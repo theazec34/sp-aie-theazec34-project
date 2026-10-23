@@ -1,8 +1,13 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-23) — BrasAI proxy timeout vs login OK
-- Login OK (rápido); BrasAI fallaba: proxy cortaba a **10s** la query RAG y marcaba todos los upstreams como timeout.
-- Proxy: probe `/health` (2.5s) → elige upstream → forward **120s** en `/knowledge` `/rfp` `/agent`.
+## Estado (2026-10-23) — BrasAI = manuales; Agente = ops en vivo
+- **BrasAI:** solo RAG (lealtad, alérgenos, merma, pedidos-manual); UI con alcance + placeholder alérgenos.
+- **Agente soporte:** MCP `query_suppliers` (€/ranking) + `query_inventory_ops` (historial, entradas, salidas, resumen kg + estimado €). Intent `supplier` + inventario inteligente.
+- Tests: `test_agent_tools` / `test_mcp_server` ampliados.
+
+## Estado previo — BrasAI proxy timeout vs login OK
+- Login OK (rápido); BrasAI fallaba: proxy cortaba a **10s** la query RAG.
+- Proxy: probe `/health` → forward **120s** en `/knowledge` `/rfp` `/agent`.
 
 ## Estado previo — login timeout /api-backend
 - Causa: `.env` con `INTERNAL_API_URL=http://backend:8000` pisaba host-gateway → login 12s abort.

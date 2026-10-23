@@ -112,6 +112,7 @@ def issue_dev_token(
         "incidents:read",
         "incidents:write",
         "inventory:read",
+        "suppliers:read",
     ]
     payload: dict[str, Any] = {
         "iss": DEV_ISSUER,

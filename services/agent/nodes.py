@@ -31,11 +31,15 @@ from agent.memory.pending import get_pending  # noqa: E402
 from agent.state import AgentState  # noqa: E402
 from agent.tools.mcp_client import (  # noqa: E402
     manage_incidents_via_mcp,
+    query_inventory_ops_via_mcp,
     query_inventory_via_mcp,
+    query_suppliers_via_mcp,
 )
 from agent.tools.routing import (  # noqa: E402
     classify_intent,
+    extract_inventory_view,
     extract_product_query,
+    extract_supplier_action,
     extract_ticket_id,
 )
 
@@ -394,18 +398,42 @@ def answer_from_ticket(state: AgentState) -> dict[str, Any]:
 
 
 def lookup_inventory(state: AgentState) -> dict[str, Any]:
-    """Node — inventory stock via MCP client (read-only tool)."""
+    """Node — inventory stock / history / kg summary via MCP (read-only)."""
     question = state.get("question") or ""
+    view = extract_inventory_view(question)
     name_query = extract_product_query(question)
-    payload = query_inventory_via_mcp(name_query=name_query, limit=10)
-    products = list(payload.get("products") or []) if payload.get("ok") else []
+    timed_out = False
+    products: list[dict[str, Any]] = []
+    orders: list[dict[str, Any]] = []
+    summary: dict[str, Any] | None = None
+    source = "mcp:query_inventory"
+
+    if view == "stock":
+        payload = query_inventory_via_mcp(name_query=name_query, limit=15)
+        products = list(payload.get("products") or []) if payload.get("ok") else []
+        ok = bool(payload.get("ok")) and bool(products)
+        source = "mcp:query_inventory"
+    else:
+        payload = query_inventory_ops_via_mcp(
+            view=view, name_query=name_query, limit=15
+        )
+        source = "mcp:query_inventory_ops"
+        if view == "summary":
+            summary = payload.get("summary") if payload.get("ok") else None
+            ok = bool(payload.get("ok")) and bool(summary)
+        else:
+            orders = list(payload.get("orders") or []) if payload.get("ok") else []
+            ok = bool(payload.get("ok")) and bool(orders)
+
     timed_out = bool(payload.get("timed_out"))
-    ok = bool(payload.get("ok")) and bool(products)
     tool_result = prepare_tool_result(
         {
             "ok": ok,
-            "source": "mcp:query_inventory",
+            "source": source,
+            "view": view,
             "products": products,
+            "orders": orders,
+            "summary": summary,
             "error": None if ok else (payload.get("error") or payload.get("error_code")),
             "timed_out": timed_out,
             "mcp": payload,
@@ -425,9 +453,11 @@ def lookup_inventory(state: AgentState) -> dict[str, Any]:
     }
     out["trace"] = _append_trace(state, "lookup_inventory", {
         "name_query": name_query,
+        "view": view,
         "ok": ok,
         "timed_out": timed_out,
         "n_products": len(products),
+        "n_orders": len(orders),
         "error": tool_result.get("error"),
         "via": "mcp",
         "isolated": True,
@@ -438,19 +468,72 @@ def lookup_inventory(state: AgentState) -> dict[str, Any]:
 def answer_from_inventory(state: AgentState) -> dict[str, Any]:
     """Format inventory payload; optional memory proposal; output guard."""
     payload = state.get("tool_result") or {}
-    products = payload.get("products") or []
-    lines: list[str] = []
-    for p in products:
-        lines.append(
-            f"{p.get('name')} (SKU {p.get('sku')}): "
-            f"{p.get('current_stock')} {p.get('unit')} — "
-            f"categoría {p.get('category')}, país {p.get('country')}."
+    view = payload.get("view") or "stock"
+    answer: str
+
+    if view == "summary" and payload.get("summary"):
+        s = payload["summary"]
+        lines = [
+            "Resumen operativo de inventario (datos en vivo):",
+            f"- Productos: {s.get('products_count')}; "
+            f"entradas qty={s.get('inbound_qty_total')}; "
+            f"salidas qty={s.get('outbound_qty_total')} "
+            f"({s.get('inbound_count')} inbound / {s.get('outbound_count')} outbound).",
+        ]
+        tops = s.get("top_suppliers_by_inbound_qty") or []
+        if tops:
+            lines.append("Proveedores con más cantidad recibida (inbound):")
+            for row in tops[:5]:
+                lines.append(
+                    f"  · {row.get('supplier_name')}: {row.get('total_qty')} ud/kg "
+                    f"(tarifa {row.get('rate_per_unit_eur')} €/u, "
+                    f"estimado {row.get('estimated_value_eur')} €)."
+                )
+        hi = s.get("highest_tariff_supplier")
+        if hi:
+            lines.append(
+                f"Mayor tarifa activa en directorio: {hi.get('name')} — "
+                f"{hi.get('rate_per_unit')} {hi.get('currency', 'EUR')}/unidad "
+                f"({', '.join(hi.get('categories') or [])})."
+            )
+        stock = s.get("top_stock") or []
+        if stock:
+            lines.append("Mayor stock actual:")
+            for p in stock[:5]:
+                lines.append(
+                    f"  · {p.get('name')}: {p.get('current_stock')} {p.get('unit')}"
+                )
+        answer = "\n".join(lines)
+    elif view in {"history", "inbound", "outbound"} and payload.get("orders"):
+        label = {
+            "history": "Historial de movimientos",
+            "inbound": "Últimas entradas (inbound)",
+            "outbound": "Últimas salidas (outbound)",
+        }.get(str(view), "Movimientos")
+        lines = [f"{label}:"]
+        for o in payload["orders"][:12]:
+            who = o.get("supplier_name") or o.get("reason") or "—"
+            lines.append(
+                f"- [{o.get('kind')}] {o.get('ingredient_name')}: "
+                f"{o.get('quantity')} {o.get('unit') or 'u'} "
+                f"({who}) — {o.get('created_at')}"
+            )
+        answer = "\n".join(lines)
+    else:
+        products = payload.get("products") or []
+        lines = []
+        for p in products:
+            lines.append(
+                f"{p.get('name')} (SKU {p.get('sku')}): "
+                f"{p.get('current_stock')} {p.get('unit')} — "
+                f"categoría {p.get('category')}, país {p.get('country')}."
+            )
+        answer = (
+            "Stock actual según inventario: " + " ".join(lines)
+            if lines
+            else "No encontré productos de inventario para esa consulta."
         )
-    answer = (
-        "Stock actual según inventario: " + " ".join(lines)
-        if lines
-        else "No encontré productos de inventario para esa consulta."
-    )
+
     question = state.get("question") or ""
     answer, proposal_dump = _maybe_attach_proposal(state, question, answer)
     answer = _finalize_answer(state, answer)
@@ -460,8 +543,114 @@ def answer_from_inventory(state: AgentState) -> dict[str, Any]:
         "memory_proposal": proposal_dump,
     }
     out["trace"] = _append_trace(state, "answer_from_inventory", {
-        "n_products": len(products),
-        "source": "mcp:query_inventory",
+        "view": view,
+        "n_products": len(payload.get("products") or []),
+        "n_orders": len(payload.get("orders") or []),
+        "source": payload.get("source") or "mcp:query_inventory",
+        "proposed_memory": proposal_dump is not None,
+        "output_guarded": True,
+    })
+    return out
+
+
+def lookup_supplier(state: AgentState) -> dict[str, Any]:
+    """Node — supplier directory via MCP (read-only, EUR)."""
+    question = state.get("question") or ""
+    action = extract_supplier_action(question)
+    payload = query_suppliers_via_mcp(action=action, limit=15)
+    timed_out = bool(payload.get("timed_out"))
+    ok = bool(payload.get("ok")) and (
+        bool(payload.get("suppliers"))
+        or bool(payload.get("summary"))
+    )
+    tool_result = prepare_tool_result(
+        {
+            "ok": ok,
+            "source": "mcp:query_suppliers",
+            "action": action,
+            "suppliers": list(payload.get("suppliers") or []),
+            "summary": payload.get("summary"),
+            "error": None if ok else (payload.get("error") or payload.get("error_code")),
+            "timed_out": timed_out,
+            "mcp": payload,
+        },
+        session_id=_session_id(state),
+    )
+    sources = list(state.get("sources_used") or [])
+    if "supplier_tool" not in sources:
+        sources = sources + ["supplier_tool"]
+    if "mcp" not in sources:
+        sources = sources + ["mcp"]
+    out: dict[str, Any] = {
+        "tool_ok": ok,
+        "tool_result": tool_result,
+        "sources_used": sources,
+        "error": None if ok else (tool_result.get("error") or "supplier_not_found"),
+    }
+    out["trace"] = _append_trace(state, "lookup_supplier", {
+        "action": action,
+        "ok": ok,
+        "timed_out": timed_out,
+        "n_suppliers": len(tool_result.get("suppliers") or []),
+        "via": "mcp",
+        "isolated": True,
+    })
+    return out
+
+
+def answer_from_supplier(state: AgentState) -> dict[str, Any]:
+    """Format supplier directory payload in EUR."""
+    payload = state.get("tool_result") or {}
+    action = payload.get("action") or "summary"
+    if action == "summary" and payload.get("summary"):
+        s = payload["summary"]
+        hi = s.get("highest_rate_active") or {}
+        lines = [
+            f"Directorio de proveedores: {s.get('count')} fichas "
+            f"({s.get('active_count')} activos), moneda {s.get('currency', 'EUR')}.",
+        ]
+        if hi:
+            lines.append(
+                f"Mayor tarifa activa: **{hi.get('name')}** — "
+                f"{hi.get('rate_per_unit')} €/unidad "
+                f"({', '.join(hi.get('categories') or [])}, {hi.get('country')})."
+            )
+        tops = s.get("top_by_rate_eur") or []
+        if tops:
+            lines.append("Top tarifas (€/unidad):")
+            for t in tops[:8]:
+                lines.append(
+                    f"- {t.get('name')}: {t.get('rate_per_unit')} € "
+                    f"[{t.get('status')}]"
+                )
+        answer = "\n".join(lines)
+    else:
+        suppliers = payload.get("suppliers") or []
+        lines = ["Proveedores (tarifas en €):"]
+        for s in suppliers[:12]:
+            cats = ", ".join(s.get("categories") or [])
+            lines.append(
+                f"- {s.get('name')}: {s.get('rate_per_unit')} €/u — "
+                f"{cats} ({s.get('country')}, {s.get('status')})"
+            )
+        answer = (
+            "\n".join(lines)
+            if suppliers
+            else "No encontré proveedores que coincidan con esa consulta."
+        )
+
+    question = state.get("question") or ""
+    answer, proposal_dump = _maybe_attach_proposal(state, question, answer)
+    answer = _finalize_answer(state, answer)
+    out: dict[str, Any] = {
+        "answer": answer,
+        "error": None,
+        "memory_proposal": proposal_dump,
+    }
+    out["trace"] = _append_trace(state, "answer_from_supplier", {
+        "action": action,
+        "n_suppliers": len(payload.get("suppliers") or []),
+        "source": "mcp:query_suppliers",
         "proposed_memory": proposal_dump is not None,
         "output_guarded": True,
     })
@@ -488,11 +677,16 @@ def tool_fallback(state: AgentState) -> dict[str, Any]:
             "revisa el panel de incidencias."
         )
         reason = err
+    elif intent == "supplier":
+        answer = (
+            "No pude leer el directorio de proveedores ahora mismo. "
+            "No invento tarifas: revisa el módulo Proveedores del backoffice."
+        )
+        reason = err
     else:
         answer = (
-            "No pude confirmar el stock en el inventario ahora mismo. "
-            "No invento existencias: prueba otro nombre/SKU o revisa el "
-            "backoffice de inventario."
+            "No pude confirmar inventario (stock/historial/kg) ahora mismo. "
+            "No invento existencias: revisa Existencias o Historial en el backoffice."
         )
         reason = err
     out: dict[str, Any] = {
@@ -515,7 +709,8 @@ def refuse_honestly(state: AgentState) -> dict[str, Any]:
     if reason == "empty_question":
         answer = (
             "No recibí una pregunta válida. Puedes preguntar por manuales "
-            "(lealtad, alérgenos…), por una incidencia (#id) o por stock."
+            "(BrasAI), por proveedores/tarifas €, por stock/salidas/historial, "
+            "o por una incidencia (#id)."
         )
     else:
         answer = refusal_message()
