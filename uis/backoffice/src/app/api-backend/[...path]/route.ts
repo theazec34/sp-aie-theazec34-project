@@ -1,8 +1,9 @@
 /**
  * Proxy same-origin → API interna.
- * Más fiable que `rewrites` de next.config con Turbopack + Docker/Codespaces.
- * Prueba varios upstreams; host.docker.internal primero (Codespaces);
- * fallos a backend:8000 con timeout corto para no tumbar el login (12s).
+ *
+ * Codespaces: TCP a backend:8000 suele TIMEOUT; host.docker.internal funciona.
+ * BrasAI/RAG puede tardar >10s — primero elegimos upstream con /health (rápido),
+ * luego reenviamos la petición real con timeout largo.
  */
 import http from "node:http";
 import https from "node:https";
@@ -24,35 +25,44 @@ const HOP_BY_HOP = new Set([
   "content-length",
 ]);
 
+const PROBE_MS = 2_500;
+const DEFAULT_FORWARD_MS = 30_000;
+const LONG_FORWARD_MS = 120_000;
+
 function upstreamCandidates(): string[] {
   const primary = (
     process.env.INTERNAL_API_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
     "http://host.docker.internal:8000"
   ).replace(/\/$/, "");
-  // host-gateway primero: en Codespaces TCP a backend:8000 hace TIMEOUT.
-  const alts = [
-    "http://host.docker.internal:8000",
-    primary,
-    "http://backend:8000",
-    "http://brasaland-backend:8000",
-    "http://127.0.0.1:8000",
+  return [
+    ...new Set([
+      "http://host.docker.internal:8000",
+      primary,
+      "http://backend:8000",
+      "http://brasaland-backend:8000",
+    ]),
   ];
-  return [...new Set(alts)];
 }
 
-function timeoutFor(base: string): number {
-  // Fallar rápido en hostnames Docker que cuelgan; dar margen al host-gateway.
-  if (base.includes("backend") && !base.includes("host.docker")) return 2_500;
-  if (base.includes("127.0.0.1")) return 2_000;
-  return 10_000;
+function forwardTimeoutMs(suffix: string): number {
+  // RAG / setup / agent pueden superar 30s
+  if (
+    suffix.startsWith("/knowledge") ||
+    suffix.startsWith("/rag") ||
+    suffix.startsWith("/agent") ||
+    suffix.startsWith("/rfp")
+  ) {
+    return LONG_FORWARD_MS;
+  }
+  return DEFAULT_FORWARD_MS;
 }
 
 function nodeFetch(
   dest: string,
   init: {
     method: string;
-    headers: Headers;
+    headers?: Headers;
     body?: Buffer;
     timeoutMs: number;
   }
@@ -60,7 +70,7 @@ function nodeFetch(
   const url = new URL(dest);
   const lib = url.protocol === "https:" ? https : http;
   const headers: Record<string, string> = {};
-  init.headers.forEach((value, key) => {
+  init.headers?.forEach((value, key) => {
     if (!HOP_BY_HOP.has(key.toLowerCase())) headers[key] = value;
   });
 
@@ -104,6 +114,26 @@ function nodeFetch(
   });
 }
 
+async function pickUpstream(): Promise<{ base: string } | { errors: string[] }> {
+  const errors: string[] = [];
+  for (const base of upstreamCandidates()) {
+    try {
+      const res = await nodeFetch(`${base}/health`, {
+        method: "GET",
+        timeoutMs: PROBE_MS,
+      });
+      if (res.status >= 200 && res.status < 500) {
+        return { base };
+      }
+      errors.push(`${base}: HTTP ${res.status}`);
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : "unreachable";
+      errors.push(`${base}: ${detail}`);
+    }
+  }
+  return { errors };
+}
+
 async function proxy(
   req: NextRequest,
   context: { params: Promise<{ path: string[] }> }
@@ -121,37 +151,40 @@ async function proxy(
     body = Buffer.from(await req.arrayBuffer());
   }
 
-  const errors: string[] = [];
-  for (const base of upstreamCandidates()) {
-    const dest = `${base}${suffix}`;
-    try {
-      const upstream = await nodeFetch(dest, {
-        method: req.method,
-        headers,
-        body,
-        timeoutMs: timeoutFor(base),
-      });
-      return new NextResponse(new Uint8Array(upstream.body), {
-        status: upstream.status,
-        statusText: upstream.statusText,
-        headers: upstream.headers,
-      });
-    } catch (err) {
-      const detail = err instanceof Error ? err.message : "unreachable";
-      errors.push(`${base}: ${detail}`);
-    }
+  const picked = await pickUpstream();
+  if ("errors" in picked) {
+    return NextResponse.json(
+      {
+        detail:
+          `Proxy /api-backend no alcanzó la API (${picked.errors.join(" | ")}). ` +
+          `Comprueba: curl -sS http://127.0.0.1:8000/health && docker compose ps. ` +
+          `Si health OK: docker compose up -d --force-recreate --no-deps interfaces`,
+      },
+      { status: 502 }
+    );
   }
 
-  return NextResponse.json(
-    {
-      detail:
-        `Proxy /api-backend no alcanzó la API (${errors.join(" | ")}). ` +
-        `Comprueba: docker compose ps && curl :8000/health. ` +
-        `Recrea interfaces: docker compose up -d --force-recreate --no-deps interfaces. ` +
-        `Login con URL «/api-backend».`,
-    },
-    { status: 502 }
-  );
+  try {
+    const upstream = await nodeFetch(`${picked.base}${suffix}`, {
+      method: req.method,
+      headers,
+      body,
+      timeoutMs: forwardTimeoutMs(suffix),
+    });
+    return new NextResponse(new Uint8Array(upstream.body), {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: upstream.headers,
+    });
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : "unreachable";
+    return NextResponse.json(
+      {
+        detail: `Proxy /api-backend falló en ${picked.base}${suffix} (${detail}).`,
+      },
+      { status: 502 }
+    );
+  }
 }
 
 export const GET = proxy;
