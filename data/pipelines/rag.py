@@ -201,6 +201,13 @@ def retrieve(
     _load_env()
     threshold = _default_min_score() if min_score is None else min_score
     coll = collection or collection_name()
+    # Con hash embeddings el vector engaña (p.ej. «fidelización» → pedidos).
+    # Priorizamos keyword overlap sobre el corpus pequeño de manuales.
+    if _embedding_provider() in {"hash", "offline", "local"}:
+        kw = _keyword_retrieve(query.strip(), k=k, collection=coll)
+        if kw:
+            return kw
+
     vector = embed(query.strip())
     hits = _search(vector=vector, k=k, collection=coll)
 
@@ -216,7 +223,6 @@ def retrieve(
     if payloads:
         return payloads
 
-    # Hash / cold collection: vector search often empty → keyword fallback.
     logger.info("vector retrieve empty for %r — trying keyword fallback", query[:80])
     return _keyword_retrieve(query.strip(), k=k, collection=coll)
 

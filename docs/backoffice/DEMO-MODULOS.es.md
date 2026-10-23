@@ -1,7 +1,27 @@
 # Demo rápida de módulos (backoffice `:3001`)
 
+## Seed demo multi-sede (preguntas del agente)
+Al arrancar el backend se ejecuta `seed_demo_ops.py` (además de suppliers/inventory).
+Crea proveedores por sede (`notes` con `branch=miami_doral`…), reservas **hoy/mañana**,
+candidaturas, movimientos de inventario (kg) e incidencias.
+
+```bash
+# Re-sembrar a mano (idempotente; fuerza con SEED_DEMO_FORCE=1)
+docker compose exec -T backend python seed_demo_ops.py
+# o:
+docker compose exec -T backend sh -c 'SEED_DEMO_FORCE=1 python seed_demo_ops.py'
+```
+
+Preguntas útiles al **Agente soporte**:
+- ¿Cuál es el proveedor con la tarifa más alta en €?
+- ¿Qué proveedor nos ha enviado más kg?
+- ¿Qué stock tenemos ahora?
+- ¿Estado de la incidencia en Miami Doral?
+
+Reservas/candidaturas sembradas también aparecen en **Reservas web** / **Candidaturas**.
+
 ## Reservas / Candidaturas
-Solo llegan si se envían desde la web (`:3000/reservas`, `/trabaja-con-nosotros`).  
+También llegan si se envían desde la web (`:3000/reservas`, `/trabaja-con-nosotros`).  
 `reservas@brasaland.com` es un `mailto:` — **no** hay bandeja de correo en el panel.
 
 ## Recepción de RFP

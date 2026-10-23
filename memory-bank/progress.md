@@ -1,9 +1,12 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-23) — BrasAI razona con LLM si hay API key
-- Causa «no razona»: modo grounded pegaba chunks. Ahora LLM auto si `GENERATION_*` + key (o `GENERATION_USE_LLM=1`); fallback grounded.
-- `.env` demo: `RAG_MIN_SCORE=0.05`, `INTERNAL_API_URL=host.docker.internal`, offscope «cuál es el menú».
-- Agente inventario: timeout 12s + fallback stock/tarifas si falla `query_inventory_ops`.
+## Estado (2026-10-23) — seed demo multi-sede + RAG hash keyword-first
+- `seed_demo_ops.py`: proveedores por sede (`branch=`), reservas hoy/mañana, candidaturas, inventario kg, incidencias. Entrypoint lo lanza en background.
+- BrasAI errático con hash: **keyword retrieve primero** (evita «fidelización» → pedidos).
+- LLM auto con API key; agente HTTP si WS caído.
+
+## Estado previo — BrasAI razona con LLM si hay API key
+- LLM auto si `GENERATION_*` + key; `RAG_MIN_SCORE` bajo con hash; offscope menú.
 
 ## Estado previo — BrasAI keyword + Agente HTTP fallback
 - Keyword fallback + WS→HTTP; sede desplegable.
