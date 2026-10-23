@@ -18,6 +18,7 @@ def test_retrieve_filters_below_min_score(monkeypatch: pytest.MonkeyPatch) -> No
         _FakeHit(id=1, score=0.9, payload={"text": "a", "source_document": "loyalty-program"}),
         _FakeHit(id=2, score=0.5, payload={"text": "b", "source_document": "waste-protocol"}),
     ]
+    monkeypatch.setattr(rag_pipeline, "_embedding_provider", lambda: "fastembed")
     monkeypatch.setattr(rag_pipeline, "embed", lambda _q: [0.1, 0.2, 0.3])
     monkeypatch.setattr(rag_pipeline, "_search", lambda **_kw: fake_hits)
 
@@ -32,6 +33,7 @@ def test_retrieve_may_return_fewer_than_k(monkeypatch: pytest.MonkeyPatch) -> No
     fake_hits = [
         _FakeHit(id=1, score=0.8, payload={"text": "only"}),
     ]
+    monkeypatch.setattr(rag_pipeline, "_embedding_provider", lambda: "fastembed")
     monkeypatch.setattr(rag_pipeline, "embed", lambda _q: [0.0])
     monkeypatch.setattr(rag_pipeline, "_search", lambda **_kw: fake_hits)
 
@@ -110,6 +112,46 @@ def test_retrieve_keyword_fallback_when_vector_empty(
     result = rag_pipeline.retrieve("Que son los Brasa Points?", k=3, min_score=0.9)
     assert result
     assert "Brasa Points" in result[0]["text"]
+
+
+def test_retrieve_hash_prefers_keyword_over_misleading_vector(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("EMBEDDING_PROVIDER", "hash")
+    monkeypatch.setattr(
+        rag_pipeline,
+        "_search",
+        lambda **_kw: [
+            type(
+                "H",
+                (),
+                {
+                    "score": 0.9,
+                    "payload": {
+                        "text": "Pedidos de emergencia con recargo 8%.",
+                        "source_document": "supplier-ordering",
+                    },
+                },
+            )()
+        ],
+    )
+    monkeypatch.setattr(
+        rag_pipeline,
+        "_scroll_all_payloads",
+        lambda *_a, **_k: [
+            {
+                "text": "Niveles del programa: Plata, Oro y Platino de fidelización.",
+                "source_document": "loyalty-program",
+            },
+            {
+                "text": "Pedidos de emergencia con recargo 8%.",
+                "source_document": "supplier-ordering",
+            },
+        ],
+    )
+    result = rag_pipeline.retrieve("niveles de fidelización", k=3)
+    assert result
+    assert "loyalty" in result[0].get("source_document", "")
 
 
 def test_generate_defaults_to_grounded_without_credentials(

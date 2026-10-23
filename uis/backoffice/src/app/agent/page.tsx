@@ -263,7 +263,12 @@ export default function AgentChatPage() {
               <li>¿Qué stock tenemos ahora de cada ingrediente?</li>
               <li>¿Cuáles fueron las últimas salidas de inventario?</li>
               <li>¿Qué proveedor nos ha enviado más kg?</li>
+              <li>¿Estado de la incidencia en Miami Doral?</li>
             </ul>
+            <p style={{ marginTop: "0.5rem" }}>
+              Tras <code>seed_demo_ops</code> hay proveedores/reservas/candidaturas
+              por sede (hoy y mañana). Reservas web y Candidaturas en el panel.
+            </p>
           </div>
         ) : null}
         {messages.map((m) => (
