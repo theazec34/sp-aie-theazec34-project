@@ -15,7 +15,7 @@ from typing import Any
 logger = logging.getLogger("agent.tools.mcp_client")
 
 DEFAULT_MCP_URL = os.getenv("MCP_SERVER_URL", "http://127.0.0.1:8100/mcp")
-DEFAULT_TIMEOUT_S = float(os.getenv("AGENT_TOOL_TIMEOUT_S", "4"))
+DEFAULT_TIMEOUT_S = float(os.getenv("AGENT_TOOL_TIMEOUT_S", "12"))
 
 
 def _bearer_token() -> str:

@@ -275,8 +275,8 @@ def _openai_generate(question: str, context: list[dict[str, Any]]) -> str:
             "GENERATION_BASE_URL and GENERATION_MODEL_ID required for "
             "GENERATION_PROVIDER=openai"
         )
-    # 25s: en Codespaces un gateway lento no debe dejar la UI en «Consultando…»
-    client = OpenAI(base_url=base_url, api_key=api_key, timeout=25.0)
+    # 18s: razonar con LLM; si el gateway no llega, grounded hace fallback
+    client = OpenAI(base_url=base_url, api_key=api_key, timeout=18.0)
     if not context:
         user = (
             f"No se recuperó contexto relevante de los manuales.\n\n"
@@ -314,19 +314,55 @@ def _openai_generate(question: str, context: list[dict[str, Any]]) -> str:
     raise last_exc
 
 
+def _llm_credentials_ready() -> bool:
+    base_url, api_key, model_id = _generation_settings()
+    if not base_url or not model_id:
+        return False
+    key = (api_key or "").strip()
+    return bool(key) and key.lower() not in {"not-needed", "changeme", "xxx"}
+
+
+def _should_use_llm() -> bool:
+    """Use LLM when credentials exist, unless GENERATION_USE_LLM=0."""
+    flag = os.getenv("GENERATION_USE_LLM", "").strip().lower()
+    if flag in {"0", "false", "no"}:
+        return False
+    if flag in {"1", "true", "yes"}:
+        return True
+    # Auto: si hay API key de 4Geeks/OpenAI → razonar con LLM
+    return generation_provider() == "openai" and _llm_credentials_ready()
+
+
+_OFFSCOPE_MENU = re.compile(
+    r"("
+    r"cu[aá]l\s+es\s+el\s+men[uú]\s*\??\s*$|"
+    r"carta\s+completa|todo\s+el\s+men[uú]|"
+    r"qu[eé]\s+hay\s+en\s+la\s+carta"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _offscope_message(question: str) -> str | None:
+    """Honest redirect when the manuals cannot answer the ask."""
+    q = question or ""
+    if _OFFSCOPE_MENU.search(q):
+        return (
+            "BrasAI no tiene la carta completa del restaurante: solo el manual "
+            "de alérgenos por plato. Prueba p.ej. «¿Qué alérgenos tiene la "
+            "Costilla BBQ?» o «¿La paella tiene gluten?». Para stock/proveedores "
+            "usa el Agente soporte."
+        )
+    return None
+
+
 def generate_answer(question: str, context: list[dict[str, Any]]) -> str:
     """Generation step only — reusable by agents without re-running retrieve."""
     if not question or not question.strip():
         raise ValueError("generate_answer() requires a non-empty question")
     _load_env()
     provider = generation_provider()
-    # Codespaces: LLM gateway suele ser lento/inestable. Por defecto respondemos
-    # grounded (rápido, fiel al manual). Opt-in LLM: GENERATION_USE_LLM=1.
-    prefer_llm = os.getenv("GENERATION_USE_LLM", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-    }
+    prefer_llm = _should_use_llm()
     if not context:
         if provider == "openai" and prefer_llm:
             try:
@@ -342,7 +378,6 @@ def generate_answer(question: str, context: list[dict[str, Any]]) -> str:
             logger.warning("openai generation failed, grounded fallback: %s", exc)
             return _grounded_generate(question.strip(), context)
     if provider in {"grounded", "openai"}:
-        # openai without GENERATION_USE_LLM → grounded (rápido y usable)
         return _grounded_generate(question.strip(), context)
     raise RuntimeError(f"Unknown GENERATION_PROVIDER={provider!r}")
 
@@ -351,9 +386,24 @@ def query(question: str) -> str:
     """Pipeline entry: retrieve → generate_answer. Returns answer string only."""
     if not question or not question.strip():
         raise ValueError("query() requiere una pregunta no vacía")
-    chunks = retrieve(question.strip())
-    # Strip scores before generation prompt / agent reuse surface
-    clean = [
-        {k: v for k, v in c.items() if k != "score"} for c in chunks
-    ]
-    return generate_answer(question.strip(), clean)
+    q = question.strip()
+    off = _offscope_message(q)
+    if off:
+        return off
+
+    chunks = retrieve(q)
+    if not chunks:
+        return generate_answer(q, [])
+
+    # Filtrar ruido del keyword fallback. Si no hay score (tests/mocks), aceptar.
+    scored = [c for c in chunks if "score" in c]
+    if scored:
+        strong = [c for c in scored if float(c.get("score") or 0) >= 0.34]
+        use = strong or scored[:1]
+        if float(use[0].get("score") or 0) < 0.2:
+            return refusal_message()
+    else:
+        use = chunks
+
+    clean = [{k: v for k, v in c.items() if k != "score"} for c in use]
+    return generate_answer(q, clean)

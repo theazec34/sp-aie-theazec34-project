@@ -397,6 +397,41 @@ def answer_from_ticket(state: AgentState) -> dict[str, Any]:
     return out
 
 
+def _compose_inventory_summary_fallback() -> dict[str, Any]:
+    """If query_inventory_ops missing/fails, build a minimal summary from stock + suppliers."""
+    inv = query_inventory_via_mcp(limit=50)
+    products = list(inv.get("products") or []) if inv.get("ok") else []
+    from agent.tools.mcp_client import query_suppliers_via_mcp
+
+    sup = query_suppliers_via_mcp(action="summary", limit=10)
+    summary_sup = sup.get("summary") if sup.get("ok") else {}
+    return {
+        "ok": bool(inv.get("ok")),
+        "view": "summary",
+        "summary": {
+            "currency": "EUR",
+            "products_count": len(products),
+            "inbound_count": 0,
+            "outbound_count": 0,
+            "inbound_qty_total": 0.0,
+            "outbound_qty_total": 0.0,
+            "top_suppliers_by_inbound_qty": [],
+            "top_stock": sorted(
+                products,
+                key=lambda p: float(p.get("current_stock") or 0),
+                reverse=True,
+            )[:10],
+            "highest_tariff_supplier": (summary_sup or {}).get("highest_rate_active"),
+            "note": (
+                "Resumen parcial: no hay historial inbound/outbound disponible "
+                "en esta sesión; se muestra stock actual y mayor tarifa del directorio."
+            ),
+        },
+        "timed_out": bool(inv.get("timed_out")),
+        "error": inv.get("error") or inv.get("error_code"),
+    }
+
+
 def lookup_inventory(state: AgentState) -> dict[str, Any]:
     """Node — inventory stock / history / kg summary via MCP (read-only)."""
     question = state.get("question") or ""
@@ -407,6 +442,7 @@ def lookup_inventory(state: AgentState) -> dict[str, Any]:
     orders: list[dict[str, Any]] = []
     summary: dict[str, Any] | None = None
     source = "mcp:query_inventory"
+    payload: dict[str, Any]
 
     if view == "stock":
         payload = query_inventory_via_mcp(name_query=name_query, limit=15)
@@ -418,12 +454,29 @@ def lookup_inventory(state: AgentState) -> dict[str, Any]:
             view=view, name_query=name_query, limit=15
         )
         source = "mcp:query_inventory_ops"
+        if not payload.get("ok") and view == "summary":
+            payload = _compose_inventory_summary_fallback()
+            source = "mcp:query_inventory+query_suppliers"
         if view == "summary":
             summary = payload.get("summary") if payload.get("ok") else None
-            ok = bool(payload.get("ok")) and bool(summary)
+            # summary vacío (0 productos) sigue siendo respuesta válida
+            ok = bool(payload.get("ok")) and summary is not None
         else:
             orders = list(payload.get("orders") or []) if payload.get("ok") else []
             ok = bool(payload.get("ok")) and bool(orders)
+            if not ok and view in {"history", "inbound", "outbound"}:
+                # Sin movimientos: di stock en vez de fallback opaco
+                stock_payload = query_inventory_via_mcp(limit=15)
+                products = (
+                    list(stock_payload.get("products") or [])
+                    if stock_payload.get("ok")
+                    else []
+                )
+                if products:
+                    view = "stock"
+                    payload = stock_payload
+                    source = "mcp:query_inventory"
+                    ok = True
 
     timed_out = bool(payload.get("timed_out"))
     tool_result = prepare_tool_result(
@@ -480,6 +533,8 @@ def answer_from_inventory(state: AgentState) -> dict[str, Any]:
             f"salidas qty={s.get('outbound_qty_total')} "
             f"({s.get('inbound_count')} inbound / {s.get('outbound_count')} outbound).",
         ]
+        if s.get("note"):
+            lines.append(f"- Nota: {s.get('note')}")
         tops = s.get("top_suppliers_by_inbound_qty") or []
         if tops:
             lines.append("Proveedores con más cantidad recibida (inbound):")

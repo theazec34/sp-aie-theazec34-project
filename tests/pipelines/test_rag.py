@@ -112,14 +112,17 @@ def test_retrieve_keyword_fallback_when_vector_empty(
     assert "Brasa Points" in result[0]["text"]
 
 
-def test_generate_defaults_to_grounded_without_llm_flag(
+def test_generate_defaults_to_grounded_without_credentials(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("GENERATION_PROVIDER", "openai")
     monkeypatch.delenv("GENERATION_USE_LLM", raising=False)
+    monkeypatch.delenv("GENERATION_API_KEY", raising=False)
+    monkeypatch.delenv("GENERATION_BASE_URL", raising=False)
+    monkeypatch.delenv("GENERATION_MODEL_ID", raising=False)
 
     def _boom(*_a, **_k):
-        raise AssertionError("LLM must not run unless GENERATION_USE_LLM=1")
+        raise AssertionError("LLM must not run without credentials")
 
     monkeypatch.setattr(rag_pipeline, "_openai_generate", _boom)
     answer = rag_pipeline.generate_answer(
@@ -133,3 +136,8 @@ def test_generate_defaults_to_grounded_without_llm_flag(
     )
     assert "Brasa Points" in answer
     assert "manuales" in answer.lower()
+
+
+def test_offscope_menu_redirect() -> None:
+    msg = rag_pipeline.query("cual es el menu?")
+    assert "carta completa" in msg.lower() or "alérgenos" in msg.lower()
