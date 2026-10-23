@@ -6,7 +6,7 @@
 - **API** `services/api` — FastAPI/uvicorn, puerto **8000** (`/docs`)
 - **Redis / Celery / Flower** — broker `:6379`, Flower `:5555` (DEV-55)
 - **Qdrant** — `:6333` (RAG)
-- **Docker:** `docker compose up` (ver `DOCKER.md`)
+- **Docker:** `docker compose up` (ver `DOCKER.md`); backend/worker usan DNS `8.8.8.8`/`1.1.1.1` (egress LLM en Codespaces)
 - **TS Hito 2:** `src/` — `npm run typecheck` / `npm run demo`
 - **E2E:** Playwright → website `:3000` (`npm run test:e2e`)
 - **API tests:** `cd services/api && uv run pytest`
