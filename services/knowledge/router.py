@@ -1,6 +1,8 @@
 """Knowledge-base query API — Phase 3.
 
 POST /knowledge/query → { "answer": "..." } only (no raw Qdrant hits).
+POST /knowledge/reindex → starts background job (no HTTP 504 on long embeds).
+GET  /knowledge/reindex/status → poll job.
 """
 
 from __future__ import annotations
@@ -27,6 +29,7 @@ from app.rate_limit import (  # noqa: E402
 from app.users.models import UserInDB  # noqa: E402
 from data.pipelines.rag import query as rag_query  # noqa: E402
 from data.process.rag import setup as rag_setup  # noqa: E402
+from knowledge.reindex_job import get_status, start_reindex  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +46,10 @@ class KnowledgeQueryResponse(BaseModel):
 
 class ReindexResponse(BaseModel):
     status: str
-    collection: str
-    chunks_indexed: int
+    collection: str = "brasaland_knowledge"
+    chunks_indexed: int = 0
+    message: str = ""
+    error: str | None = None
 
 
 def _collection_is_empty() -> bool:
@@ -81,13 +86,24 @@ def knowledge_query(
         ),
     )
     try:
+        job = get_status()
+        if job.get("status") == "running":
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "BrasAI está reindexando manuales ahora mismo. "
+                    "Espera unos segundos y vuelve a preguntar."
+                ),
+            )
         if _collection_is_empty():
             logger.info("BrasAI: colección vacía — indexando corpus…")
             rag_setup()
         answer = rag_query(body.question.strip())
+    except HTTPException:
+        raise
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001 — never leak stack traces to clients
         logger.exception("knowledge query failed")
         raise HTTPException(
             status_code=503,
@@ -103,14 +119,50 @@ def knowledge_query(
 def knowledge_reindex(
     _user: UserInDB = Depends(get_current_user),
 ) -> ReindexResponse:
-    """Re-run setup() (idempotent upsert) — ops helper, not required by UI."""
-    try:
-        result = rag_setup()
-    except Exception as exc:  # noqa: BLE001
-        logger.exception("knowledge reindex failed")
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    """Start background reindex — returns immediately (poll /reindex/status)."""
+    job = start_reindex(recreate=True)
+    status = str(job.get("status") or "started")
+    if status == "running":
+        return ReindexResponse(
+            status="running",
+            message=(
+                "Reindexación en curso en segundo plano. "
+                "No hace falta volver a pulsar; consulta el estado o espera ~1–3 min."
+            ),
+        )
     return ReindexResponse(
-        status="ok",
-        collection=str(result["collection"]),
-        chunks_indexed=int(result["chunks_indexed"]),
+        status=status,
+        message="Reindexación iniciada en segundo plano.",
+    )
+
+
+@router.get("/reindex/status", response_model=ReindexResponse)
+def knowledge_reindex_status(
+    _user: UserInDB = Depends(get_current_user),
+) -> ReindexResponse:
+    """Poll background reindex job."""
+    job = get_status()
+    status = str(job.get("status") or "idle")
+    result = job.get("result") or {}
+    if status == "done":
+        return ReindexResponse(
+            status="done",
+            collection=str(result.get("collection") or "brasaland_knowledge"),
+            chunks_indexed=int(result.get("chunks_indexed") or 0),
+            message="Manuales indexados. Ya puedes preguntar a BrasAI.",
+        )
+    if status == "error":
+        return ReindexResponse(
+            status="error",
+            error=str(job.get("error") or "reindex_failed"),
+            message="Falló la reindexación. Revisa logs del backend o prueba por CLI.",
+        )
+    if status == "running":
+        return ReindexResponse(
+            status="running",
+            message="Indexando… (embeddings + Qdrant). Puede tardar 1–3 min.",
+        )
+    return ReindexResponse(
+        status="idle",
+        message="No hay reindexación en curso.",
     )

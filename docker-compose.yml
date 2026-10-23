@@ -35,6 +35,7 @@ services:
       - ./services/celery_app.py:/app/celery_app.py
       - ./services/tasks:/app/tasks
       - ./services/agent:/app/agent
+      - ./services/knowledge:/app/knowledge
       - ./packages:/packages
       - ./docs/company-knowledge-base:/app/docs/company-knowledge-base:ro
       - ./data:/app/data:ro
