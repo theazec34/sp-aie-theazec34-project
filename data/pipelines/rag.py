@@ -12,10 +12,12 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import time
 from typing import Any
 
 from data.process.rag import (
+    _embedding_provider,
     _load_env,
     collection_name,
     embed,
@@ -55,12 +57,72 @@ REFUSAL_ES = (
 
 def _default_min_score() -> float:
     raw = os.getenv("RAG_MIN_SCORE", "").strip()
-    return float(raw) if raw else DEFAULT_MIN_SCORE
+    if raw:
+        return float(raw)
+    # Hash embeddings are not semantic — keep a low bar; keyword fallback covers misses.
+    if _embedding_provider() in {"hash", "offline", "local"}:
+        return 0.05
+    return DEFAULT_MIN_SCORE
 
 
 def _default_top_k() -> int:
     raw = os.getenv("RAG_TOP_K", "").strip()
     return int(raw) if raw else DEFAULT_TOP_K
+
+
+def _tokenize(text: str) -> set[str]:
+    return {
+        t
+        for t in re.findall(r"[a-záéíóúñü0-9]+", (text or "").lower())
+        if len(t) >= 3
+    }
+
+
+def _keyword_score(query: str, text: str) -> float:
+    q, d = _tokenize(query), _tokenize(text)
+    if not q or not d:
+        return 0.0
+    return len(q & d) / float(len(q))
+
+
+def _scroll_all_payloads(collection: str, *, limit: int = 200) -> list[dict[str, Any]]:
+    """Read payloads from the collection for keyword fallback (small demo corpus)."""
+    client = get_qdrant_client()
+    out: list[dict[str, Any]] = []
+    next_offset = None
+    while len(out) < limit:
+        kwargs: dict[str, Any] = {
+            "collection_name": collection,
+            "limit": min(64, limit - len(out)),
+            "with_payload": True,
+            "with_vectors": False,
+        }
+        if next_offset is not None:
+            kwargs["offset"] = next_offset
+        records, next_offset = client.scroll(**kwargs)
+        for rec in records:
+            payload = dict(getattr(rec, "payload", None) or {})
+            if payload.get("text"):
+                out.append(payload)
+        if next_offset is None:
+            break
+    return out
+
+
+def _keyword_retrieve(query: str, *, k: int, collection: str) -> list[dict[str, Any]]:
+    scored: list[tuple[float, dict[str, Any]]] = []
+    for payload in _scroll_all_payloads(collection):
+        score = _keyword_score(query, str(payload.get("text") or ""))
+        # Boost if source filename tokens match (loyalty, allergen, waste…)
+        src = str(payload.get("source_document") or "")
+        score = max(score, _keyword_score(query, src) * 0.8)
+        if score <= 0:
+            continue
+        row = dict(payload)
+        row["score"] = score
+        scored.append((score, row))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [row for _, row in scored[:k]]
 
 
 def _generation_settings() -> tuple[str, str, str]:
@@ -150,7 +212,13 @@ def retrieve(
         payload = dict(getattr(hit, "payload", None) or {})
         payload["score"] = score
         payloads.append(payload)
-    return payloads
+
+    if payloads:
+        return payloads
+
+    # Hash / cold collection: vector search often empty → keyword fallback.
+    logger.info("vector retrieve empty for %r — trying keyword fallback", query[:80])
+    return _keyword_retrieve(query.strip(), k=k, collection=coll)
 
 
 def assemble_context(chunks: list[dict[str, Any]]) -> str:
@@ -252,21 +320,29 @@ def generate_answer(question: str, context: list[dict[str, Any]]) -> str:
         raise ValueError("generate_answer() requires a non-empty question")
     _load_env()
     provider = generation_provider()
+    # Codespaces: LLM gateway suele ser lento/inestable. Por defecto respondemos
+    # grounded (rápido, fiel al manual). Opt-in LLM: GENERATION_USE_LLM=1.
+    prefer_llm = os.getenv("GENERATION_USE_LLM", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
     if not context:
-        if provider == "openai":
+        if provider == "openai" and prefer_llm:
             try:
                 return _openai_generate(question.strip(), [])
             except Exception as exc:  # noqa: BLE001
                 logger.warning("openai generation failed, grounded fallback: %s", exc)
                 return refusal_message()
         return refusal_message()
-    if provider == "openai":
+    if provider == "openai" and prefer_llm:
         try:
             return _openai_generate(question.strip(), context)
         except Exception as exc:  # noqa: BLE001
             logger.warning("openai generation failed, grounded fallback: %s", exc)
             return _grounded_generate(question.strip(), context)
-    if provider == "grounded":
+    if provider in {"grounded", "openai"}:
+        # openai without GENERATION_USE_LLM → grounded (rápido y usable)
         return _grounded_generate(question.strip(), context)
     raise RuntimeError(f"Unknown GENERATION_PROVIDER={provider!r}")
 

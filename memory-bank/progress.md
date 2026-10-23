@@ -1,9 +1,12 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-23) — BrasAI = manuales; Agente = ops en vivo
-- **BrasAI:** solo RAG (lealtad, alérgenos, merma, pedidos-manual); UI con alcance + placeholder alérgenos.
-- **Agente soporte:** MCP `query_suppliers` (€/ranking) + `query_inventory_ops` (historial, entradas, salidas, resumen kg + estimado €). Intent `supplier` + inventario inteligente.
-- Tests: `test_agent_tools` / `test_mcp_server` ampliados.
+## Estado (2026-10-23) — BrasAI keyword + Agente HTTP fallback
+- BrasAI «no sé»: hash embed + min_score alto → 0 hits. Ahora: umbral bajo + **keyword fallback** + grounded rápido (LLM solo con `GENERATION_USE_LLM=1`).
+- Agente «Reconectando…»: WS a :8000 Public; si falla, chat usa **POST /agent/query** vía `/api-backend`. Sede = `<select>` con `INCIDENT_BRANCHES`.
+
+## Estado previo — BrasAI = manuales; Agente = ops en vivo
+- **BrasAI:** solo RAG (lealtad, alérgenos, merma, pedidos-manual).
+- **Agente:** MCP `query_suppliers` + `query_inventory_ops`.
 
 ## Estado previo — BrasAI proxy timeout vs login OK
 - Login OK (rápido); BrasAI fallaba: proxy cortaba a **10s** la query RAG.
