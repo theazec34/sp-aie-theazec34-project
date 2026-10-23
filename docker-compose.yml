@@ -91,7 +91,16 @@ services:
       REDIS_URL: redis://redis:6379/0
       QDRANT_URL: http://qdrant:6333
       PYTHONPATH: /app/api:/app
-    command: ["celery", "-A", "celery_app.celery", "worker", "--loglevel=INFO"]
+    # -E: eventos Celery para que Flower liste workers / tasks en vivo
+    command:
+      [
+        "celery",
+        "-A",
+        "celery_app.celery",
+        "worker",
+        "--loglevel=INFO",
+        "-E",
+      ]
     volumes:
       - ./services/api:/app/api
       - ./services/celery_app.py:/app/celery_app.py
