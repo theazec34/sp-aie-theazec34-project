@@ -26,7 +26,7 @@ const moduleCards = [
   },
   {
     id: "knowledge",
-    title: "BrasAI",
+    title: "BrasAI (manuales)",
     description:
       "Asistente RAG sobre los manuales oficiales (Brasa Points, alérgenos, merma…).",
     href: "/knowledge",
@@ -35,7 +35,7 @@ const moduleCards = [
     id: "agent",
     title: "Agente de soporte",
     description:
-      "Chat en vivo (WebSocket) para encargados: tokens en tiempo real e interrupción a mitad de respuesta.",
+      "Datos en vivo: proveedores (€/kg), existencias, entradas/salidas, historial e incidencias.",
     href: "/agent",
   },
   {

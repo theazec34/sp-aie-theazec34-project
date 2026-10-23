@@ -214,6 +214,231 @@ def _ingredient_dict(ingredient: Any, stock: float) -> dict[str, Any]:
     }
 
 
+# ----- Suppliers (read path) -----
+
+
+def list_suppliers(
+    *,
+    name_query: str | None = None,
+    limit: int = 50,
+) -> list[dict[str, Any]]:
+    if DATA_MODE == "direct":
+        from app.suppliers.repository import SupplierRepository
+
+        repo = SupplierRepository()
+        try:
+            items = [s.model_dump(mode="json") for s in repo.list()]
+        finally:
+            repo.close()
+    else:
+        headers = {}
+        token = os.getenv("MCP_INVENTORY_BEARER", "").strip()
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        with _http_client() as client:
+            r = client.get("/suppliers", headers=headers)
+            if r.status_code >= 400:
+                raise BackendError(r.text, status_code=r.status_code, body=_safe_json(r))
+            items = list(r.json())
+
+    if name_query:
+        q = name_query.lower()
+        items = [
+            s
+            for s in items
+            if q in str(s.get("name", "")).lower()
+            or q in str(s.get("contact_email") or "").lower()
+        ]
+    return items[:limit]
+
+
+def supplier_directory_summary(*, limit: int = 10) -> dict[str, Any]:
+    """Rank suppliers by tariff (€) and basic counts — read-only."""
+    suppliers = list_suppliers(limit=500)
+    active = [s for s in suppliers if str(s.get("status", "")).lower() == "active"]
+    ranked = sorted(
+        suppliers,
+        key=lambda s: float(s.get("rate_per_unit") or 0),
+        reverse=True,
+    )
+    top = ranked[:limit]
+    top_active = sorted(
+        active,
+        key=lambda s: float(s.get("rate_per_unit") or 0),
+        reverse=True,
+    )[:1]
+    return {
+        "count": len(suppliers),
+        "active_count": len(active),
+        "currency": "EUR",
+        "top_by_rate_eur": top,
+        "highest_rate_active": top_active[0] if top_active else None,
+    }
+
+
+# ----- Inventory movements / history -----
+
+
+def list_inventory_orders(
+    *,
+    kind: str | None = None,
+    name_query: str | None = None,
+    limit: int = 20,
+) -> list[dict[str, Any]]:
+    """Unified inbound/outbound history (same shape as GET /inventory/orders)."""
+    if DATA_MODE == "direct":
+        from sqlmodel import Session, select
+        from sqlalchemy.orm import selectinload
+
+        from app.database import engine
+        from app.inventory.models import IngredientEntry, IngredientExit
+
+        orders: list[dict[str, Any]] = []
+        with Session(engine) as session:
+            entries = session.exec(
+                select(IngredientEntry)
+                .options(selectinload(IngredientEntry.ingredient))  # type: ignore[arg-type]
+                .order_by(IngredientEntry.created_at.desc())  # type: ignore[union-attr]
+            ).all()
+            exits = session.exec(
+                select(IngredientExit)
+                .options(selectinload(IngredientExit.ingredient))  # type: ignore[arg-type]
+                .order_by(IngredientExit.created_at.desc())  # type: ignore[union-attr]
+            ).all()
+            for entry in entries:
+                ing = entry.ingredient
+                if ing is None:
+                    continue
+                orders.append(
+                    {
+                        "kind": "inbound",
+                        "id": entry.id,
+                        "ingredient_id": entry.ingredient_id,
+                        "quantity": float(entry.quantity),
+                        "unit": getattr(ing, "unit", None),
+                        "ingredient_name": ing.name,
+                        "supplier_name": entry.supplier_name,
+                        "reason": None,
+                        "created_at": (
+                            entry.created_at.isoformat()
+                            if entry.created_at is not None
+                            else None
+                        ),
+                    }
+                )
+            for exit_row in exits:
+                ing = exit_row.ingredient
+                if ing is None:
+                    continue
+                orders.append(
+                    {
+                        "kind": "outbound",
+                        "id": exit_row.id,
+                        "ingredient_id": exit_row.ingredient_id,
+                        "quantity": float(exit_row.quantity),
+                        "unit": getattr(ing, "unit", None),
+                        "ingredient_name": ing.name,
+                        "supplier_name": None,
+                        "reason": exit_row.reason,
+                        "created_at": (
+                            exit_row.created_at.isoformat()
+                            if exit_row.created_at is not None
+                            else None
+                        ),
+                    }
+                )
+            orders.sort(key=lambda o: o.get("created_at") or "", reverse=True)
+    else:
+        headers = {}
+        token = os.getenv("MCP_INVENTORY_BEARER", "").strip()
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        with _http_client() as client:
+            r = client.get("/inventory/orders", headers=headers)
+            if r.status_code >= 400:
+                raise BackendError(r.text, status_code=r.status_code, body=_safe_json(r))
+            raw = list(r.json())
+        orders = []
+        for row in raw:
+            ing = row.get("ingredient") or {}
+            orders.append(
+                {
+                    "kind": row.get("kind"),
+                    "id": row.get("id"),
+                    "ingredient_id": row.get("ingredient_id"),
+                    "quantity": float(row.get("quantity") or 0),
+                    "unit": ing.get("unit"),
+                    "ingredient_name": ing.get("name"),
+                    "supplier_name": row.get("supplier_name"),
+                    "reason": row.get("reason"),
+                    "created_at": row.get("created_at"),
+                }
+            )
+
+    if kind in {"inbound", "outbound"}:
+        orders = [o for o in orders if o.get("kind") == kind]
+    if name_query:
+        q = name_query.lower()
+        orders = [
+            o
+            for o in orders
+            if q in str(o.get("ingredient_name") or "").lower()
+            or q in str(o.get("supplier_name") or "").lower()
+        ]
+    return orders[:limit]
+
+
+def inventory_ops_summary(*, limit: int = 10) -> dict[str, Any]:
+    """Aggregates: stock snapshot + inbound kg by supplier + outbound totals."""
+    products = query_products(limit=200)
+    orders = list_inventory_orders(limit=500)
+    inbound = [o for o in orders if o.get("kind") == "inbound"]
+    outbound = [o for o in orders if o.get("kind") == "outbound"]
+
+    by_supplier: dict[str, float] = {}
+    for o in inbound:
+        name = (o.get("supplier_name") or "sin_proveedor").strip() or "sin_proveedor"
+        by_supplier[name] = by_supplier.get(name, 0.0) + float(o.get("quantity") or 0)
+
+    top_suppliers_kg = sorted(
+        [{"supplier_name": k, "total_qty": v} for k, v in by_supplier.items()],
+        key=lambda x: x["total_qty"],
+        reverse=True,
+    )[:limit]
+
+    suppliers = list_suppliers(limit=200)
+    rate_by_name = {
+        str(s.get("name") or "").strip().lower(): float(s.get("rate_per_unit") or 0)
+        for s in suppliers
+    }
+    for row in top_suppliers_kg:
+        rate = rate_by_name.get(str(row["supplier_name"]).lower(), 0.0)
+        row["rate_per_unit_eur"] = rate
+        row["estimated_value_eur"] = round(rate * float(row["total_qty"]), 2)
+
+    top_stock = sorted(
+        products,
+        key=lambda p: float(p.get("current_stock") or 0),
+        reverse=True,
+    )[:limit]
+
+    return {
+        "currency": "EUR",
+        "products_count": len(products),
+        "inbound_count": len(inbound),
+        "outbound_count": len(outbound),
+        "inbound_qty_total": round(sum(float(o.get("quantity") or 0) for o in inbound), 3),
+        "outbound_qty_total": round(
+            sum(float(o.get("quantity") or 0) for o in outbound), 3
+        ),
+        "top_suppliers_by_inbound_qty": top_suppliers_kg,
+        "top_stock": top_stock,
+        "highest_tariff_supplier": supplier_directory_summary(limit=1).get(
+            "highest_rate_active"
+        ),
+    }
+
+
 def _safe_json(response: httpx.Response) -> Any:
     try:
         return response.json()

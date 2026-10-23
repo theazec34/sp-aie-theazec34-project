@@ -33,6 +33,11 @@ def test_classify_intent_ticket_vs_rag():
     assert classify_intent("¿Estado del ticket 12?") == "ticket"
     assert classify_intent("¿Cuántos puntos para el nivel Oro?") == "rag"
     assert classify_intent("¿Qué stock de lomo tenemos?") == "inventory"
+    assert classify_intent("¿Cuál es el mayor proveedor en €?") == "supplier"
+    assert classify_intent("¿Cuáles fueron las últimas salidas?") == "inventory"
+    assert (
+        classify_intent("¿Qué proveedor nos ha enviado más kg?") == "inventory"
+    )
 
 
 def test_eval_ticket_question_uses_mcp_not_rag(
@@ -175,3 +180,85 @@ def test_deprecated_direct_incident_tool_raises():
 
     with pytest.raises(RuntimeError, match="DEPRECATED"):
         lookup_support_ticket(TicketLookupInput(ticket_id=1))
+
+
+def test_eval_supplier_question_uses_mcp(
+    fresh_graph, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    monkeypatch.setenv("AGENT_TRACE_DIR", str(tmp_path))
+
+    def _fake_suppliers(**_k):
+        return {
+            "ok": True,
+            "action": "top_rate",
+            "currency": "EUR",
+            "suppliers": [
+                {
+                    "name": "Carnes del Sur",
+                    "rate_per_unit": 42.5,
+                    "currency": "EUR",
+                    "status": "active",
+                    "categories": ["carne"],
+                    "country": "España",
+                }
+            ],
+            "count": 1,
+        }
+
+    monkeypatch.setattr("agent.nodes.query_suppliers_via_mcp", _fake_suppliers)
+    monkeypatch.setattr(
+        "agent.nodes.retrieve",
+        lambda *_a, **_k: (_ for _ in ()).throw(AssertionError("no RAG")),
+    )
+
+    result = run_agent("¿Cuál es el mayor proveedor en €?")
+    assert result["intent"] == "supplier"
+    assert "lookup_supplier" in result["nodes"]
+    assert "answer_from_supplier" in result["nodes"]
+    assert "retrieve_knowledge" not in result["nodes"]
+    assert "Carnes del Sur" in result["answer"]
+    assert "mcp" in result["sources_used"]
+
+
+def test_eval_inventory_summary_uses_ops_tool(
+    fresh_graph, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    monkeypatch.setenv("AGENT_TRACE_DIR", str(tmp_path))
+
+    def _fake_ops(**kwargs):
+        assert kwargs.get("view") == "summary"
+        return {
+            "ok": True,
+            "view": "summary",
+            "summary": {
+                "currency": "EUR",
+                "products_count": 2,
+                "inbound_count": 1,
+                "outbound_count": 1,
+                "inbound_qty_total": 10.0,
+                "outbound_qty_total": 3.0,
+                "top_suppliers_by_inbound_qty": [
+                    {
+                        "supplier_name": "Carnes del Sur",
+                        "total_qty": 10.0,
+                        "rate_per_unit_eur": 5.0,
+                        "estimated_value_eur": 50.0,
+                    }
+                ],
+                "top_stock": [],
+                "highest_tariff_supplier": {
+                    "name": "Carnes del Sur",
+                    "rate_per_unit": 5.0,
+                    "currency": "EUR",
+                    "categories": ["carne"],
+                },
+            },
+        }
+
+    monkeypatch.setattr("agent.nodes.query_inventory_ops_via_mcp", _fake_ops)
+    result = run_agent("¿Qué proveedor nos ha enviado más kg?")
+    assert result["intent"] == "inventory"
+    assert "lookup_inventory" in result["nodes"]
+    assert "answer_from_inventory" in result["nodes"]
+    assert "Carnes del Sur" in result["answer"]
+    assert "10" in result["answer"]

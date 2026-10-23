@@ -15,9 +15,7 @@ const QUERY_TIMEOUT_MS = 120_000;
 const REINDEX_TIMEOUT_MS = 180_000;
 
 export default function KnowledgePage() {
-  const [question, setQuestion] = useState(
-    "¿Cuántos puntos necesito para el nivel Oro?",
-  );
+  const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [loading, setLoading] = useState(false);
   const [reindexing, setReindexing] = useState(false);
@@ -105,8 +103,9 @@ export default function KnowledgePage() {
           <p className="bo-kicker">Operaciones · Marketing</p>
           <h1>BrasAI</h1>
           <p className="bo-soft">
-            Asistente sobre Brasa Points, desperdicio, alérgenos y pedidos —
-            respuestas desde los manuales oficiales (RAG).
+            Responde solo con los <strong>manuales oficiales</strong> indexados
+            (RAG). No consulta reservas, candidaturas ni stock en vivo — eso es
+            el <strong>Agente soporte</strong>.
           </p>
         </div>
         <button
@@ -120,6 +119,16 @@ export default function KnowledgePage() {
       </header>
 
       <section className="bo-panel">
+        <h3>Qué puede responder</h3>
+        <ul className="bo-soft" style={{ margin: "0.5rem 0 0", paddingLeft: "1.2rem" }}>
+          <li>Brasa Points / niveles de fidelización (Plata, Oro, Platino)</li>
+          <li>Alérgenos y carta (p. ej. Costilla BBQ, paellas)</li>
+          <li>Protocolo de desperdicio y merma</li>
+          <li>Procedimiento de pedidos a proveedores (manual, no datos en vivo)</li>
+        </ul>
+      </section>
+
+      <section className="bo-panel">
         <form className="bo-form" onSubmit={onSubmit}>
           <label htmlFor="knowledge-question">Pregunta</label>
           <textarea
@@ -129,7 +138,7 @@ export default function KnowledgePage() {
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             disabled={loading || reindexing}
-            placeholder="Ej. ¿La Costilla BBQ tiene alérgenos?"
+            placeholder="Ej. ¿Qué alérgenos tiene la Costilla BBQ?"
           />
           <button
             type="submit"

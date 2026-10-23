@@ -3,6 +3,8 @@
 Exposes:
 - ``manage_incidents`` — create / query / update status (PATCH .../status)
 - ``query_inventory`` — read-only stock lookup
+- ``query_inventory_ops`` — historial / entradas / salidas / resumen kg
+- ``query_suppliers`` — directorio proveedores (€) + ranking
 - ``mutate_inventory`` — always rejects writes (least privilege)
 
 Auth: mcpauth Bearer JWT (not FastMCP built-in auth).
@@ -31,8 +33,12 @@ from mcps.brasaland_tools.backend import (
     BackendError,
     create_incident,
     get_incident,
+    inventory_ops_summary,
     list_incidents,
+    list_inventory_orders,
+    list_suppliers,
     query_products,
+    supplier_directory_summary,
     update_incident_status,
 )
 from mcps.brasaland_tools.errors import McpErrorCode, error_payload
@@ -52,9 +58,10 @@ logging.basicConfig(
 mcp = FastMCP(
     name="brasaland-company-tools",
     instructions=(
-        "Brasaland operational tools: Incidents Manager (create/query/status) "
-        "and read-only inventory. Requires OAuth Bearer JWT with least-privilege "
-        "scopes. Inventory writes are always rejected."
+        "Brasaland operational tools: Incidents Manager, read-only inventory "
+        "(stock, history, inbound/outbound kg), and supplier directory (€). "
+        "Requires OAuth Bearer JWT with least-privilege scopes. "
+        "Inventory writes are always rejected."
     ),
 )
 
@@ -312,6 +319,147 @@ def query_inventory(
         return result
     except BackendError as exc:
         result = _tool_error(McpErrorCode.BACKEND_ERROR, str(exc))
+        log_tool_invocation(
+            tool=tool, client_id=client_id, subject=subject, result=result["error_code"],
+        )
+        return result
+
+
+@mcp.tool(
+    name="query_inventory_ops",
+    description=(
+        "Read-only inventory operations: current summary (kg in/out, top suppliers "
+        "by inbound qty + estimated €), movement history, inbound entries, or "
+        "outbound exits. view=summary|history|inbound|outbound. "
+        "Requires scopes: brasaland:tools + inventory:read."
+    ),
+)
+def query_inventory_ops(
+    view: Literal["summary", "history", "inbound", "outbound"] = "summary",
+    name_query: str | None = None,
+    limit: int = 15,
+) -> dict[str, Any]:
+    """Read-only inventory history / aggregates."""
+    tool = "query_inventory_ops"
+    client_id, subject = _client_meta()
+    try:
+        _require_scopes(TOOL_REQUIRED_SCOPES[tool])
+        if view == "summary":
+            summary = inventory_ops_summary(limit=limit)
+            out = {"ok": True, "view": view, "summary": summary}
+        else:
+            kind = None if view == "history" else view
+            orders = list_inventory_orders(
+                kind=kind, name_query=name_query, limit=limit
+            )
+            out = {
+                "ok": True,
+                "view": view,
+                "orders": orders,
+                "count": len(orders),
+            }
+        log_tool_invocation(
+            tool=tool, client_id=client_id, subject=subject, result="ok",
+            extra={"view": view},
+        )
+        return out
+    except MCPAuthBearerAuthException as exc:
+        code = (
+            McpErrorCode.AUTHZ_INSUFFICIENT_SCOPE
+            if exc.code == BearerAuthExceptionCode.MISSING_REQUIRED_SCOPES
+            else McpErrorCode.AUTH_INVALID_TOKEN
+        )
+        result = _tool_error(code, str(exc.code.value))
+        log_tool_invocation(
+            tool=tool, client_id=client_id, subject=subject, result=result["error_code"],
+        )
+        return result
+    except BackendError as exc:
+        result = _tool_error(McpErrorCode.BACKEND_ERROR, str(exc))
+        log_tool_invocation(
+            tool=tool, client_id=client_id, subject=subject, result=result["error_code"],
+        )
+        return result
+    except Exception as exc:  # noqa: BLE001
+        result = _tool_error(
+            McpErrorCode.BACKEND_ERROR, f"{type(exc).__name__}: {exc}"
+        )
+        log_tool_invocation(
+            tool=tool, client_id=client_id, subject=subject, result=result["error_code"],
+        )
+        return result
+
+
+@mcp.tool(
+    name="query_suppliers",
+    description=(
+        "Read-only supplier directory (EUR tariffs). action=list|top_rate|summary. "
+        "Use for 'mayor proveedor en €', tarifas, categorías y contacto. "
+        "Requires scopes: brasaland:tools + suppliers:read."
+    ),
+)
+def query_suppliers(
+    action: Literal["list", "top_rate", "summary"] = "summary",
+    name_query: str | None = None,
+    limit: int = 15,
+) -> dict[str, Any]:
+    """Read-only supplier directory."""
+    tool = "query_suppliers"
+    client_id, subject = _client_meta()
+    try:
+        _require_scopes(TOOL_REQUIRED_SCOPES[tool])
+        if action == "summary":
+            summary = supplier_directory_summary(limit=limit)
+            out = {"ok": True, "action": action, "summary": summary}
+        elif action == "top_rate":
+            suppliers = list_suppliers(name_query=name_query, limit=200)
+            ranked = sorted(
+                suppliers,
+                key=lambda s: float(s.get("rate_per_unit") or 0),
+                reverse=True,
+            )[:limit]
+            out = {
+                "ok": True,
+                "action": action,
+                "currency": "EUR",
+                "suppliers": ranked,
+                "count": len(ranked),
+            }
+        else:
+            suppliers = list_suppliers(name_query=name_query, limit=limit)
+            out = {
+                "ok": True,
+                "action": action,
+                "currency": "EUR",
+                "suppliers": suppliers,
+                "count": len(suppliers),
+            }
+        log_tool_invocation(
+            tool=tool, client_id=client_id, subject=subject, result="ok",
+            extra={"action": action},
+        )
+        return out
+    except MCPAuthBearerAuthException as exc:
+        code = (
+            McpErrorCode.AUTHZ_INSUFFICIENT_SCOPE
+            if exc.code == BearerAuthExceptionCode.MISSING_REQUIRED_SCOPES
+            else McpErrorCode.AUTH_INVALID_TOKEN
+        )
+        result = _tool_error(code, str(exc.code.value))
+        log_tool_invocation(
+            tool=tool, client_id=client_id, subject=subject, result=result["error_code"],
+        )
+        return result
+    except BackendError as exc:
+        result = _tool_error(McpErrorCode.BACKEND_ERROR, str(exc))
+        log_tool_invocation(
+            tool=tool, client_id=client_id, subject=subject, result=result["error_code"],
+        )
+        return result
+    except Exception as exc:  # noqa: BLE001
+        result = _tool_error(
+            McpErrorCode.BACKEND_ERROR, f"{type(exc).__name__}: {exc}"
+        )
         log_tool_invocation(
             tool=tool, client_id=client_id, subject=subject, result=result["error_code"],
         )

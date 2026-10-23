@@ -12,16 +12,22 @@ SCOPE_INCIDENTS_WRITE = "incidents:write"
 # Inventory — read only by design (no write scope is ever granted for inventory).
 SCOPE_INVENTORY_READ = "inventory:read"
 
+# Suppliers directory — read only via MCP.
+SCOPE_SUPPLIERS_READ = "suppliers:read"
+
 ALL_SCOPES: list[str] = [
     SCOPE_TOOLS,
     SCOPE_INCIDENTS_READ,
     SCOPE_INCIDENTS_WRITE,
     SCOPE_INVENTORY_READ,
+    SCOPE_SUPPLIERS_READ,
 ]
 
 TOOL_REQUIRED_SCOPES: dict[str, list[str]] = {
     "manage_incidents": [SCOPE_TOOLS, SCOPE_INCIDENTS_READ],
     "query_inventory": [SCOPE_TOOLS, SCOPE_INVENTORY_READ],
+    "query_inventory_ops": [SCOPE_TOOLS, SCOPE_INVENTORY_READ],
+    "query_suppliers": [SCOPE_TOOLS, SCOPE_SUPPLIERS_READ],
     "mutate_inventory": [SCOPE_TOOLS, SCOPE_INVENTORY_READ],
 }
 

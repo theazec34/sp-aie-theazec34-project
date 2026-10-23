@@ -16,7 +16,13 @@ class AgentState(TypedDict):
     has_context: bool
     # Part 2 — routing + tool payloads
     intent: Literal[
-        "rag", "ticket", "inventory", "memory_confirm", "guard_block", "casual"
+        "rag",
+        "ticket",
+        "inventory",
+        "supplier",
+        "memory_confirm",
+        "guard_block",
+        "casual",
     ]
     tool_ok: bool
     tool_result: dict[str, Any] | None
@@ -37,7 +43,14 @@ class AgentState(TypedDict):
 
 
 RouteAfterReceive = Literal[
-    "retrieve", "ticket", "inventory", "refuse", "memory_confirm", "guard_block", "casual"
+    "retrieve",
+    "ticket",
+    "inventory",
+    "supplier",
+    "refuse",
+    "memory_confirm",
+    "guard_block",
+    "casual",
 ]
 RouteAfterRetrieve = Literal["generate", "refuse"]
 RouteAfterTool = Literal["answer", "fallback"]
