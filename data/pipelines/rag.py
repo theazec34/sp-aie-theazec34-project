@@ -78,8 +78,41 @@ def _tokenize(text: str) -> set[str]:
     }
 
 
+# Sinónimos ES → tokens que aparecen en source_document / cuerpo del manual
+_QUERY_SYNONYMS: dict[str, set[str]] = {
+    "fidelizacion": {"loyalty", "brasa", "points", "puntos", "oro", "plata", "platino"},
+    "fidelización": {"loyalty", "brasa", "points", "puntos", "oro", "plata", "platino"},
+    "lealtad": {"loyalty", "brasa", "points", "puntos"},
+    "niveles": {"loyalty", "oro", "plata", "platino", "bronce"},
+    "alergeno": {"allergen", "allergens", "menu"},
+    "alérgeno": {"allergen", "allergens", "menu"},
+    "alergenos": {"allergen", "allergens", "menu"},
+    "alérgenos": {"allergen", "allergens", "menu"},
+    "merma": {"waste", "desperdicio", "protocol"},
+    "desperdicio": {"waste", "merma", "protocol"},
+    "proveedor": {"supplier", "ordering", "pedido"},
+    "proveedores": {"supplier", "ordering", "pedido"},
+}
+
+
+def _expand_query_tokens(query: str) -> set[str]:
+    tokens = _tokenize(query)
+    expanded = set(tokens)
+    for tok in list(tokens):
+        expanded |= _QUERY_SYNONYMS.get(tok, set())
+    # Frases compuestas
+    qlow = (query or "").lower()
+    if "brasa point" in qlow or "brasa points" in qlow:
+        expanded |= {"loyalty", "brasa", "points", "puntos"}
+    if "fideliz" in qlow or "lealtad" in qlow:
+        expanded |= {"loyalty", "brasa", "points", "puntos", "oro", "plata"}
+    return expanded
+
+
 def _keyword_score(query: str, text: str) -> float:
-    q, d = _tokenize(query), _tokenize(text)
+    q, d = _expand_query_tokens(query), _tokenize(text) | _tokenize(
+        text.replace("-", " ").replace("_", " ")
+    )
     if not q or not d:
         return 0.0
     return len(q & d) / float(len(q))
@@ -112,10 +145,17 @@ def _scroll_all_payloads(collection: str, *, limit: int = 200) -> list[dict[str,
 def _keyword_retrieve(query: str, *, k: int, collection: str) -> list[dict[str, Any]]:
     scored: list[tuple[float, dict[str, Any]]] = []
     for payload in _scroll_all_payloads(collection):
-        score = _keyword_score(query, str(payload.get("text") or ""))
-        # Boost if source filename tokens match (loyalty, allergen, waste…)
+        text = str(payload.get("text") or "")
         src = str(payload.get("source_document") or "")
-        score = max(score, _keyword_score(query, src) * 0.8)
+        score = _keyword_score(query, text)
+        # Boost fuerte si el source encaja (loyalty-program, menu-allergens…)
+        src_score = _keyword_score(query, src.replace("-", " "))
+        score = max(score, src_score * 1.2)
+        if "loyalty" in src and any(
+            t in _expand_query_tokens(query)
+            for t in ("loyalty", "fidelizacion", "puntos", "oro", "plata", "brasa")
+        ):
+            score += 0.5
         if score <= 0:
             continue
         row = dict(payload)
