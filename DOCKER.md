@@ -37,6 +37,18 @@ Atajo: `bash scripts/docker-rebuild-clean.sh`
 
 Si sigue fallando: `DOCKER_BUILDKIT=0 docker compose build --no-cache && docker compose up`.
 
+### Agente: «No pude leer el directorio de proveedores» (pero Proveedores OK)
+
+La API tiene datos y el agente no: suele ser imagen Docker con `mcps/` viejo
+mientras `services/agent` está montado al día. Compose monta `./mcps:/app/mcps`.
+
+```bash
+docker compose up -d --force-recreate backend
+docker compose exec -T backend python seed_demo_ops.py   # tras seed.py --force
+# Prueba in-process:
+docker compose exec -T backend python -c "from agent.tools.mcp_client import query_suppliers_via_mcp; print(query_suppliers_via_mcp(action='top_rate', limit=3))"
+```
+
 ### BrasAI: HTTP 504 al «Reindexar manuales»
 
 El reindex con embeddings 4Geeks puede superar el timeout del proxy. La UI

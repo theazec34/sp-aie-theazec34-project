@@ -36,6 +36,9 @@ services:
       - ./services/tasks:/app/tasks
       - ./services/agent:/app/agent
       - ./services/knowledge:/app/knowledge
+      # MCP tools: el agente monta agent/ fresco pero sin esto usa mcps de la imagen
+      # (vieja → query_suppliers ausente → «No pude leer el directorio…»).
+      - ./mcps:/app/mcps
       - ./packages:/packages
       - ./docs/company-knowledge-base:/app/docs/company-knowledge-base:ro
       - ./data:/app/data:ro
@@ -94,6 +97,7 @@ services:
       - ./services/celery_app.py:/app/celery_app.py
       - ./services/tasks:/app/tasks
       - ./services/agent:/app/agent
+      - ./mcps:/app/mcps
       - ./packages:/packages
       - backend_data:/app/api/data
     depends_on:

@@ -1,6 +1,12 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-23) — BrasAI reindex async (HTTP 504)
+## Estado (2026-10-23) — Agente proveedores: montar ./mcps
+- API `/suppliers` OK (33 fichas) pero agente «No pude leer directorio».
+- Causa: `services/agent` montado fresco; `mcps/` solo en imagen vieja
+  → `query_suppliers` ausente en in-process MCP.
+- Fix: volume `./mcps:/app/mcps` en backend/worker + error MCP más claro.
+
+## Estado previo — BrasAI reindex async (HTTP 504)
 - Reindex sync con embeddings 4Geeks superaba el proxy → **HTTP 504**.
 - Fix: `POST /knowledge/reindex` en background + `GET …/status`; UI hace poll;
   `embed_many` por lotes; volume `services/knowledge` montado en compose.

@@ -170,18 +170,28 @@ def _invoke_inprocess(tool_name: str, arguments: dict[str, Any]) -> dict[str, An
     # Populate mcpauth ContextVar the same way Bearer middleware does.
     mcp_server.mcp_auth._context_var.set(auth_info)  # noqa: SLF001
 
-    fn = {
-        "manage_incidents": mcp_server.manage_incidents,
-        "query_inventory": mcp_server.query_inventory,
-        "query_inventory_ops": mcp_server.query_inventory_ops,
-        "query_suppliers": mcp_server.query_suppliers,
-        "query_front_ops": mcp_server.query_front_ops,
-        "mutate_inventory": mcp_server.mutate_inventory,
-    }.get(tool_name)
+    tool_map = {}
+    for name in (
+        "manage_incidents",
+        "query_inventory",
+        "query_inventory_ops",
+        "query_suppliers",
+        "query_front_ops",
+        "mutate_inventory",
+    ):
+        fn_candidate = getattr(mcp_server, name, None)
+        if fn_candidate is not None:
+            tool_map[name] = fn_candidate
+    fn = tool_map.get(tool_name)
     if fn is None:
         return {
             "ok": False,
-            "error": f"Unknown MCP tool {tool_name}",
+            "error": (
+                f"Unknown MCP tool {tool_name}; "
+                f"available_on_server={sorted(tool_map)}. "
+                "Si falta query_*: monta ./mcps o rebuild backend "
+                "(docker compose up -d --build backend)."
+            ),
             "error_code": "MCP_TOOL_NOT_FOUND",
         }
     result = fn(**arguments)
