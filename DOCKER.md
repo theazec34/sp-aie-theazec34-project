@@ -163,9 +163,17 @@ Parar worker: `Ctrl+C` en su terminal (o `docker compose stop worker`).
 `POST /api/v1/incidents/analyze` responde **202** + `task_id`; el resultado se
 consulta en `GET /tasks/{task_id}`. Flower: http://localhost:5555
 
-Si Flower muestra **Online workers: 0** con el contenedor `worker` en Up,
-recrea con eventos: `docker compose up -d --force-recreate worker flower`.
-Comprueba: `docker compose exec worker celery -A celery_app.celery inspect ping`.
+Si Flower muestra **Online workers: 0** con el contenedor `worker` en Up:
+
+1. Mira el log: `docker compose logs worker --tail 40`
+2. Si ves `Timeout connecting to server` hacia Redis (típico Codespaces),
+   el broker va por `host.docker.internal:6379` (puerto publicado; déjalo
+   **Private** en Ports). Recrea todo el stack Celery:
+   ```bash
+   docker compose up -d --force-recreate redis worker flower backend
+   docker compose exec worker celery -A celery_app.celery inspect ping
+   ```
+3. Debe responder `pong` y Flower → Online workers: 1.
 
 ## Parar
 
