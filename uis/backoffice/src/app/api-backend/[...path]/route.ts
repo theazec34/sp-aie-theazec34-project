@@ -156,7 +156,7 @@ async function proxy(
     return NextResponse.json(
       {
         detail:
-          `Proxy /api-backend no alcanzó la API (${picked.errors.join(" | ")}). ` +
+          `No se pudo alcanzar la API (${picked.errors.join(" | ")}). ` +
           `Comprueba: curl -sS http://127.0.0.1:8000/health && docker compose ps. ` +
           `Si health OK: docker compose up -d --force-recreate --no-deps interfaces`,
       },
@@ -180,7 +180,7 @@ async function proxy(
     const detail = err instanceof Error ? err.message : "unreachable";
     return NextResponse.json(
       {
-        detail: `Proxy /api-backend falló en ${picked.base}${suffix} (${detail}).`,
+        detail: `No se pudo completar la petición al API (${detail}).`,
       },
       { status: 502 }
     );
