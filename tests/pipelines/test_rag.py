@@ -114,6 +114,29 @@ def test_retrieve_keyword_fallback_when_vector_empty(
     assert "Brasa Points" in result[0]["text"]
 
 
+def test_loyalty_synonyms_rank_loyalty_source(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("EMBEDDING_PROVIDER", "hash")
+    monkeypatch.setattr(
+        rag_pipeline,
+        "_scroll_all_payloads",
+        lambda *_a, **_k: [
+            {
+                "text": "Pedidos de emergencia con recargo 8%.",
+                "source_document": "supplier-ordering",
+            },
+            {
+                "text": "Programa Brasa Points: niveles Plata, Oro y Platino.",
+                "source_document": "loyalty-program",
+            },
+        ],
+    )
+    result = rag_pipeline.retrieve("niveles de fidelización", k=2)
+    assert result
+    assert result[0]["source_document"] == "loyalty-program"
+
+
 def test_retrieve_hash_prefers_keyword_over_misleading_vector(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

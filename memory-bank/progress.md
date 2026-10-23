@@ -1,9 +1,11 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-23) — seed demo multi-sede + RAG hash keyword-first
-- `seed_demo_ops.py`: proveedores por sede (`branch=`), reservas hoy/mañana, candidaturas, inventario kg, incidencias. Entrypoint lo lanza en background.
-- BrasAI errático con hash: **keyword retrieve primero** (evita «fidelización» → pedidos).
-- LLM auto con API key; agente HTTP si WS caído.
+## Estado (2026-10-23) — sinónimos fidelización + .env (no export)
+- `export` en shell **no** basta: Docker Compose lee el fichero `.env`. Tras cambiar LLM, verificar `docker compose exec backend printenv EMBEDDING_PROVIDER`.
+- Keyword RAG: sinónimos (`fidelización`→loyalty/puntos/oro) para no devolver supplier-ordering.
+
+## Estado previo — seed demo multi-sede + RAG hash keyword-first
+- `seed_demo_ops.py` multi-sede; keyword-first con hash.
 
 ## Estado previo — BrasAI razona con LLM si hay API key
 - LLM auto si `GENERATION_*` + key; `RAG_MIN_SCORE` bajo con hash; offscope menú.
