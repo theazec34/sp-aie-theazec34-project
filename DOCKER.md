@@ -37,6 +37,18 @@ Atajo: `bash scripts/docker-rebuild-clean.sh`
 
 Si sigue fallando: `DOCKER_BUILDKIT=0 docker compose build --no-cache && docker compose up`.
 
+### BrasAI: `Storage folder … qdrant_local is already accessed`
+
+Qdrant **local** (fichero) no admite dos clientes a la vez. Con
+`QDRANT_FORCE_LOCAL=1` + `uvicorn --reload`, Reindexar/preguntar falla.
+
+```bash
+# En .env:
+QDRANT_FORCE_LOCAL=0
+# Compose ya pone QDRANT_URL=http://qdrant:6333
+docker compose up -d --force-recreate backend qdrant
+```
+
 ### Codespaces: LLM / `llm.4geeks.ai`
 
 Dos fallos distintos en el contenedor `backend`:
