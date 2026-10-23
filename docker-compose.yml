@@ -17,7 +17,9 @@ services:
     environment:
       # Forzar hostnames de la red Compose (ignora 127.0.0.1 del .env local)
       QDRANT_URL: http://qdrant:6333
-      REDIS_URL: redis://redis:6379/0
+      # Codespaces: TCP bridge contenedor→redis suele hacer TIMEOUT (mismo
+      # patrón que interfaces→backend). Broker vía puerto publicado en el host.
+      REDIS_URL: redis://host.docker.internal:6379/0
       # FastEmbed baja modelos de HuggingFace; en Codespaces a menudo no hay DNS → hash offline
       EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-hash}
       # Si el servicio qdrant no responde (volumen corrupto), BrasAI usa disco local
@@ -88,7 +90,7 @@ services:
     env_file:
       - .env
     environment:
-      REDIS_URL: redis://redis:6379/0
+      REDIS_URL: redis://host.docker.internal:6379/0
       QDRANT_URL: http://qdrant:6333
       PYTHONPATH: /app/api:/app
     # -E: eventos Celery para que Flower liste workers / tasks en vivo
@@ -116,9 +118,8 @@ services:
         condition: service_started
       llm-proxy:
         condition: service_started
-    dns:
-      - 8.8.8.8
-      - 1.1.1.1
+    # Sin dns: públicos aquí: rompen el embed DNS de Compose para `redis`
+    # y el worker ya habla con el broker vía host.docker.internal.
     extra_hosts:
       - "host.docker.internal:host-gateway"
       - "llm.4geeks.ai:${LLM_4GEEKS_IP:-68.183.63.85}"
@@ -134,7 +135,7 @@ services:
     env_file:
       - .env
     environment:
-      REDIS_URL: redis://redis:6379/0
+      REDIS_URL: redis://host.docker.internal:6379/0
       PYTHONPATH: /app/api:/app
       FLOWER_BASIC_AUTH: ${FLOWER_BASIC_AUTH:-}
     command:
@@ -157,6 +158,8 @@ services:
         condition: service_healthy
       worker:
         condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - brasaland-net
     restart: unless-stopped
@@ -165,7 +168,7 @@ services:
     image: redis:7-alpine
     container_name: brasaland-redis
     # protected-mode no: sin requirepass, Redis rechazaría clientes de otros
-    # contenedores (worker/Flower → Timeout). Sin ports públicos = OWASP A05 OK.
+    # contenedores (worker/Flower → Timeout).
     command:
       [
         "redis-server",
@@ -178,7 +181,10 @@ services:
         "--protected-mode",
         "no",
       ]
-    # Sin ports: — solo red interna brasaland-net (CRITICAL fix OWASP A05)
+    # Publicado en el host para Codespaces (bridge TCP worker→redis timeout).
+    # En Ports del Codespace: deja 6379 en Private (no hace falta abrirlo).
+    ports:
+      - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
