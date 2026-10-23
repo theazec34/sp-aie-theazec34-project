@@ -105,9 +105,10 @@ export default function KnowledgePage() {
           <p className="bo-soft">
             Responde solo con los <strong>manuales oficiales</strong> indexados
             (RAG). No consulta reservas, candidaturas ni stock en vivo — eso es
-            el <strong>Agente soporte</strong>. Si dice que no hay información,
-            pulsa <strong>Reindexar manuales</strong> (no suele ser la API key:
-            por defecto responde desde el texto del manual, sin LLM lento).
+            el <strong>Agente soporte</strong>.             Si dice que no hay información, pulsa{" "}
+            <strong>Reindexar manuales</strong>. Con{" "}
+            <code>GENERATION_USE_LLM=1</code> + API key razona con el LLM; si el
+            gateway falla, usa el texto del manual.
           </p>
         </div>
         <button

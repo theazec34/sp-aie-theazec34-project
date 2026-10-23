@@ -1,8 +1,12 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-23) — BrasAI keyword + Agente HTTP fallback
-- BrasAI «no sé»: hash embed + min_score alto → 0 hits. Ahora: umbral bajo + **keyword fallback** + grounded rápido (LLM solo con `GENERATION_USE_LLM=1`).
-- Agente «Reconectando…»: WS a :8000 Public; si falla, chat usa **POST /agent/query** vía `/api-backend`. Sede = `<select>` con `INCIDENT_BRANCHES`.
+## Estado (2026-10-23) — BrasAI razona con LLM si hay API key
+- Causa «no razona»: modo grounded pegaba chunks. Ahora LLM auto si `GENERATION_*` + key (o `GENERATION_USE_LLM=1`); fallback grounded.
+- `.env` demo: `RAG_MIN_SCORE=0.05`, `INTERNAL_API_URL=host.docker.internal`, offscope «cuál es el menú».
+- Agente inventario: timeout 12s + fallback stock/tarifas si falla `query_inventory_ops`.
+
+## Estado previo — BrasAI keyword + Agente HTTP fallback
+- Keyword fallback + WS→HTTP; sede desplegable.
 
 ## Estado previo — BrasAI = manuales; Agente = ops en vivo
 - **BrasAI:** solo RAG (lealtad, alérgenos, merma, pedidos-manual).
