@@ -160,7 +160,25 @@ def _invoke_inprocess(tool_name: str, arguments: dict[str, Any]) -> dict[str, An
     exposes, without requiring a separate uvicorn process. This is still MCP
     tool surface — not a direct IncidentRepository path from the agent.
     """
-    from mcps.brasaland_tools import server as mcp_server
+    import importlib
+
+    try:
+        mcp_server = importlib.import_module("mcps.brasaland_tools.server")
+    except ModuleNotFoundError as exc:
+        missing = getattr(exc, "name", None) or str(exc)
+        return {
+            "ok": False,
+            "error": (
+                f"Falta dependencia MCP en la imagen ({missing}). "
+                "En el backend: "
+                "uv pip install --system 'fastmcp>=4.0.10' 'mcpauth>=0.1.1' "
+                "'langchain-mcp-adapters>=0.3.1' "
+                "o rebuild: docker compose build --no-cache backend && "
+                "docker compose up -d backend"
+            ),
+            "error_code": "MCP_DEPS_MISSING",
+        }
+
     from mcps.brasaland_tools.auth import issue_dev_token, verify_dev_access_token
 
     token = _bearer_token() if os.getenv("MCP_ACCESS_TOKEN") else issue_dev_token(
