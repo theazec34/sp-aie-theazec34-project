@@ -78,7 +78,8 @@ class ChatSessionStore:
         with self._lock:
             existing = self._sessions.get(sid)
             if existing is not None:
-                if location_id and not existing.location_id:
+                # Siempre actualizar sede al reconectar (el desplegable del UI)
+                if location_id:
                     existing.location_id = location_id
                 if existing.status == "closed":
                     existing.status = "active"

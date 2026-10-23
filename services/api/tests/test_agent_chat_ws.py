@@ -235,6 +235,85 @@ def test_ws_reconnect_same_session_restores_history(
         assert any(m.get("role") == "assistant" for m in msgs)
 
 
+def test_session_store_updates_location_on_reconnect():
+    """Cambiar sede en el desplegable debe actualizar location_id de la sesión."""
+    from agent.chat.sessions import get_session_store
+
+    store = get_session_store()
+    first = store.get_or_create(
+        session_id="chat_sede", user_id="1", location_id="miami_doral"
+    )
+    assert first.location_id == "miami_doral"
+    second = store.get_or_create(
+        session_id="chat_sede", user_id="1", location_id="bogota_chapinero"
+    )
+    assert second.session_id == first.session_id
+    assert second.location_id == "bogota_chapinero"
+    assert store.get("chat_sede").location_id == "bogota_chapinero"
+
+
+def test_ws_reconnect_updates_location_and_tools(
+    client: TestClient,
+    auth_header: dict[str, str],
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """Tras reconectar con otra sede, run_agent recibe el location_id nuevo."""
+    seen: list[str | None] = []
+
+    def fake_run_agent(question: str, **kwargs: Any) -> dict[str, Any]:
+        seen.append(kwargs.get("location_id"))
+        return {
+            "answer": f"sede={kwargs.get('location_id')}",
+            "run_id": "r_sede",
+            "session_id": kwargs.get("session_id"),
+            "nodes": [],
+            "checkpointed": True,
+        }
+
+    monkeypatch.setattr("agent.chat.streamer.run_agent", fake_run_agent)
+
+    async def fast_turn(**kwargs: Any):
+        from agent.chat.streamer import run_streaming_turn as real
+
+        return await real(**{**kwargs, "token_delay_s": 0})
+
+    monkeypatch.setattr("agent.chat.ws.run_streaming_turn", fast_turn)
+
+    token = _token(client, auth_header)
+    with client.websocket_connect(
+        f"/agent/chat/ws?token={token}&session_id=chat_sede_ws&location_id=miami_doral"
+    ) as ws:
+        snap = ws.receive_json()
+        assert snap["data"]["location_id"] == "miami_doral"
+        ws.send_json(
+            {
+                "event": "user_message",
+                "data": {"session_id": "chat_sede_ws", "text": "tarifas"},
+            }
+        )
+        for _ in range(40):
+            if ws.receive_json()["event"] == "generation_completed":
+                break
+
+    with client.websocket_connect(
+        f"/agent/chat/ws?token={token}&session_id=chat_sede_ws&location_id=bogota_chapinero"
+    ) as ws2:
+        snap2 = ws2.receive_json()
+        assert snap2["event"] == "session_snapshot"
+        assert snap2["data"]["location_id"] == "bogota_chapinero"
+        ws2.send_json(
+            {
+                "event": "user_message",
+                "data": {"session_id": "chat_sede_ws", "text": "tarifas bogota"},
+            }
+        )
+        for _ in range(40):
+            if ws2.receive_json()["event"] == "generation_completed":
+                break
+
+    assert seen == ["miami_doral", "bogota_chapinero"]
+
+
 def test_event_contract_shapes():
     """Contrato BRIEFING Parte 2 (sin mezclar RFP/SSE)."""
     sample = {

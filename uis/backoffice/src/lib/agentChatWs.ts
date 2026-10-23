@@ -74,14 +74,29 @@ export type AgentChatController = {
   getSessionId: () => string | null;
 };
 
+export function clearStoredSessionId() {
+  try {
+    sessionStorage.removeItem(SESSION_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function connectAgentChat(
   handlers: AgentChatHandlers,
-  opts?: { locationId?: string; sessionId?: string | null },
+  opts?: { locationId?: string; sessionId?: string | null; freshSession?: boolean },
 ): AgentChatController {
   let stopped = false;
   let attempt = 0;
   let socket: WebSocket | null = null;
-  let sessionId: string | null = opts?.sessionId ?? getStoredSessionId();
+  // freshSession / sessionId:null → no reutilizar chat de otra sede
+  if (opts?.freshSession) {
+    clearStoredSessionId();
+  }
+  let sessionId: string | null =
+    opts?.freshSession || opts?.sessionId === null
+      ? null
+      : (opts?.sessionId ?? getStoredSessionId());
   let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
   const backoffMs = () => Math.min(30_000, 1000 * 2 ** Math.min(attempt, 5));
