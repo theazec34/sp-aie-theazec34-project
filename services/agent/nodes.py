@@ -31,12 +31,15 @@ from agent.memory.pending import get_pending  # noqa: E402
 from agent.state import AgentState  # noqa: E402
 from agent.tools.mcp_client import (  # noqa: E402
     manage_incidents_via_mcp,
+    query_front_ops_via_mcp,
     query_inventory_ops_via_mcp,
     query_inventory_via_mcp,
     query_suppliers_via_mcp,
 )
 from agent.tools.routing import (  # noqa: E402
     classify_intent,
+    extract_front_ops_action,
+    extract_front_ops_day,
     extract_inventory_view,
     extract_product_query,
     extract_supplier_action,
@@ -612,17 +615,19 @@ def lookup_supplier(state: AgentState) -> dict[str, Any]:
     """Node — supplier directory via MCP (read-only, EUR)."""
     question = state.get("question") or ""
     action = extract_supplier_action(question)
-    payload = query_suppliers_via_mcp(action=action, limit=15)
-    timed_out = bool(payload.get("timed_out"))
-    ok = bool(payload.get("ok")) and (
-        bool(payload.get("suppliers"))
-        or bool(payload.get("summary"))
+    branch = (state.get("location_id") or "").strip() or None
+    payload = query_suppliers_via_mcp(
+        action=action, limit=15, branch=branch
     )
+    timed_out = bool(payload.get("timed_out"))
+    # ok=True del MCP basta (directorio vacío → respuesta honesta, no fallback)
+    ok = bool(payload.get("ok")) and not timed_out
     tool_result = prepare_tool_result(
         {
             "ok": ok,
             "source": "mcp:query_suppliers",
             "action": action,
+            "branch": branch,
             "suppliers": list(payload.get("suppliers") or []),
             "summary": payload.get("summary"),
             "error": None if ok else (payload.get("error") or payload.get("error_code")),
@@ -646,6 +651,7 @@ def lookup_supplier(state: AgentState) -> dict[str, Any]:
         "action": action,
         "ok": ok,
         "timed_out": timed_out,
+        "branch": branch,
         "n_suppliers": len(tool_result.get("suppliers") or []),
         "via": "mcp",
         "isolated": True,
@@ -657,11 +663,13 @@ def answer_from_supplier(state: AgentState) -> dict[str, Any]:
     """Format supplier directory payload in EUR."""
     payload = state.get("tool_result") or {}
     action = payload.get("action") or "summary"
+    branch = payload.get("branch")
+    branch_note = f" (sede `{branch}`)" if branch else ""
     if action == "summary" and payload.get("summary"):
         s = payload["summary"]
         hi = s.get("highest_rate_active") or {}
         lines = [
-            f"Directorio de proveedores: {s.get('count')} fichas "
+            f"Directorio de proveedores{branch_note}: {s.get('count')} fichas "
             f"({s.get('active_count')} activos), moneda {s.get('currency', 'EUR')}.",
         ]
         if hi:
@@ -678,10 +686,16 @@ def answer_from_supplier(state: AgentState) -> dict[str, Any]:
                     f"- {t.get('name')}: {t.get('rate_per_unit')} € "
                     f"[{t.get('status')}]"
                 )
+        if not tops and not hi:
+            lines.append(
+                "No hay fichas aún. Ejecuta "
+                "`docker compose exec backend python seed.py --force` "
+                "y `python seed_demo_ops.py`."
+            )
         answer = "\n".join(lines)
     else:
         suppliers = payload.get("suppliers") or []
-        lines = ["Proveedores (tarifas en €):"]
+        lines = [f"Proveedores{branch_note} (tarifas en €):"]
         for s in suppliers[:12]:
             cats = ", ".join(s.get("categories") or [])
             lines.append(
@@ -691,7 +705,11 @@ def answer_from_supplier(state: AgentState) -> dict[str, Any]:
         answer = (
             "\n".join(lines)
             if suppliers
-            else "No encontré proveedores que coincidan con esa consulta."
+            else (
+                f"No encontré proveedores{branch_note}. "
+                "Prueba sin filtrar sede o re-siembra el directorio "
+                "(`seed.py --force` + `seed_demo_ops.py`)."
+            )
         )
 
     question = state.get("question") or ""
@@ -706,6 +724,129 @@ def answer_from_supplier(state: AgentState) -> dict[str, Any]:
         "action": action,
         "n_suppliers": len(payload.get("suppliers") or []),
         "source": "mcp:query_suppliers",
+        "proposed_memory": proposal_dump is not None,
+        "output_guarded": True,
+    })
+    return out
+
+
+def lookup_front_ops(state: AgentState) -> dict[str, Any]:
+    """Node — reservas / candidaturas via MCP."""
+    question = state.get("question") or ""
+    action = extract_front_ops_action(question)
+    day = extract_front_ops_day(question)
+    branch = (state.get("location_id") or "").strip() or None
+    kwargs: dict[str, Any] = {"action": action, "limit": 20, "branch": branch}
+    if action == "reservations" and day:
+        kwargs["day"] = day
+    payload = query_front_ops_via_mcp(**kwargs)
+    timed_out = bool(payload.get("timed_out"))
+    ok = bool(payload.get("ok")) and not timed_out
+    tool_result = prepare_tool_result(
+        {
+            "ok": ok,
+            "source": "mcp:query_front_ops",
+            "action": action,
+            "branch": branch,
+            "day": day,
+            "summary": payload.get("summary"),
+            "reservations": list(payload.get("reservations") or []),
+            "careers": list(payload.get("careers") or []),
+            "error": None if ok else (payload.get("error") or payload.get("error_code")),
+            "timed_out": timed_out,
+            "mcp": payload,
+        },
+        session_id=_session_id(state),
+    )
+    sources = list(state.get("sources_used") or [])
+    for tag in ("front_ops_tool", "mcp"):
+        if tag not in sources:
+            sources = sources + [tag]
+    out: dict[str, Any] = {
+        "tool_ok": ok,
+        "tool_result": tool_result,
+        "sources_used": sources,
+        "error": None if ok else (tool_result.get("error") or "front_ops_unavailable"),
+    }
+    out["trace"] = _append_trace(state, "lookup_front_ops", {
+        "action": action,
+        "ok": ok,
+        "timed_out": timed_out,
+        "branch": branch,
+        "via": "mcp",
+    })
+    return out
+
+
+def answer_from_front_ops(state: AgentState) -> dict[str, Any]:
+    """Format reservas / candidaturas."""
+    payload = state.get("tool_result") or {}
+    action = payload.get("action") or "summary"
+    branch = payload.get("branch")
+    branch_note = f" en sede `{branch}`" if branch else ""
+
+    if action == "summary" and payload.get("summary"):
+        s = payload["summary"]
+        lines = [
+            f"Operación de sala{branch_note}:",
+            f"- Reservas hoy: {s.get('reservations_today')} "
+            f"({s.get('guests_today')} comensales).",
+            f"- Reservas mañana: {s.get('reservations_tomorrow')}.",
+            f"- Candidaturas registradas: {s.get('careers_total')}.",
+        ]
+        for r in (s.get("sample_reservations_today") or [])[:5]:
+            lines.append(
+                f"  · {r.get('full_name')}: {r.get('date')} {r.get('time')} — "
+                f"{r.get('guests')} pax ({r.get('status')})"
+            )
+        for c in (s.get("sample_careers") or [])[:3]:
+            lines.append(
+                f"  · Candidato {c.get('name')} → {c.get('department')} "
+                f"({c.get('experience_years')} años exp.)"
+            )
+        answer = "\n".join(lines)
+    elif action == "careers":
+        careers = payload.get("careers") or []
+        if not careers:
+            answer = f"No hay candidaturas{branch_note} en el intake ahora mismo."
+        else:
+            lines = [f"Candidaturas{branch_note} ({len(careers)}):"]
+            for c in careers[:12]:
+                lines.append(
+                    f"- {c.get('name')} · {c.get('department')} · "
+                    f"{c.get('experience_years')} años · {c.get('email')}"
+                )
+            answer = "\n".join(lines)
+    else:
+        reservations = payload.get("reservations") or []
+        day = payload.get("day") or "all"
+        if not reservations:
+            answer = (
+                f"No hay reservas{branch_note} "
+                f"para el filtro «{day}». "
+                "Si acabas de levantar el entorno, ejecuta "
+                "`docker compose exec backend python seed_demo_ops.py`."
+            )
+        else:
+            lines = [f"Reservas{branch_note} ({day}, {len(reservations)}):"]
+            for r in reservations[:12]:
+                lines.append(
+                    f"- {r.get('full_name')}: {r.get('date')} {r.get('time')} — "
+                    f"{r.get('guests')} pax · {r.get('status')}"
+                )
+            answer = "\n".join(lines)
+
+    question = state.get("question") or ""
+    answer, proposal_dump = _maybe_attach_proposal(state, question, answer)
+    answer = _finalize_answer(state, answer)
+    out: dict[str, Any] = {
+        "answer": answer,
+        "error": None,
+        "memory_proposal": proposal_dump,
+    }
+    out["trace"] = _append_trace(state, "answer_from_front_ops", {
+        "action": action,
+        "source": "mcp:query_front_ops",
         "proposed_memory": proposal_dump is not None,
         "output_guarded": True,
     })
@@ -735,7 +876,15 @@ def tool_fallback(state: AgentState) -> dict[str, Any]:
     elif intent == "supplier":
         answer = (
             "No pude leer el directorio de proveedores ahora mismo. "
-            "No invento tarifas: revisa el módulo Proveedores del backoffice."
+            "No invento tarifas: revisa el módulo Proveedores del backoffice "
+            "o ejecuta `docker compose exec backend python seed.py --force`."
+        )
+        reason = err
+    elif intent == "front_ops":
+        answer = (
+            "No pude leer reservas/candidaturas ahora mismo. "
+            "Revisa Reservas web / Candidaturas en el backoffice o siembra "
+            "con `seed_demo_ops.py`."
         )
         reason = err
     else:

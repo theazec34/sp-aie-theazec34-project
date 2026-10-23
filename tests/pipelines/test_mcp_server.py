@@ -59,6 +59,7 @@ def test_metadata_and_protected_resource_public(client):
     assert "scopes_supported" in prm_body
     assert "incidents:read" in prm_body["scopes_supported"]
     assert "inventory:read" in prm_body["scopes_supported"]
+    assert "intake:read" in prm_body["scopes_supported"]
 
 
 def test_unauthenticated_mcp_rejected(client):
@@ -182,6 +183,40 @@ def test_query_suppliers_directory(mcp_env, token):
     assert "summary" in summary
 
 
+def test_query_front_ops_summary(mcp_env, token, tmp_path, monkeypatch):
+    from mcps.brasaland_tools.auth import verify_dev_access_token
+    from app.public_intake.models import ReservationCreate
+    from app.public_intake.repository import PublicIntakeRepository
+    from datetime import date, time
+
+    monkeypatch.setattr(
+        "app.public_intake.repository.DEFAULT_DB_PATH",
+        tmp_path / "intake.json",
+    )
+    mcp_env.mcp_auth._context_var.set(verify_dev_access_token(token))
+    repo = PublicIntakeRepository(db_path=tmp_path / "intake.json")
+    try:
+        repo.create_reservation(
+            ReservationCreate(
+                full_name="Ana Demo",
+                phone="+34600111222",
+                email="ana.demo@example.com",
+                date=date.today(),
+                time=time(20, 0),
+                guests=2,
+                notes="[sede:miami_doral] demo",
+            )
+        )
+    finally:
+        repo.close()
+
+    out = mcp_env.query_front_ops(
+        action="reservations", branch="miami_doral", day="today", limit=10
+    )
+    assert out["ok"] is True
+    assert out["count"] >= 1
+
+
 def test_tool_discovery_schemas(mcp_env):
     """Discovery: tool names + descriptions available without reading source."""
     names = {
@@ -189,6 +224,7 @@ def test_tool_discovery_schemas(mcp_env):
         "query_inventory",
         "query_inventory_ops",
         "query_suppliers",
+        "query_front_ops",
         "mutate_inventory",
     }
     for name in names:

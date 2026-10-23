@@ -38,6 +38,8 @@ def test_classify_intent_ticket_vs_rag():
     assert (
         classify_intent("¿Qué proveedor nos ha enviado más kg?") == "inventory"
     )
+    assert classify_intent("¿Qué reservas tengo hoy?") == "front_ops"
+    assert classify_intent("¿Cuántas candidaturas hay?") == "front_ops"
 
 
 def test_eval_ticket_question_uses_mcp_not_rag(
@@ -257,8 +259,65 @@ def test_eval_inventory_summary_uses_ops_tool(
 
     monkeypatch.setattr("agent.nodes.query_inventory_ops_via_mcp", _fake_ops)
     result = run_agent("¿Qué proveedor nos ha enviado más kg?")
+
     assert result["intent"] == "inventory"
     assert "lookup_inventory" in result["nodes"]
     assert "answer_from_inventory" in result["nodes"]
     assert "Carnes del Sur" in result["answer"]
     assert "10" in result["answer"]
+
+
+def test_eval_front_ops_reservations(
+    fresh_graph, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    monkeypatch.setenv("AGENT_TRACE_DIR", str(tmp_path))
+
+    def _fake_front(**kwargs):
+        assert kwargs.get("action") == "reservations"
+        return {
+            "ok": True,
+            "action": "reservations",
+            "branch": "miami_doral",
+            "day": "today",
+            "reservations": [
+                {
+                    "full_name": "Cliente Demo Miami Doral",
+                    "date": "2026-10-23",
+                    "time": "20:00:00",
+                    "guests": 4,
+                    "status": "received",
+                }
+            ],
+            "count": 1,
+        }
+
+    monkeypatch.setattr("agent.nodes.query_front_ops_via_mcp", _fake_front)
+    result = run_agent(
+        "¿Qué reservas tengo hoy?",
+        location_id="miami_doral",
+    )
+    assert result["intent"] == "front_ops"
+    assert "lookup_front_ops" in result["nodes"]
+    assert "Cliente Demo Miami Doral" in result["answer"]
+
+
+def test_supplier_empty_directory_still_answers(
+    fresh_graph, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    """MCP ok + 0 suppliers must not hit tool_fallback."""
+    monkeypatch.setenv("AGENT_TRACE_DIR", str(tmp_path))
+
+    def _fake_empty(**_k):
+        return {
+            "ok": True,
+            "action": "top_rate",
+            "currency": "EUR",
+            "suppliers": [],
+            "count": 0,
+        }
+
+    monkeypatch.setattr("agent.nodes.query_suppliers_via_mcp", _fake_empty)
+    result = run_agent("¿Cuál es el proveedor con la tarifa más alta en €?")
+    assert result["intent"] == "supplier"
+    assert "answer_from_supplier" in result["nodes"]
+    assert "tool_fallback" not in result["nodes"]

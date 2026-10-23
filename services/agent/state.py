@@ -20,6 +20,7 @@ class AgentState(TypedDict):
         "ticket",
         "inventory",
         "supplier",
+        "front_ops",
         "memory_confirm",
         "guard_block",
         "casual",
@@ -29,6 +30,7 @@ class AgentState(TypedDict):
     sources_used: list[str]
     trace: list[dict[str, Any]]
     run_id: NotRequired[str]
+    location_id: NotRequired[str | None]
     # Part 3 — episodic memory
     session_id: NotRequired[str]
     user_id: NotRequired[str | None]
@@ -47,6 +49,7 @@ RouteAfterReceive = Literal[
     "ticket",
     "inventory",
     "supplier",
+    "front_ops",
     "refuse",
     "memory_confirm",
     "guard_block",

@@ -92,6 +92,11 @@ _QUERY_SYNONYMS: dict[str, set[str]] = {
     "desperdicio": {"waste", "merma", "protocol"},
     "proveedor": {"supplier", "ordering", "pedido"},
     "proveedores": {"supplier", "ordering", "pedido"},
+    "horario": {"service", "hours", "apertura", "cierre"},
+    "horarios": {"service", "hours", "apertura", "cierre"},
+    "reserva": {"customer", "experience", "reservas", "mesa"},
+    "reservas": {"customer", "experience", "reservas", "mesa"},
+    "platino": {"loyalty", "brasa", "points", "puntos", "100"},
 }
 
 

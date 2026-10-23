@@ -34,12 +34,15 @@ SOURCE_DOCUMENT_BY_FILE = {
     "brasaland-waste-protocol.es.md": "waste-protocol",
     "brasaland-menu-allergens.es.md": "menu-allergens",
     "brasaland-supplier-ordering.es.md": "supplier-ordering",
+    "brasaland-service-hours.es.md": "service-hours",
+    "brasaland-customer-experience.es.md": "customer-experience",
 }
 
 # Flat manuals (ES) — section cues when ## headings are absent.
 _SECTION_START_RE = re.compile(
     r"^(?P<title>"
     r"Niveles del programa|"
+    r"Redención de puntos|"
     r"Preguntas frecuentes de clientes|"
     r"Platos principales y sus alérgenos declarados|"
     r"Protocolo ante alergias reportadas por el cliente|"
@@ -48,7 +51,12 @@ _SECTION_START_RE = re.compile(
     r"Causas que requieren escalamiento a Felipe Guerrero directamente|"
     r"Meta operativa|"
     r"Categorías de proveedores y frecuencia de pedido|"
-    r"Regla de stock mínimo"
+    r"Regla de stock mínimo|"
+    r"Recepción y rechazo de mercancía|"
+    r"Colombia|"
+    r"Florida \(EE\. UU\.\)|"
+    r"Reservas|"
+    r"Servicio en mesa"
     r"):\s*(?P<rest>.*)$",
     re.IGNORECASE,
 )

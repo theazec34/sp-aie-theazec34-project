@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import Literal
 
-Intent = Literal["rag", "ticket", "inventory", "supplier"]
+Intent = Literal["rag", "ticket", "inventory", "supplier", "front_ops"]
 
 _TICKET_HINT = re.compile(
     r"\b(ticket|incidencia|incident|soporte|reclamo|queja\s+registrad)\w*\b",
@@ -24,6 +24,12 @@ _INVENTORY_HINT = re.compile(
     r"\b(inventario|stock|sku|ingrediente|producto|existencias|almac[eé]n|"
     r"salida(?:s)?|entrada(?:s)?|historial|inbound|outbound|kg|kilos?|"
     r"merma\s+de\s+inventario)\w*\b",
+    re.IGNORECASE,
+)
+_FRONT_OPS_HINT = re.compile(
+    r"\b(reserva(?:s)?|reservation|comensal(?:es)?|cliente(?:s)?|"
+    r"candidat(?:o|a|ura|uras)|empleo|trabaja(?:r)?\s+con\s+nosotros|"
+    r"mesa(?:s)?\s+(?:para|hoy|mañana)|cu[aá]ntas?\s+reserv)\w*\b",
     re.IGNORECASE,
 )
 _INVENTORY_OUTBOUND = re.compile(
@@ -104,6 +110,36 @@ def extract_supplier_action(
     return "summary"
 
 
+def extract_front_ops_action(
+    question: str,
+) -> Literal["summary", "reservations", "careers"]:
+    q = question or ""
+    if re.search(
+        r"\b(candidat|empleo|trabaja|cv|curr[ií]culum|rr\.?\s*hh)\w*\b",
+        q,
+        re.IGNORECASE,
+    ):
+        return "careers"
+    if re.search(
+        r"\b(reserva|reservation|mesa|comensal|cliente)\w*\b",
+        q,
+        re.IGNORECASE,
+    ):
+        return "reservations"
+    return "summary"
+
+
+def extract_front_ops_day(
+    question: str,
+) -> Literal["today", "tomorrow", "all"] | None:
+    q = (question or "").lower()
+    if re.search(r"\b(mañana|manana|tomorrow)\b", q):
+        return "tomorrow"
+    if re.search(r"\b(hoy|today)\b", q):
+        return "today"
+    return "all"
+
+
 def classify_intent(question: str) -> Intent:
     """Decide automatically whether the question needs RAG or a live tool."""
     q = (question or "").strip()
@@ -118,4 +154,6 @@ def classify_intent(question: str) -> Intent:
         return "supplier"
     if _INVENTORY_HINT.search(q):
         return "inventory"
+    if _FRONT_OPS_HINT.search(q):
+        return "front_ops"
     return "rag"

@@ -9,11 +9,13 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 
 from agent.nodes import (
+    answer_from_front_ops,
     answer_from_inventory,
     answer_from_supplier,
     answer_from_ticket,
     emit_guard_response,
     generate_response,
+    lookup_front_ops,
     lookup_inventory,
     lookup_supplier,
     lookup_ticket,
@@ -31,7 +33,7 @@ from agent.state import (
 )
 
 RouteAfterMemory = Literal[
-    "end", "retrieve", "ticket", "inventory", "supplier", "refuse"
+    "end", "retrieve", "ticket", "inventory", "supplier", "front_ops", "refuse"
 ]
 
 
@@ -51,6 +53,8 @@ def route_after_receive(state: AgentState) -> RouteAfterReceive:
         return "inventory"
     if intent == "supplier":
         return "supplier"
+    if intent == "front_ops":
+        return "front_ops"
     return "retrieve"
 
 
@@ -81,6 +85,8 @@ def route_after_memory(state: AgentState) -> RouteAfterMemory:
             return "inventory"
         if intent == "supplier":
             return "supplier"
+        if intent == "front_ops":
+            return "front_ops"
         if intent == "memory_confirm":
             return "end"
         return "retrieve"
@@ -103,6 +109,8 @@ def build_agent_graph(*, checkpointer: MemorySaver | None = None):
     builder.add_node("answer_from_inventory", answer_from_inventory)
     builder.add_node("lookup_supplier", lookup_supplier)
     builder.add_node("answer_from_supplier", answer_from_supplier)
+    builder.add_node("lookup_front_ops", lookup_front_ops)
+    builder.add_node("answer_from_front_ops", answer_from_front_ops)
     builder.add_node("tool_fallback", tool_fallback)
 
     builder.add_edge(START, "receive_question")
@@ -114,6 +122,7 @@ def build_agent_graph(*, checkpointer: MemorySaver | None = None):
             "ticket": "lookup_ticket",
             "inventory": "lookup_inventory",
             "supplier": "lookup_supplier",
+            "front_ops": "lookup_front_ops",
             "refuse": "refuse_honestly",
             "memory_confirm": "resolve_memory_confirm",
             "guard_block": "emit_guard_response",
@@ -130,6 +139,7 @@ def build_agent_graph(*, checkpointer: MemorySaver | None = None):
             "ticket": "lookup_ticket",
             "inventory": "lookup_inventory",
             "supplier": "lookup_supplier",
+            "front_ops": "lookup_front_ops",
             "refuse": "refuse_honestly",
         },
     )
@@ -153,11 +163,17 @@ def build_agent_graph(*, checkpointer: MemorySaver | None = None):
         route_after_tool,
         {"answer": "answer_from_supplier", "fallback": "tool_fallback"},
     )
+    builder.add_conditional_edges(
+        "lookup_front_ops",
+        route_after_tool,
+        {"answer": "answer_from_front_ops", "fallback": "tool_fallback"},
+    )
     builder.add_edge("generate_response", END)
     builder.add_edge("refuse_honestly", END)
     builder.add_edge("answer_from_ticket", END)
     builder.add_edge("answer_from_inventory", END)
     builder.add_edge("answer_from_supplier", END)
+    builder.add_edge("answer_from_front_ops", END)
     builder.add_edge("tool_fallback", END)
 
     saver = checkpointer if checkpointer is not None else MemorySaver()
@@ -175,6 +191,7 @@ def initial_state(
     run_id: str | None = None,
     session_id: str | None = None,
     user_id: str | None = None,
+    location_id: str | None = None,
 ) -> AgentState:
     state: AgentState = {
         "question": question or "",
@@ -190,6 +207,7 @@ def initial_state(
         "trace": [],
         "session_id": session_id or run_id or "default",
         "user_id": user_id,
+        "location_id": location_id,
         "memory_hits": [],
         "memory_proposal": None,
         "memory_decision": None,
@@ -206,6 +224,7 @@ def run_agent(
     run_id: str | None = None,
     session_id: str | None = None,
     user_id: str | None = None,
+    location_id: str | None = None,
 ) -> dict[str, Any]:
     """Invoke compiled graph; persist consultable trace."""
     import uuid
@@ -219,7 +238,13 @@ def run_agent(
     # thread_id = session for checkpoint continuity across turns
     config = {"configurable": {"thread_id": sid}}
     final = graph.invoke(
-        initial_state(question, run_id=rid, session_id=sid, user_id=user_id),
+        initial_state(
+            question,
+            run_id=rid,
+            session_id=sid,
+            user_id=user_id,
+            location_id=location_id,
+        ),
         config=config,
     )
 
@@ -235,6 +260,7 @@ def run_agent(
         "run_id": rid,
         "session_id": sid,
         "user_id": user_id,
+        "location_id": location_id,
         "answer": final.get("answer") or "",
         "error": final.get("error"),
         "trace": trace,

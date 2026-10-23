@@ -41,6 +41,11 @@ class AgentQueryRequest(BaseModel):
         max_length=128,
         description="Stable conversation id for memory proposals / confirmations",
     )
+    location_id: str | None = Field(
+        default=None,
+        max_length=64,
+        description="Sede operativa (p. ej. miami_doral) para filtrar tools",
+    )
 
 
 class AgentQueryResponse(BaseModel):
@@ -89,6 +94,7 @@ def agent_query(
             body.question or "",
             session_id=body.session_id,
             user_id=uid,
+            location_id=body.location_id,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

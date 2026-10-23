@@ -5,6 +5,7 @@ Exposes:
 - ``query_inventory`` — read-only stock lookup
 - ``query_inventory_ops`` — historial / entradas / salidas / resumen kg
 - ``query_suppliers`` — directorio proveedores (€) + ranking
+- ``query_front_ops`` — reservas / candidaturas (intake)
 - ``mutate_inventory`` — always rejects writes (least privilege)
 
 Auth: mcpauth Bearer JWT (not FastMCP built-in auth).
@@ -32,10 +33,13 @@ from mcps.brasaland_tools.auth import (
 from mcps.brasaland_tools.backend import (
     BackendError,
     create_incident,
+    front_ops_summary,
     get_incident,
     inventory_ops_summary,
+    list_careers_ops,
     list_incidents,
     list_inventory_orders,
+    list_reservations_ops,
     list_suppliers,
     query_products,
     supplier_directory_summary,
@@ -401,6 +405,7 @@ def query_inventory_ops(
 def query_suppliers(
     action: Literal["list", "top_rate", "summary"] = "summary",
     name_query: str | None = None,
+    branch: str | None = None,
     limit: int = 15,
 ) -> dict[str, Any]:
     """Read-only supplier directory."""
@@ -409,10 +414,39 @@ def query_suppliers(
     try:
         _require_scopes(TOOL_REQUIRED_SCOPES[tool])
         if action == "summary":
-            summary = supplier_directory_summary(limit=limit)
+            # summary usa list_suppliers interno; filtrar branch vía list + rank
+            if branch:
+                suppliers = list_suppliers(branch=branch, limit=500)
+                active = [
+                    s for s in suppliers if str(s.get("status", "")).lower() == "active"
+                ]
+                ranked = sorted(
+                    suppliers,
+                    key=lambda s: float(s.get("rate_per_unit") or 0),
+                    reverse=True,
+                )
+                summary = {
+                    "count": len(suppliers),
+                    "active_count": len(active),
+                    "currency": "EUR",
+                    "branch": branch,
+                    "top_by_rate_eur": ranked[:limit],
+                    "highest_rate_active": (
+                        sorted(
+                            active,
+                            key=lambda s: float(s.get("rate_per_unit") or 0),
+                            reverse=True,
+                        )[:1]
+                        or [None]
+                    )[0],
+                }
+            else:
+                summary = supplier_directory_summary(limit=limit)
             out = {"ok": True, "action": action, "summary": summary}
         elif action == "top_rate":
-            suppliers = list_suppliers(name_query=name_query, limit=200)
+            suppliers = list_suppliers(
+                name_query=name_query, branch=branch, limit=200
+            )
             ranked = sorted(
                 suppliers,
                 key=lambda s: float(s.get("rate_per_unit") or 0),
@@ -422,21 +456,104 @@ def query_suppliers(
                 "ok": True,
                 "action": action,
                 "currency": "EUR",
+                "branch": branch,
                 "suppliers": ranked,
                 "count": len(ranked),
             }
         else:
-            suppliers = list_suppliers(name_query=name_query, limit=limit)
+            suppliers = list_suppliers(
+                name_query=name_query, branch=branch, limit=limit
+            )
             out = {
                 "ok": True,
                 "action": action,
                 "currency": "EUR",
+                "branch": branch,
                 "suppliers": suppliers,
                 "count": len(suppliers),
             }
         log_tool_invocation(
             tool=tool, client_id=client_id, subject=subject, result="ok",
             extra={"action": action},
+        )
+        return out
+    except MCPAuthBearerAuthException as exc:
+        code = (
+            McpErrorCode.AUTHZ_INSUFFICIENT_SCOPE
+            if exc.code == BearerAuthExceptionCode.MISSING_REQUIRED_SCOPES
+            else McpErrorCode.AUTH_INVALID_TOKEN
+        )
+        result = _tool_error(code, str(exc.code.value))
+        log_tool_invocation(
+            tool=tool, client_id=client_id, subject=subject, result=result["error_code"],
+        )
+        return result
+    except BackendError as exc:
+        result = _tool_error(McpErrorCode.BACKEND_ERROR, str(exc))
+        log_tool_invocation(
+            tool=tool, client_id=client_id, subject=subject, result=result["error_code"],
+        )
+        return result
+    except Exception as exc:  # noqa: BLE001
+        result = _tool_error(
+            McpErrorCode.BACKEND_ERROR, f"{type(exc).__name__}: {exc}"
+        )
+        log_tool_invocation(
+            tool=tool, client_id=client_id, subject=subject, result=result["error_code"],
+        )
+        return result
+
+
+@mcp.tool(
+    name="query_front_ops",
+    description=(
+        "Read-only front-of-house ops: reservations (today/tomorrow) and career "
+        "applications. action=summary|reservations|careers. Optional branch "
+        "(e.g. miami_doral). Requires scopes: brasaland:tools + intake:read."
+    ),
+)
+def query_front_ops(
+    action: Literal["summary", "reservations", "careers"] = "summary",
+    branch: str | None = None,
+    day: Literal["today", "tomorrow", "all"] | None = None,
+    limit: int = 20,
+) -> dict[str, Any]:
+    """Reservas y candidaturas del intake público."""
+    tool = "query_front_ops"
+    client_id, subject = _client_meta()
+    try:
+        _require_scopes(TOOL_REQUIRED_SCOPES[tool])
+        if action == "summary":
+            out = {
+                "ok": True,
+                "action": action,
+                "summary": front_ops_summary(branch=branch),
+            }
+        elif action == "careers":
+            rows = list_careers_ops(branch=branch, limit=limit)
+            out = {
+                "ok": True,
+                "action": action,
+                "branch": branch,
+                "careers": rows,
+                "count": len(rows),
+            }
+        else:
+            day_key = None if day in {None, "all"} else day
+            rows = list_reservations_ops(
+                branch=branch, day=day_key, limit=limit
+            )
+            out = {
+                "ok": True,
+                "action": action,
+                "branch": branch,
+                "day": day or "all",
+                "reservations": rows,
+                "count": len(rows),
+            }
+        log_tool_invocation(
+            tool=tool, client_id=client_id, subject=subject, result="ok",
+            extra={"action": action, "branch": branch},
         )
         return out
     except MCPAuthBearerAuthException as exc:
