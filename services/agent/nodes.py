@@ -874,10 +874,18 @@ def tool_fallback(state: AgentState) -> dict[str, Any]:
         )
         reason = err
     elif intent == "supplier":
+        detail = ""
+        if err and err not in {"supplier_not_found", "tool_unavailable"}:
+            detail = f" (detalle: {err})"
         answer = (
-            "No pude leer el directorio de proveedores ahora mismo. "
-            "No invento tarifas: revisa el módulo Proveedores del backoffice "
-            "o ejecuta `docker compose exec backend python seed.py --force`."
+            "No pude leer el directorio de proveedores ahora mismo"
+            f"{detail}. "
+            "Si el módulo Proveedores del backoffice sí lista fichas: "
+            "`docker compose up -d --force-recreate backend` "
+            "(el volumen ./mcps debe estar montado). "
+            "Si el módulo está vacío: "
+            "`docker compose exec backend python seed.py --force` "
+            "y luego `python seed_demo_ops.py`."
         )
         reason = err
     elif intent == "front_ops":
