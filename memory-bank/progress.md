@@ -1,8 +1,12 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-23) — login timeout /api-backend
-- Causa: `.env` tenía `INTERNAL_API_URL=http://backend:8000` y **pisaba** el default host-gateway → proxy colgaba 20s; login aborta a 12s («API no respondió a tiempo»).
-- Compose **fuerza** `INTERNAL_API_URL=http://host.docker.internal:8000` (ignora .env); proxy prioriza host-gateway y fail-fast en `backend:8000`.
+## Estado (2026-10-23) — BrasAI proxy timeout vs login OK
+- Login OK (rápido); BrasAI fallaba: proxy cortaba a **10s** la query RAG y marcaba todos los upstreams como timeout.
+- Proxy: probe `/health` (2.5s) → elige upstream → forward **120s** en `/knowledge` `/rfp` `/agent`.
+
+## Estado previo — login timeout /api-backend
+- Causa: `.env` con `INTERNAL_API_URL=http://backend:8000` pisaba host-gateway → login 12s abort.
+- Compose **fuerza** `INTERNAL_API_URL=http://host.docker.internal:8000`.
 
 ## Estado previo — proxy BrasAI vía host-gateway
 - Diagnóstico Codespaces: DNS `backend` OK, misma red, pero **TCP interfaces→backend:8000 = TIMEOUT**; host→`:8000` sí responde.
