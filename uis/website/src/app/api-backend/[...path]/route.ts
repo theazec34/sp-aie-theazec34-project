@@ -137,8 +137,7 @@ async function proxy(
     return NextResponse.json(
       {
         detail:
-          `Proxy /api-backend no alcanzó la API (${picked.errors.join(" | ")}). ` +
-          `Revisa: docker compose logs backend`,
+          `No se pudo alcanzar la API. Comprueba que el backend esté en marcha.`,
       },
       { status: 502 }
     );

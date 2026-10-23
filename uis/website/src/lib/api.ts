@@ -65,16 +65,16 @@ export async function postJson<T>(
         ok: false,
         status: 0,
         detail:
-          "La API no respondió a tiempo. Comprueba que el backend esté sano " +
-          "(curl :8000/health) y reintenta. En Codespaces el puerto 8000 debe ser Public.",
+          "La API no respondió a tiempo. Comprueba que el servicio esté en " +
+          "marcha y vuelve a intentarlo.",
       };
     }
     return {
       ok: false,
       status: 0,
       detail:
-        "No se pudo contactar con la API. En Codespaces pon el puerto 8000 en Public " +
-        "y recarga la página. Comprueba: curl localhost:8000/health",
+        "No se pudo contactar con la API. Comprueba que el backend esté en " +
+        "marcha y recarga la página.",
     };
   }
 }

@@ -118,10 +118,8 @@ export function networkErrorMessage(err: unknown, apiBase: string): string {
   const raw = err instanceof Error ? err.message : String(err);
   if (/failed to fetch|networkerror|load failed|network request failed/i.test(raw)) {
     return (
-      `No se pudo conectar con la API (${apiBase}). Comprueba: ` +
-      `1) uvicorn / backend en el puerto 8000, ` +
-      `2) en Codespaces el puerto 8000 en Public (solo si usas URL directa), ` +
-      `3) deja la URL en «/api-backend» (proxy del backoffice) o usa «Usar auto-detectada».`
+      `No se pudo conectar con la API (${apiBase}). Comprueba que el backend ` +
+      `esté en marcha y usa «Usar auto-detectada» en la URL de la API.`
     );
   }
   return raw;

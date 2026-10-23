@@ -250,15 +250,12 @@ export default function AgentChatPage() {
 
       {conn === "open" ? (
         <p className="bo-soft" style={{ marginBottom: "0.75rem" }}>
-          Canal en vivo: la etiqueta verde «En vivo (WebSocket)» confirma que el
-          chat está conectado al API. Si cambia a «HTTP» o «Conectando…», no hay
-          WS (en Codespaces pon el puerto <strong>8000 en Public</strong>).
+          Canal en vivo: la etiqueta «En vivo (WebSocket)» confirma la conexión
+          directa con el API.
         </p>
       ) : (
         <p className="bo-soft" style={{ marginBottom: "0.75rem" }}>
-          WebSocket no conectado (en Codespaces pon el puerto <strong>8000 en
-          Public</strong>). Mientras tanto el chat usa{" "}
-          <code>POST /agent/query</code> vía <code>/api-backend</code> — sigue
+          WebSocket no disponible; el chat usa el API por HTTP y sigue
           filtrando por la sede elegida abajo.
         </p>
       )}

@@ -146,3 +146,24 @@ def test_reporting_endpoints(client, auth_header):
     )
     assert trigger.status_code == 200
     assert trigger.json()["status"] == "completed"
+
+
+def test_pipeline_artifact_dir_skips_readonly(tmp_path, monkeypatch):
+    """Docker monta ./data :ro — los artefactos deben ir a un dir escribible."""
+    from data.pipelines import pipeline as pipe
+
+    ro = tmp_path / "ro_data"
+    ro.mkdir()
+    ro.chmod(0o555)
+    monkeypatch.delenv("PIPELINE_ARTIFACT_DIR", raising=False)
+    monkeypatch.setattr(pipe, "_REPO_ROOT", tmp_path)
+    monkeypatch.setattr(pipe, "_API_ROOT", tmp_path / "missing_api")
+
+    writable = tmp_path / "tmp_artifacts"
+    monkeypatch.setenv("PIPELINE_ARTIFACT_DIR", str(writable))
+    out = pipe.pipeline_artifact_dir("raw")
+    assert out.is_dir()
+    probe = out / "ok.txt"
+    probe.write_text("yes", encoding="utf-8")
+    assert probe.read_text(encoding="utf-8") == "yes"
+    ro.chmod(0o755)

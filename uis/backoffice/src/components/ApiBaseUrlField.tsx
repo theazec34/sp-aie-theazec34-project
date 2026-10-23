@@ -11,7 +11,7 @@ type Props = {
   onChange?: (url: string) => void;
 };
 
-/** Editable API base URL for Codespaces / local debugging. */
+/** Editable API base URL (defaults to same-origin proxy). */
 export default function ApiBaseUrlField({ onChange }: Props) {
   const [value, setValue] = useState(() =>
     typeof window === "undefined" ? "" : getApiBaseUrl()
@@ -39,9 +39,8 @@ export default function ApiBaseUrlField({ onChange }: Props) {
         aria-describedby="api-base-hint"
       />
       <span id="api-base-hint" className="api-base-hint">
-        En Codespaces: URL <code>…-8000.app.github.dev</code> (puerto 8000 en{" "}
-        <strong>Public</strong> solo para Swagger/WS). Login: deja <code>/api-backend</code>
-        y pulsa «Usar auto-detectada».
+        Recomendado: dejar la URL auto-detectada (proxy del panel) y pulsar
+        «Usar auto-detectada» si cambias de entorno.
       </span>
       <button
         type="button"

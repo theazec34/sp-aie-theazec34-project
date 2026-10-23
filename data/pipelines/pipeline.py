@@ -14,7 +14,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
+import tempfile
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -49,8 +51,38 @@ from data.pipelines.weekly_location_performance.db import (  # noqa: E402
     upsert_kpi_rows,
 )
 
-_RAW_DIR = _REPO_ROOT / "data" / "raw"
-_EVAL_DIR = _REPO_ROOT / "data" / "eval"
+
+def pipeline_artifact_dir(kind: str) -> Path:
+    """Writable dir for raw/eval dumps.
+
+    Compose mounts ``./data`` as ``:ro`` in the API container, so writing under
+    ``/app/data/raw`` raises OSError and ``POST /reporting/pipeline-runs`` → 500.
+    Prefer the backend data volume (``/app/api/data/pipeline``) or TEMP.
+    """
+    env = (os.getenv("PIPELINE_ARTIFACT_DIR") or "").strip()
+    candidates: list[Path] = []
+    if env:
+        candidates.append(Path(env) / kind)
+    candidates.extend(
+        [
+            Path("/app/api/data/pipeline") / kind,
+            _API_ROOT / "data" / "pipeline" / kind,
+            _REPO_ROOT / "data" / kind,
+            Path(tempfile.gettempdir()) / "brasaland_pipeline" / kind,
+        ]
+    )
+    for path in candidates:
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+            probe = path / ".writeok"
+            probe.write_text("1", encoding="utf-8")
+            probe.unlink(missing_ok=True)
+            return path
+        except OSError:
+            continue
+    last = candidates[-1]
+    last.mkdir(parents=True, exist_ok=True)
+    return last
 
 
 # ---------------------------------------------------------------------------
@@ -88,15 +120,20 @@ def extract_telemetry_events_for_cost_waste_week(week_start: date) -> dict:
             params={"start": start, "end": end, "types": list(KPI_EVENT_TYPES)},
         )
 
-    _RAW_DIR.mkdir(parents=True, exist_ok=True)
-    raw_path = _RAW_DIR / f"telemetry_week_{week_start.isoformat()}.csv"
-    df.to_csv(raw_path, index=False)
+    raw_dir = pipeline_artifact_dir("raw")
+    raw_path = raw_dir / f"telemetry_week_{week_start.isoformat()}.csv"
+    try:
+        df.to_csv(raw_path, index=False)
+        raw_path_str = str(raw_path)
+    except OSError:
+        # Artifact is optional — KPIs still compute from ``rows``.
+        raw_path_str = ""
 
     return {
         "week_start": week_start.isoformat(),
         "rows": df.to_dict(orient="records"),
         "rows_extracted": int(len(df)),
-        "raw_path": str(raw_path),
+        "raw_path": raw_path_str,
     }
 
 
@@ -187,9 +224,9 @@ def upsert_weekly_location_performance_rows(transform_result: dict, run_id: str)
 
 @task(name="write_weekly_cost_waste_eval_snapshot")
 def write_weekly_cost_waste_eval_snapshot(transform_result: dict, load_result: dict) -> str:
-    """Optional eval artifact for ops validation under data/eval/."""
-    _EVAL_DIR.mkdir(parents=True, exist_ok=True)
-    path = _EVAL_DIR / f"weekly_kpis_{transform_result['week_start']}.json"
+    """Optional eval artifact for ops validation (writable pipeline dir)."""
+    eval_dir = pipeline_artifact_dir("eval")
+    path = eval_dir / f"weekly_kpis_{transform_result['week_start']}.json"
     payload = {
         "week_start": transform_result.get("week_start"),
         "kpi_rows": transform_result.get("kpi_rows"),

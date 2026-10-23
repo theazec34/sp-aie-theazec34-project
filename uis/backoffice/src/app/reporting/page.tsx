@@ -173,9 +173,9 @@ export default function ReportingDashboardPage() {
           <p className="bo-kicker">Reporte para Mariana (CEO) y Felipe (Ops)</p>
           <h1>Costo y merma por local</h1>
           <p className="bo-soft">
-            Consolidado semanal de compra, merma, quiebres de stock y alertas de precio.
-            Montos del reporting en la moneda de cada sede; proveedores del
-            directorio están unificados en <strong>euros (€)</strong>.
+            Consolidado semanal de compra, merma, quiebres de stock y alertas de
+            precio. Los montos siguen la moneda de cada sede; el directorio de
+            proveedores opera en <strong>euros (€)</strong>.
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
