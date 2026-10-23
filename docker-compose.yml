@@ -51,11 +51,14 @@ services:
       timeout: 5s
       retries: 36
       start_period: 20s
-    # Codespaces: el DNS interno de Docker a menudo no resuelve internet
-    # (llm.4geeks.ai → "Could not resolve host"). DNS públicos arreglan egress.
+    # Codespaces: DNS del contenedor suele fallar hacia internet (UDP/53).
+    # DNS públicos ayudan a veces; extra_hosts garantiza llm.4geeks.ai.
+    # Override: LLM_4GEEKS_IP=x.x.x.x en .env (o scripts/codespace-fix-llm-dns.sh).
     dns:
       - 8.8.8.8
       - 1.1.1.1
+    extra_hosts:
+      - "llm.4geeks.ai:${LLM_4GEEKS_IP:-68.183.63.85}"
     networks:
       - brasaland-net
     restart: unless-stopped
@@ -87,6 +90,8 @@ services:
     dns:
       - 8.8.8.8
       - 1.1.1.1
+    extra_hosts:
+      - "llm.4geeks.ai:${LLM_4GEEKS_IP:-68.183.63.85}"
     networks:
       - brasaland-net
     restart: unless-stopped

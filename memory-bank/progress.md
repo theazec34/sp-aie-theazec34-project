@@ -1,10 +1,10 @@
 # Progress — Brasaland Digital
 
 ## Estado (2026-10-23) — DNS egress backend → llm.4geeks.ai
-- Diagnóstico: API key OK en host (HTTP 200 a `/v1/models`); contenedor
-  `backend` no resolvía `llm.4geeks.ai` (`Temporary failure in name resolution`).
-- Fix: `dns: [8.8.8.8, 1.1.1.1]` en `backend` y `worker` (`docker-compose.yml`).
-- Doc: `docs/backoffice/IA-Y-API-KEYS.es.md` (sección Codespaces DNS).
+- Diagnóstico: API key OK en host (HTTP 200); contenedor sin resolución DNS
+  (incluso con `dns: 8.8.8.8` — UDP/53 a menudo bloqueado en Codespaces).
+- Fix: `extra_hosts: llm.4geeks.ai:${LLM_4GEEKS_IP:-…}` + DNS públicos en
+  `backend`/`worker`; script `scripts/codespace-fix-llm-dns.sh`.
 
 ## Estado previo — sinónimos fidelización + .env (no export)
 - `export` en shell **no** basta: Docker Compose lee el fichero `.env`. Tras cambiar LLM, verificar `docker compose exec backend printenv EMBEDDING_PROVIDER`.
