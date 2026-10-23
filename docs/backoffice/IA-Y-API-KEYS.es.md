@@ -38,17 +38,15 @@ Tras editar `.env`: `docker compose up -d --force-recreate backend`
 ### Codespaces: DNS del contenedor vs host
 
 Si en el **host** `curl https://llm.4geeks.ai/v1/models` da **200** pero dentro del
-backend `getent hosts llm.4geeks.ai` no resuelve (`Could not resolve host`),
-no es la API key: es el DNS de Docker. `docker-compose.yml` fija DNS públicos
-(`8.8.8.8`, `1.1.1.1`) en `backend` y `worker`. Tras pull:
+backend `getent hosts llm.4geeks.ai` no resuelve, no es la API key: es DNS/egress
+del contenedor. Compose usa `extra_hosts` + DNS públicos; si `getent` sigue vacío:
 
 ```bash
+bash scripts/codespace-fix-llm-dns.sh
+# o recrear con IP actual:
+# echo "LLM_4GEEKS_IP=$(getent hosts llm.4geeks.ai | awk '{print $1; exit}')" >> .env
 docker compose up -d --force-recreate backend worker
-docker compose exec -T backend getent hosts llm.4geeks.ai
 ```
-
-Parche inmediato sin pull: `docker compose exec backend sh -c 'echo "68.183.63.85 llm.4geeks.ai" >> /etc/hosts'`
-(la IP puede cambiar; mejor el fix de DNS en compose).
 
 ## Variables de embedding (RAG)
 
