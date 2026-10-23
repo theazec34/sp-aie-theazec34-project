@@ -30,13 +30,19 @@ function upstreamCandidates(): string[] {
     "http://127.0.0.1:8000"
   ).replace(/\/$/, "");
   const alts = [
-    primary,
     "http://host.docker.internal:8000",
+    primary,
     "http://backend:8000",
     "http://brasaland-backend:8000",
     "http://127.0.0.1:8000",
   ];
   return [...new Set(alts)];
+}
+
+function timeoutFor(base: string): number {
+  if (base.includes("backend") && !base.includes("host.docker")) return 2_500;
+  if (base.includes("127.0.0.1")) return 2_000;
+  return 10_000;
 }
 
 function nodeFetch(
@@ -120,7 +126,7 @@ async function proxy(
         method: req.method,
         headers,
         body,
-        timeoutMs: 15_000,
+        timeoutMs: timeoutFor(base),
       });
       return new NextResponse(new Uint8Array(upstream.body), {
         status: upstream.status,

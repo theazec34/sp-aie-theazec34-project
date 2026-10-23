@@ -40,8 +40,8 @@ export default function ApiBaseUrlField({ onChange }: Props) {
       />
       <span id="api-base-hint" className="api-base-hint">
         En Codespaces: URL <code>…-8000.app.github.dev</code> (puerto 8000 en{" "}
-        <strong>Public</strong>). En Docker local: <code>/api-backend</code>. Pulsa
-        «Usar auto-detectada» si el login hace timeout.
+        <strong>Public</strong> solo para Swagger/WS). Login: deja <code>/api-backend</code>
+        y pulsa «Usar auto-detectada».
       </span>
       <button
         type="button"

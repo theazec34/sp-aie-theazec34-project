@@ -1,7 +1,8 @@
 /**
  * Proxy same-origin → API interna.
  * Más fiable que `rewrites` de next.config con Turbopack + Docker/Codespaces.
- * Prueba varios upstreams (service name + container_name) y fuerza IPv4 vía DNS.
+ * Prueba varios upstreams; host.docker.internal primero (Codespaces);
+ * fallos a backend:8000 con timeout corto para no tumbar el login (12s).
  */
 import http from "node:http";
 import https from "node:https";
@@ -27,16 +28,24 @@ function upstreamCandidates(): string[] {
   const primary = (
     process.env.INTERNAL_API_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
-    "http://127.0.0.1:8000"
+    "http://host.docker.internal:8000"
   ).replace(/\/$/, "");
+  // host-gateway primero: en Codespaces TCP a backend:8000 hace TIMEOUT.
   const alts = [
-    primary,
     "http://host.docker.internal:8000",
+    primary,
     "http://backend:8000",
     "http://brasaland-backend:8000",
     "http://127.0.0.1:8000",
   ];
   return [...new Set(alts)];
+}
+
+function timeoutFor(base: string): number {
+  // Fallar rápido en hostnames Docker que cuelgan; dar margen al host-gateway.
+  if (base.includes("backend") && !base.includes("host.docker")) return 2_500;
+  if (base.includes("127.0.0.1")) return 2_000;
+  return 10_000;
 }
 
 function nodeFetch(
@@ -120,7 +129,7 @@ async function proxy(
         method: req.method,
         headers,
         body,
-        timeoutMs: 20_000,
+        timeoutMs: timeoutFor(base),
       });
       return new NextResponse(new Uint8Array(upstream.body), {
         status: upstream.status,
@@ -137,8 +146,9 @@ async function proxy(
     {
       detail:
         `Proxy /api-backend no alcanzó la API (${errors.join(" | ")}). ` +
-        `Comprueba que backend esté healthy: docker compose ps && docker compose logs backend. ` +
-        `En login usa «/api-backend» (no hace falta poner el puerto 8000 Public).`,
+        `Comprueba: docker compose ps && curl :8000/health. ` +
+        `Recrea interfaces: docker compose up -d --force-recreate --no-deps interfaces. ` +
+        `Login con URL «/api-backend».`,
     },
     { status: 502 }
   );
