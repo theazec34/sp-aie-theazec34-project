@@ -325,16 +325,66 @@ def weekly_location_performance_flow(
         raise
 
 
+def run_weekly_location_performance_etl(
+    week_start: date | None = None,
+    triggered_by: str = "api_manual",
+) -> dict:
+    """ETL extract→transform→load without Prefect's ephemeral server.
+
+    Calling ``@flow`` from the API in Docker/Codespaces often fails while
+    Prefect spins up a temporary server (generic HTTP 500 in the UI). The
+    CLI/hito path still uses ``weekly_location_performance_flow``.
+    """
+    week_start = week_start or iso_week_start()
+    ensure_reporting_tables()
+    run_id = open_run(
+        pipeline_name=PIPELINE_NAME,
+        week_start=week_start,
+        triggered_by=triggered_by,
+    )
+    try:
+        extracted = extract_telemetry_events_for_cost_waste_week.fn(week_start)
+        rows = extracted.get("rows") or []
+        purchase = compute_purchase_cost_by_location_task.fn(rows)
+        compute_waste_cost_and_ratio_by_location_task.fn(rows, purchase)
+        compute_stockout_and_price_alert_counts_task.fn(rows)
+        transformed = assemble_weekly_location_kpi_rows.fn(extracted)
+        loaded = upsert_weekly_location_performance_rows.fn(transformed, run_id)
+        eval_path = ""
+        eval_ok = False
+        try:
+            eval_path = write_weekly_cost_waste_eval_snapshot.fn(transformed, loaded)
+            eval_ok = True
+        except Exception:  # noqa: BLE001
+            eval_ok = False
+        return {
+            "run_id": run_id,
+            "status": "completed",
+            "week_start": week_start.isoformat(),
+            "rows_extracted": transformed.get("rows_extracted", 0),
+            "rows_upserted": loaded.get("rows_upserted", 0),
+            "eval_snapshot": eval_path,
+            "eval_ok": eval_ok,
+        }
+    except Exception as exc:  # noqa: BLE001
+        finish_run(
+            run_id,
+            status="failed",
+            error_message=str(exc)[:500],
+            checkpoint={"week_start": week_start.isoformat(), "stage": "failed"},
+        )
+        raise
+
+
 def trigger_weekly_location_performance_flow(
     week_start: date | None = None,
     triggered_by: str = "api_manual",
 ) -> dict:
-    """API-facing entrypoint (no ETL logic in services/)."""
-    result = weekly_location_performance_flow(
+    """API-facing entrypoint — plain ETL (no Prefect ephemeral server)."""
+    return run_weekly_location_performance_etl(
         week_start=week_start,
         triggered_by=triggered_by,
     )
-    return result if isinstance(result, dict) else {"status": "completed", "result": str(result)}
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -217,6 +217,13 @@ export default function ReportingDashboardPage() {
 
       {loading && !report ? <p className="bo-soft">Cargando KPIs…</p> : null}
 
+      {report && rows.length === 0 && !error ? (
+        <p className="bo-soft" style={{ marginBottom: 16 }}>
+          No hay KPIs para esta semana. Tras sembrar telemetría de demo, pulsa
+          de nuevo «Recalcular semana».
+        </p>
+      ) : null}
+
       {report ? (
         <div className="bo-telemetry-grid">
           <KpiTable

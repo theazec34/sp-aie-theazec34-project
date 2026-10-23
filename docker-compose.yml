@@ -29,6 +29,9 @@ services:
       SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@brasaland.com}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-ChangeMeLocalOnly12!}
       SEED_ADMIN_NAME: ${SEED_ADMIN_NAME:-Admin Brasaland}
+      # Evita que Prefect escriba en HOME de solo lectura si algún CLI usa @flow
+      PREFECT_HOME: /tmp/prefect
+      PIPELINE_ARTIFACT_DIR: /app/api/data/pipeline
     ports:
       - "8000:8000"
     volumes:
