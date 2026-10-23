@@ -1,6 +1,14 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-23) — Redis Celery vía host-gateway (Codespaces)
+## Estado (2026-10-23) — Reporting recalcular + UI sin textos de entorno
+- «Recalcular semana» → 500: Compose monta `./data` **:ro** y el pipeline
+  escribía CSV en `/app/data/raw` → OSError.
+- Fix: `pipeline_artifact_dir` escribe en `/app/api/data/pipeline` (volumen
+  writable) o TEMP; dump CSV best-effort.
+- UI: quitados hints de Codespaces / puerto Public /api-backend en login,
+  agente, website y analizador CSV.
+
+## Estado previo — Redis Celery vía host-gateway (Codespaces)
 - Worker Up pero `Timeout connecting to redis://redis:6379` → Flower 0
   workers y `POST /incidents/analyze` → 504.
 - Mismo patrón bridge TCP que interfaces→backend: publicar Redis `:6379`

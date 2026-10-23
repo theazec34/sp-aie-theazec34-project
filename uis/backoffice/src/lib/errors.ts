@@ -78,10 +78,8 @@ export async function readApiError(
   if (response.status >= 500) {
     return {
       message:
-        "El servidor no responde correctamente (HTTP " +
-        response.status +
-        "). Si acabas de arrancar: copia .env.example → .env (SECRET_KEY), " +
-        "reinicia el backend y vuelve a iniciar sesión. En login usa /api-backend.",
+        "El servidor no pudo completar la operación. Reinténtalo en unos " +
+        "segundos; si persiste, vuelve a iniciar sesión.",
       fieldErrors: {},
     };
   }

@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 import sys
 from datetime import date
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
+
+logger = logging.getLogger("brasaland.reporting")
 
 # Repo root → data.pipelines.*; services/api → app.auth
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -81,10 +84,22 @@ def pipeline_runs_trigger(
             status_code=400,
             detail=f"Nombre de pipeline no soportado; se esperaba {PIPELINE_NAME}",
         )
-    result = trigger_weekly_location_performance_flow(
-        week_start=body.week_start,
-        triggered_by="api_manual",
-    )
+    try:
+        result = trigger_weekly_location_performance_flow(
+            week_start=body.week_start,
+            triggered_by="api_manual",
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("pipeline_runs_trigger failed: %s", exc)
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "No se pudo recalcular la semana. Si no hay datos, siembra "
+                "telemetría (`seed_telemetry.py`) y vuelve a intentar."
+            ),
+        ) from exc
     return PipelineRunAccepted(
         run_id=result.get("run_id"),
         status=result.get("status", "completed"),

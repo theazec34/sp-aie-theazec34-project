@@ -56,8 +56,8 @@ function friendlyNetworkMessage(err, base) {
   const raw = err && err.message ? String(err.message) : String(err || "");
   if (/failed to fetch|networkerror|load failed/i.test(raw)) {
     return (
-      `No hay conexión con la API en ${base}. En Ports marca el 8000 como Public, ` +
-      "reinicia uvicorn y pulsa «Probar API»."
+      `No hay conexión con la API en ${base}. Comprueba que el backend esté ` +
+      "en marcha y pulsa «Probar API»."
     );
   }
   return raw || "Error inesperado.";

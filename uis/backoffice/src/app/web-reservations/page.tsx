@@ -30,7 +30,7 @@ export default function WebReservationsPage() {
         if (!res.ok) {
           throw new ApiError(
             `No se pudieron cargar las reservas (HTTP ${res.status}). ` +
-              `Comprueba login JWT, URL /api-backend y que el backend tenga SECRET_KEY.`,
+              `Comprueba la sesión e inténtalo de nuevo.`,
             res.status
           );
         }
