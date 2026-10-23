@@ -1,10 +1,14 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-23) — DNS egress backend → llm.4geeks.ai
-- Diagnóstico: API key OK en host (HTTP 200); contenedor sin resolución DNS
-  (incluso con `dns: 8.8.8.8` — UDP/53 a menudo bloqueado en Codespaces).
-- Fix: `extra_hosts: llm.4geeks.ai:${LLM_4GEEKS_IP:-…}` + DNS públicos en
-  `backend`/`worker`; script `scripts/codespace-fix-llm-dns.sh`.
+## Estado (2026-10-23) — LLM vía host proxy (Codespaces)
+- Tras `extra_hosts`, DNS OK pero `curl :443` desde backend → **timeout**
+  (host sí 200). Bridge sin egress TCP.
+- Fix: servicio `llm-proxy` (nginx `network_mode: host` :18080) +
+  `scripts/codespace-enable-llm-proxy.sh` apunta BASE_URL a
+  `http://host.docker.internal:18080/v1`.
+
+## Estado previo — DNS egress backend → llm.4geeks.ai
+- `extra_hosts` + DNS públicos; `scripts/codespace-fix-llm-dns.sh`.
 
 ## Estado previo — sinónimos fidelización + .env (no export)
 - `export` en shell **no** basta: Docker Compose lee el fichero `.env`. Tras cambiar LLM, verificar `docker compose exec backend printenv EMBEDDING_PROVIDER`.
