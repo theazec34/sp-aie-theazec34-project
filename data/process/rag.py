@@ -178,6 +178,25 @@ def _qdrant_path() -> str:
     return "/tmp/brasaland_qdrant"
 
 
+# Un solo cliente por proceso: Qdrant local (path) no admite dos instancias
+# abiertas a la vez (uvicorn --reload / reindex + query).
+_QDRANT_CLIENT = None
+_QDRANT_CLIENT_KEY: tuple[str, ...] | None = None
+
+
+def _close_cached_qdrant() -> None:
+    global _QDRANT_CLIENT, _QDRANT_CLIENT_KEY
+    client = _QDRANT_CLIENT
+    _QDRANT_CLIENT = None
+    _QDRANT_CLIENT_KEY = None
+    if client is None:
+        return
+    try:
+        client.close()
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def _local_qdrant_client():
     from qdrant_client import QdrantClient
 
@@ -186,15 +205,38 @@ def _local_qdrant_client():
     path = _qdrant_path()
     Path(path).mkdir(parents=True, exist_ok=True)
     logger.warning("Using local Qdrant storage at %s", path)
-    return QdrantClient(path=path)
+    try:
+        return QdrantClient(path=path)
+    except Exception as exc:  # noqa: BLE001
+        msg = str(exc).lower()
+        if "already accessed" in msg or "concurrent access" in msg:
+            # Otro proceso (p. ej. CLI setup) dejó el lock; preferir servidor.
+            url = _qdrant_url()
+            if url:
+                logger.warning(
+                    "Local Qdrant path locked (%s) — using server %s",
+                    path,
+                    url,
+                )
+                try:
+                    client = QdrantClient(
+                        url=url, timeout=8, check_compatibility=False
+                    )
+                except TypeError:
+                    client = QdrantClient(url=url, timeout=8)
+                client.get_collections()
+                return client
+        raise
 
 
 def get_qdrant_client():
     """Qdrant client: URL server, else local path (no Docker required).
 
-    If the Compose service ``qdrant`` is up but not answering (common after
-    disk-full corruption), fall back to on-disk storage so BrasAI can demo.
+    Cached per-process. Local path storage cannot be opened twice — avoid
+    ``QDRANT_FORCE_LOCAL=1`` under ``uvicorn --reload``; use the Compose
+    ``qdrant`` service instead.
     """
+    global _QDRANT_CLIENT, _QDRANT_CLIENT_KEY
     from qdrant_client import QdrantClient
 
     url = _qdrant_url()
@@ -203,8 +245,22 @@ def get_qdrant_client():
         "true",
         "yes",
     }
+    key = (
+        "local" if force_local or not url else "url",
+        url or "",
+        _qdrant_path() if force_local or not url else "",
+        os.getenv("QDRANT_MEMORY", "").strip(),
+    )
+    if _QDRANT_CLIENT is not None and _QDRANT_CLIENT_KEY == key:
+        return _QDRANT_CLIENT
+
+    _close_cached_qdrant()
+
     if force_local or not url:
-        return _local_qdrant_client()
+        client = _local_qdrant_client()
+        _QDRANT_CLIENT = client
+        _QDRANT_CLIENT_KEY = key
+        return client
 
     try:
         try:
@@ -217,6 +273,8 @@ def get_qdrant_client():
             client = QdrantClient(url=url, timeout=8)
         # Probe — ConnectTimeout here if storage is wedged
         client.get_collections()
+        _QDRANT_CLIENT = client
+        _QDRANT_CLIENT_KEY = key
         return client
     except Exception as exc:  # noqa: BLE001
         logger.warning(
@@ -226,7 +284,15 @@ def get_qdrant_client():
             url,
             exc,
         )
-        return _local_qdrant_client()
+        client = _local_qdrant_client()
+        _QDRANT_CLIENT = client
+        _QDRANT_CLIENT_KEY = ("local-fallback", url or "", _qdrant_path(), "")
+        return client
+
+
+def reset_qdrant_client() -> None:
+    """Test / ops helper — drop the process-wide client cache."""
+    _close_cached_qdrant()
 
 
 def _embedding_provider() -> str:

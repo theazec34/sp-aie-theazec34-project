@@ -1,10 +1,15 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-23) — BrasAI manuales + agente front_ops
+## Estado (2026-10-23) — Qdrant local lock BrasAI
+- Error UI: `qdrant_local is already accessed by another instance`.
+- Causa: `QDRANT_FORCE_LOCAL=1` + varios `QdrantClient(path=…)` (reload).
+- Fix: cliente cacheado por proceso; si el path está locked → servidor;
+  `.env` / docs → `QDRANT_FORCE_LOCAL=0` con Compose.
+
+## Estado previo — BrasAI manuales + agente front_ops
 - Manuales ampliados + nuevos: `service-hours`, `customer-experience`.
-- Agente: `query_front_ops` (reservas/candidaturas); proveedores no caen a
-  fallback si el directorio viene vacío; `location_id` llega al grafo.
-- MCP rehidrata suppliers si TinyDB vacío; scope `intake:read`.
+- Agente: `query_front_ops`; suppliers sin fallback vacío; `location_id`.
+- MCP rehidrata suppliers; scope `intake:read`.
 
 ## Estado previo — LLM vía host proxy (Codespaces)
 - Tras `extra_hosts`, DNS OK pero `curl :443` desde backend → **timeout**
