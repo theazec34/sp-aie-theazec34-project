@@ -1,10 +1,13 @@
 # Progress — Brasaland Digital
 
-## Estado (2026-10-23) — Agente proveedores: montar ./mcps
-- API `/suppliers` OK (33 fichas) pero agente «No pude leer directorio».
-- Causa: `services/agent` montado fresco; `mcps/` solo en imagen vieja
-  → `query_suppliers` ausente en in-process MCP.
-- Fix: volume `./mcps:/app/mcps` en backend/worker + error MCP más claro.
+## Estado (2026-10-23) — Agente: fastmcp en imagen Docker
+- Tras montar `./mcps`: `ModuleNotFoundError: fastmcp` (deps solo en
+  `pyproject.toml` / uv, no en `services/api/requirements.txt` de la imagen).
+- Fix: `fastmcp` + `mcpauth` + `langchain-mcp-adapters` + PyJWT en
+  requirements de la API; `__init__` MCP lazy; error con hint de install.
+
+## Estado previo — Agente proveedores: montar ./mcps
+- Volume `./mcps:/app/mcps` en backend/worker.
 
 ## Estado previo — BrasAI reindex async (HTTP 504)
 - Reindex sync con embeddings 4Geeks superaba el proxy → **HTTP 504**.

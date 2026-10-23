@@ -37,16 +37,21 @@ Atajo: `bash scripts/docker-rebuild-clean.sh`
 
 Si sigue fallando: `DOCKER_BUILDKIT=0 docker compose build --no-cache && docker compose up`.
 
-### Agente: «No pude leer el directorio de proveedores» (pero Proveedores OK)
+### Agente: «No pude leer el directorio…» / `No module named 'fastmcp'`
 
-La API tiene datos y el agente no: suele ser imagen Docker con `mcps/` viejo
-mientras `services/agent` está montado al día. Compose monta `./mcps:/app/mcps`.
+1. Compose monta `./mcps` (código MCP al día).
+2. La imagen debe instalar `fastmcp` / `mcpauth` (`services/api/requirements.txt`).
 
 ```bash
-docker compose up -d --force-recreate backend
-docker compose exec -T backend python seed_demo_ops.py   # tras seed.py --force
-# Prueba in-process:
-docker compose exec -T backend python -c "from agent.tools.mcp_client import query_suppliers_via_mcp; print(query_suppliers_via_mcp(action='top_rate', limit=3))"
+# Rápido (sin rebuild):
+docker compose exec -T backend uv pip install --system \
+  'fastmcp>=4.0.10' 'mcpauth>=0.1.1' 'langchain-mcp-adapters>=0.3.1' 'PyJWT>=2.8.0'
+
+# Permanente:
+docker compose build backend && docker compose up -d backend
+
+docker compose exec -T backend python -c \
+  "from agent.tools.mcp_client import query_suppliers_via_mcp; print(query_suppliers_via_mcp(action='top_rate', limit=3))"
 ```
 
 ### BrasAI: HTTP 504 al «Reindexar manuales»
