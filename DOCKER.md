@@ -39,12 +39,18 @@ Si sigue fallando: `DOCKER_BUILDKIT=0 docker compose build --no-cache && docker 
 
 ### Codespaces: `Could not resolve host: llm.4geeks.ai`
 
-El host resuelve y la key da **200**, pero `docker compose exec backend getent hosts llm.4geeks.ai` falla.
-Causa: DNS del daemon Docker, no la API key. Compose fija `dns: 8.8.8.8` / `1.1.1.1` en `backend` y `worker`.
+El host resuelve y la key da **200**, pero el contenedor no resuelve DNS (a veces ni con `dns: 8.8.8.8`).
+Compose añade `extra_hosts` con la IP de `llm.4geeks.ai` (override `LLM_4GEEKS_IP` en `.env`).
 
 ```bash
+# Tras pull / cambio de IP:
+getent hosts llm.4geeks.ai   # anota la IP
+# opcional en .env: LLM_4GEEKS_IP=68.183.63.85
 docker compose up -d --force-recreate backend worker
 docker compose exec -T backend getent hosts llm.4geeks.ai
+
+# Sin recrear contenedores:
+bash scripts/codespace-fix-llm-dns.sh
 ```
 
 El `.dockerignore` de raíz **debe** dejar pasar `data/`, `docs/company-knowledge-base/` y `docs/rfp/` (el `Dockerfile` hace `COPY` de esas rutas). Si el build falla con `"/docs/rfp": not found`, actualiza `main` o revisa que no hayas excluido `docs` enteros en `.dockerignore`.
